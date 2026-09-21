@@ -357,6 +357,7 @@ Preview Mode 是 MarkPad 的預設模式，也是產品第一印象的核心。
 - 預設字體依 UI／文件語系自動選擇：英文優先 Segoe UI、繁體中文優先微軟正黑體、日文優先 Yu Gothic
 - **Preview 本文預設字級：16 px**
 - **Preview 本文預設行高：1.6**
+- **Preview 段落間距：0.8em**
 - 字體、行高、段落間距需優先考慮長時間閱讀舒適度
 - H1～H6 必須有清楚層級
 - Code Block 必須清楚區隔並支援 Syntax Highlight
