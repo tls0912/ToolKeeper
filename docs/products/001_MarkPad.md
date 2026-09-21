@@ -450,6 +450,250 @@ UI 語系只影響 MarkPad 本身，不修改文件內容。
 
 ---
 
+
+## V1 搜尋與取代規格
+
+### Search UI
+
+- `Ctrl+F` 或左側 Search 按鈕叫出搜尋浮窗
+- 搜尋浮窗固定在文件內容區左上角
+- 不可拖曳
+- 寬度：**320 px**
+- 圓角：**4 px**
+- 完全不透明
+- 使用 **1 px 邊框 + 很淡的陰影**
+- 不占固定版面，不把文件內容往下推
+- 搜尋框有文字時顯示清除 `×` 按鈕
+- 點擊清除後只清空搜尋文字與標記，不關閉浮窗
+
+### Search 行為
+
+- 所有命中結果淡色標記
+- 目前命中結果高亮
+- 顯示結果位置，例如 `3 / 12`
+- `F3`：下一個結果
+- `Shift+F3`：上一個結果
+- 預設不區分大小寫
+- 提供 `Aa` 切換大小寫敏感
+- 記住上次 `Aa` 狀態
+- 不支援 Whole Word
+- 不支援 Regex
+- 關閉搜尋後保留上一次搜尋字串
+- 使用 `Ctrl+F` 重新開啟時自動全選搜尋框內容
+- 若使用者已反白文字再按 `Ctrl+F`：
+  - 單行反白：自動帶入搜尋框
+  - 多行反白：只取第一行
+- Preview Mode：從目前可視位置開始搜尋
+- Edit Mode：從目前游標位置開始搜尋
+- 搜到尾端後自動循環回開頭，並短暫提示「已從開頭繼續搜尋」
+- 反向搜尋到底時同理提示「已從結尾繼續搜尋」
+
+### Replace
+
+- Preview Mode 不提供 Replace
+- Edit Mode 可從 Search 浮窗展開 Replace
+- 支援 `Replace`
+- 支援 `Replace All`
+- `Replace All` 前顯示「將取代 N 處，是否繼續？」
+- 不支援 Regex
+- `Esc` 行為：
+  - Replace 展開時：第一次先收合 Replace
+  - 再按一次：關閉整個 Search 浮窗
+  - 若只有 Search：直接關閉
+
+---
+
+## V1 Edit Mode 詳細規格
+
+- 預設字級：**16 px**
+- 使用等寬字體
+- 依系統可用字體自動選擇，優先 **Cascadia Mono**
+- 行號預設顯示
+- 目前行的行號與整行背景輕微高亮
+- 自動換行預設開啟
+- Tab 寬度：**4 spaces**
+- 多行選取後 `Tab / Shift+Tab` 進行整批縮排／反縮排
+- 支援 Undo / Redo
+- 支援自動縮排
+- 自動補成對括號，但不自動補引號
+- `Ctrl+1 ~ Ctrl+6` 對應 H1～H6
+- 選取文字後支援 Markdown 快捷包覆：
+  - `Ctrl+B` → Bold
+  - `Ctrl+I` → Italic
+  - Inline Code
+  - Link
+- 選取文字時浮出小型 Markdown 工具列，只包含：
+  - Bold
+  - Italic
+  - Inline Code
+  - Link
+- 選取文字後貼上網址，自動轉為 Markdown Link
+- 左側工具列底部顯示游標位置，例如 `Ln 32, Col 8`
+
+### Preview Render
+
+- 編輯停止輸入 **300 ms** 後更新 Preview Render
+- Edit / Preview 切換時盡量同步至同一段落／位置
+- 每個 Tab 各自記住 Preview 捲動位置
+
+---
+
+## V1 圖片輸入與圖片檢視
+
+### 貼上／拖曳圖片
+
+- 從剪貼簿貼圖時：
+  - 自動建立或沿用文件旁的 `images` 資料夾
+  - 自動儲存圖片
+  - 自動插入 Markdown 圖片語法
+- 圖片檔名使用時間戳，例如：
+  - `image-20260921-205812.png`
+- Markdown 圖片路徑一律使用相對路徑
+- 拖曳圖片進 Edit Mode 時採相同行為：
+  - 自動複製到 `images`
+  - 自動插入 Markdown
+- 已存在 `images` 資料夾時直接沿用，不再詢問
+
+### Preview 圖片
+
+- 小圖維持原尺寸
+- 大圖自動縮至內容區最大寬度
+- 點擊圖片可進入放大檢視
+- 放大檢視可由以下方式關閉：
+  - 點背景
+  - `Esc`
+  - 右上角 `×`
+- 放大後支援 `Ctrl + 滾輪` 縮放
+- 圖片超出視窗尺寸時才允許拖曳移動
+
+---
+
+## V1 文件與視窗行為
+
+### 開啟文件
+
+- 拖曳 `.md` 到 MarkPad：
+  - 預設在目前視窗開新 Tab
+  - 按住 `Shift` 時開新 MarkPad 視窗
+- 雙擊另一個 `.md`：
+  - 預設加入既有 MarkPad 視窗
+  - 按住 `Shift` 時開新視窗
+- 已開啟的同一檔案再次被要求開啟時，切換至既有 Tab，不重複建立
+
+### 無文件啟動
+
+- MarkPad 無帶檔案啟動時：
+  - 顯示空白畫面
+  - 只提示「拖入或開啟 Markdown」
+- 不顯示 Recent Files
+- 不顯示 Dashboard / Workspace
+
+### 新建文件
+
+- `Ctrl+N` 建立新文件
+- 新文件預設名稱：`Untitled.md`
+- 第一次 `Ctrl+S` 開啟標準 Save As
+- 預設副檔名為 `.md`
+- 使用者未輸入副檔名時自動補 `.md`
+
+### 關閉文件
+
+- 關閉最後一個 Tab 後，MarkPad 視窗保留
+- 回到「拖入或開啟 Markdown」空白畫面
+- 有未儲存修改時：
+  - 顯示 `Save / Don't Save / Cancel`
+- 未儲存 Tab 在檔名前加 `●`
+
+### 啟動與 Recent Files
+
+- MarkPad 每次乾淨啟動，不自動恢復上次 Tabs
+- Recent Files 保留 **20 筆**
+- Recent Files 放在 `More` 裡，不占首頁
+
+---
+
+## V1 儲存、自動儲存與外部變更
+
+### Auto Save
+
+- 預設關閉
+- 可在 `More` 開啟
+- 開啟後停止輸入 **3 秒** 自動儲存
+
+### 外部修改
+
+- 若檔案被外部程式修改：
+  - MarkPad 內沒有未儲存變更 → 自動 Reload
+  - MarkPad 內有未儲存變更 → 詢問 `Reload / Keep Current`
+
+### Read-only
+
+- Read-only 文件可 Preview
+- 禁止切換到 Edit Mode
+
+### 檔案消失
+
+- 外部刪除目前檔案：
+  - 保留目前內容
+  - 標示 `File missing`
+  - 允許 Save As
+- 外部重新命名／移動檔案：
+  - 視為原檔消失
+  - 標示 `File missing`
+
+---
+
+## V1 Encoding 與 Large File
+
+### Encoding
+
+- 左側底部顯示目前 Encoding，例如 `UTF-8`
+- 非 UTF-8 文件：
+  - 自動偵測常見 Encoding
+  - 儲存時保留原 Encoding
+- UTF-8 BOM 必須正確處理
+
+### Large File Mode
+
+- 超過 **10 MB** 視為 Large File
+- 顯示 `Large file mode` 提示
+- 優先進 Edit Mode
+- 不預先 Render Preview
+- 只有使用者切到 Preview 時才進行 Render
+
+---
+
+## V1 Preview 補充互動規格
+
+### Heading / Anchor
+
+- Heading Anchor 跳轉採平滑捲動
+- Heading Hover 時顯示 Anchor Link
+- Anchor 不直接複製
+- 右鍵才提供 `Copy Link`
+
+### Code Block
+
+- Copy 按鈕永遠顯示
+- 按下 Copy 後短暫顯示 `Copied` 約 1～2 秒，再恢復
+- 有指定語言時顯示語言名稱，例如 `csharp`
+
+### Table
+
+- Table 太寬時由 Table 自己出現水平 Scrollbar
+- 不讓整個頁面水平捲動
+- 長 Table 使用 Sticky Header
+- 儲存格內容預設自動換行
+- Inline Code 在 Table 中維持不換行
+
+### HTML
+
+- 支援常見 Inline HTML / Block HTML
+- 禁止 `<script>` 與其他可執行內容
+- 僅 Render 安全 HTML
+
+---
+
 ## 技術方向
 
 暫定：
