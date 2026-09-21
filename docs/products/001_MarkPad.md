@@ -309,6 +309,98 @@ Theme 切換屬於全域 UI 設定，不影響文件內容。
 
 ---
 
+
+## V1 詳細行為規格
+
+### Preview Mode
+
+Preview Mode 是 MarkPad 的預設模式，也是產品第一印象的核心。
+
+規格原則：
+
+- 文件內容置中顯示
+- 內容最大寬度限制，避免超寬螢幕造成行長過長
+- 預設內容寬度目標約 900～1100 px，實際值於 UI 實作階段微調
+- 字體、行高、段落間距需優先考慮長時間閱讀舒適度
+- H1～H6 必須有清楚層級
+- Code Block 必須清楚區隔並支援 Syntax Highlight
+- Table 必須保持可讀性
+- 圖片依內容區寬度自適應，不超出可視範圍
+- Link 可直接點擊開啟
+- 捲軸應盡量採 Overlay / 自動淡出方式，降低固定 UI 占用
+
+Preview Mode 不顯示 Markdown 原始語法，重點是閱讀。
+
+### Edit Mode
+
+Edit Mode 顯示 Markdown 原始碼。
+
+V1 原則：
+
+- 使用等寬字體
+- 支援 Markdown Syntax Highlight
+- 支援行號
+- 支援自動縮排
+- Tab / Shift+Tab 可進行縮排與反縮排
+- 支援 Undo / Redo
+- 編輯內容變更後更新內部 Preview Render 結果
+- 切回 Preview Mode 時立即顯示最新內容
+
+Edit Mode 不預設與 Preview 並排。
+
+### 文件分頁行為
+
+- 多個 `.md` 文件預設在同一個 MarkPad 視窗內以 Tab 開啟
+- 已經開啟的檔案再次被要求開啟時，切換至既有 Tab，不重複建立
+- 未儲存文件需有清楚狀態標記
+- 關閉未儲存文件時必須詢問 Save / Don't Save / Cancel
+- Tab 過多時不可無限壓縮到無法辨識，應提供合理的 Overflow / Scroll 行為
+- `Ctrl+Tab` 切換下一個文件
+- `Ctrl+Shift+Tab` 切換上一個文件
+
+### 檔案行為
+
+- 預設支援 UTF-8
+- 必須正確處理 UTF-8 BOM
+- 儲存時原則上保留原檔 Encoding 狀態，避免無意義改寫
+- 檔案被外部程式修改時，MarkPad 應提示使用者重新載入或保留目前內容
+- 檔案被刪除或搬移時應提示狀態，不可靜默失敗
+- Read-only 檔案應顯示唯讀狀態
+- 超大 Markdown 檔案不得造成 UI 長時間無回應；必要時採延遲 Render 或降級行為
+
+### V1 快捷鍵
+
+| 快捷鍵 | 功能 |
+|---|---|
+| `Ctrl+O` | Open |
+| `Ctrl+S` | Save |
+| `Ctrl+F` | Search |
+| `Ctrl+W` | Close Current Document |
+| `Ctrl+Tab` | Next Tab |
+| `Ctrl+Shift+Tab` | Previous Tab |
+| `Ctrl+E` | Toggle Preview / Edit |
+| `Ctrl+Z` | Undo |
+| `Ctrl+Y` | Redo |
+| `F11` | Full Screen |
+
+快捷鍵原則：
+
+- 優先沿用 Windows 使用者既有習慣
+- 不建立大量自創快捷鍵
+- 高頻操作必須可以不碰滑鼠完成
+
+### V1 UI 語系
+
+第一版至少支援：
+
+- English
+- 繁體中文
+- 日本語
+
+UI 語系只影響 MarkPad 本身，不修改文件內容。
+
+---
+
 ## 技術方向
 
 暫定：
