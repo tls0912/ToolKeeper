@@ -193,7 +193,9 @@ V1 預計包含：
 3. **Save**
 4. **Search**
 5. **Close Current Document**
-6. **More / 其他低頻功能**
+6. **Light / Dark Theme Toggle**
+7. **Lan / UI Language**
+8. **More / 其他低頻功能**
 
 關閉文件即使 Tab 已有 `×` 仍保留左側按鈕，因為 Tab 關閉按鈕點擊範圍小，不應成為唯一關閉方式。
 
@@ -220,7 +222,44 @@ MarkPad 啟動與開檔時預設為 **Preview Mode**。
 
 V1 不預設採用左右雙欄 Editor + Preview，避免犧牲內容可視寬度。
 
-### 6. 左側工具列自動縮合
+### 6. Light / Dark Theme 為互斥模式
+
+亮版與暗版不使用兩顆獨立按鈕。
+
+使用單一 Toggle：
+
+```text
+☀️ Light
+   ↓ click
+🌙 Dark
+   ↓ click
+☀️ Light
+```
+
+兩者為互斥狀態：
+
+- **☀️ = Light Mode**
+- **🌙 = Dark Mode**
+
+目前使用中的 Theme 決定顯示的圖示；點擊後立即切換至另一個 Theme。
+
+Theme 切換屬於全域 UI 設定，不影響文件內容。
+
+### 7. UI 語系切換
+
+左側工具列提供 **Lan** 語系入口，用於切換 MarkPad 本身的 UI 語言。
+
+語系切換只影響：
+
+- 按鈕文字
+- Tooltip
+- 選單
+- 對話框
+- 系統提示
+
+不修改 Markdown 文件內容。
+
+### 8. 左側工具列自動縮合
 
 左側工具列平常維持窄版，只顯示 Icon。
 
@@ -232,6 +271,8 @@ V1 不預設採用左右雙欄 Editor + Preview，避免犧牲內容可視寬度
 │ 💾 │
 │ 🔍 │
 │ ✕  │
+│ ☀️ │
+│ Lan│
 │ ⋯  │
 ```
 
@@ -243,6 +284,8 @@ V1 不預設採用左右雙欄 Editor + Preview，避免犧牲內容可視寬度
 │ 💾 Save   │
 │ 🔍 Search │
 │ ✕  Close  │
+│ ☀️ Theme  │
+│ Lan Language │
 ```
 
 滑鼠離開後自動縮回。
@@ -253,7 +296,7 @@ V1 不預設採用左右雙欄 Editor + Preview，避免犧牲內容可視寬度
 - 熟悉後保持最大內容空間
 - 不讓功能名稱永久占用畫面
 
-### 7. 操作
+### 9. 操作
 
 使用者不需要閱讀說明書就應該知道如何：
 
