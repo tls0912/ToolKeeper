@@ -30,7 +30,6 @@ Windows 上極簡、快速、順手的 Markdown 文件閱讀與編輯工具。
 
 ## 核心價值
 
-
 - 快速開啟 Markdown 檔案
 - 閱讀體驗舒服
 - 修改 Markdown 不費力
@@ -65,7 +64,7 @@ Windows 上極簡、快速、順手的 Markdown 文件閱讀與編輯工具。
 - Markdown 原始碼編輯
 - 即時預覽
 - 預設 Preview Mode
-- Edit / Preview 快速切換
+- Preview / Edit 單一互斥切換
 - Ctrl+F
 - Ctrl+S
 - Light / Dark Theme
@@ -117,7 +116,7 @@ Markdown Table 是常見摩擦點。
 
 ## UX 原則
 
-### 啟動
+### 1. 啟動
 
 使用者雙擊：
 
@@ -125,28 +124,145 @@ Markdown Table 是常見摩擦點。
 README.md
 ```
 
-應直接進入：
-
-```text
-README.md - MarkPad
-```
+應直接進入 MarkPad，並以 **Preview Mode** 顯示文件。
 
 不要先出現：
 
 - 首頁
 - Dashboard
 - Workspace 選擇
+- 資料夾樹
 - 工具商城
 
-### 操作
+### 2. 可視範圍最大化
+
+MarkPad 的 UI 應優先把畫面空間留給文件內容。
+
+核心配置：
+
+```text
+┌───────────────────────────────────────────────────────────────┐
+│ MarkPad │ README.md │ AGENTS.md │ Notes.md        —  □  ×  │
+├────┬──────────────────────────────────────────────────────────┤
+│ 👁 │                                                          │
+│────│                                                          │
+│ 📂 │                                                          │
+│ 💾 │                  Markdown Content                        │
+│ 🔍 │                                                          │
+│ ✕  │                                                          │
+│    │                                                          │
+│ ⋯  │                                                          │
+└────┴──────────────────────────────────────────────────────────┘
+```
+
+整體分成三區：
+
+- **Top = Documents**
+- **Left = Actions**
+- **Center = Content**
+
+不另外建立傳統水平 Toolbar。
+
+### 3. 頂部標題列
+
+頂部標題列同時承擔：
+
+- 軟體名稱：MarkPad
+- 文件分頁
+- Windows 最小化
+- Windows 最大化／還原
+- Windows 關閉
+
+文件分頁放在標題列中，避免額外占用一整行。
+
+分頁規則：
+
+- 顯示檔名
+- 多文件以 Tab 呈現
+- 未儲存文件需有清楚狀態標記
+- Tab 可保留關閉按鈕，但不作為主要關閉方式
+
+### 4. 左側直立工具列
+
+左側工具列放置高頻文件操作。
+
+V1 預計包含：
+
+1. **Preview / Edit Toggle**
+2. **Open**
+3. **Save**
+4. **Search**
+5. **Close Current Document**
+6. **More / 其他低頻功能**
+
+關閉文件即使 Tab 已有 `×` 仍保留左側按鈕，因為 Tab 關閉按鈕點擊範圍小，不應成為唯一關閉方式。
+
+### 5. Preview / Edit 為互斥模式
+
+Preview 與 Edit 不使用兩顆獨立按鈕。
+
+使用單一 Toggle：
+
+```text
+👁 Preview
+   ↓ click
+✎ Edit
+   ↓ click
+👁 Preview
+```
+
+兩者為互斥狀態：
+
+- **👁 = Preview Mode**
+- **✎ = Edit Mode**
+
+MarkPad 啟動與開檔時預設為 **Preview Mode**。
+
+V1 不預設採用左右雙欄 Editor + Preview，避免犧牲內容可視寬度。
+
+### 6. 左側工具列自動縮合
+
+左側工具列平常維持窄版，只顯示 Icon。
+
+例如：
+
+```text
+│ 👁 │
+│ 📂 │
+│ 💾 │
+│ 🔍 │
+│ ✕  │
+│ ⋯  │
+```
+
+滑鼠移入或需要操作時，可展開文字說明：
+
+```text
+│ ✎  Edit   │
+│ 📂 Open   │
+│ 💾 Save   │
+│ 🔍 Search │
+│ ✕  Close  │
+```
+
+滑鼠離開後自動縮回。
+
+目標是兼顧：
+
+- 新使用者可理解
+- 熟悉後保持最大內容空間
+- 不讓功能名稱永久占用畫面
+
+### 7. 操作
 
 使用者不需要閱讀說明書就應該知道如何：
 
 - 打開
-- 編輯
-- 預覽
+- 閱讀
+- 切換編輯
 - 儲存
-- 關閉
+- 搜尋
+- 關閉目前文件
 
 ---
 
@@ -173,6 +289,8 @@ HTML
  ↓
 WebView2
 ```
+
+視窗層預計使用 WPF 自訂 Title Bar / WindowChrome，以保留 Windows 視窗行為的同時，將標題列空間用於文件分頁。
 
 ---
 
@@ -208,7 +326,7 @@ MarkPad
    ↓
 URI Handler 可用？
    │
-   ├─ Yes → 啟動 Markdown App
+   ├─ Yes → 啟動 MarkPad
    └─ No  → 開啟 Microsoft Store 商品頁
 ```
 
@@ -232,6 +350,8 @@ V1 不以功能數量衡量成功。
 
 - 是否可以數秒內開啟並開始使用
 - 是否比現有 Markdown 工具更順手
+- 是否把最大畫面空間留給文件內容
+- Preview / Edit 切換是否直覺
 - 是否有使用者願意付低價購買
 - Store 評價與實際使用回饋
 - 是否需要大量客服／維護
