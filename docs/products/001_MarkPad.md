@@ -884,6 +884,161 @@ UI 語系只影響 MarkPad 本身，不修改文件內容。
 
 ---
 
+
+## V1 Markdown 支援範圍
+
+### V1 支援
+
+- CommonMark / GFM
+- Strikethrough：`~~text~~`
+- Footnote：
+  - 支援 Render
+  - Preview 可點擊腳註往返
+- Emoji shortcode：
+  - 可在 More 開啟轉換
+  - 預設不轉換，保留例如 `:smile:`
+
+### V1.1 再評估
+
+- Mermaid Render
+- LaTeX / KaTeX（Inline / Block）
+
+---
+
+## V1 Editor 補充規格
+
+### Undo / Redo
+
+- 每個 Tab 各自維護 Undo / Redo 歷史
+- Preview / Edit 切換不清除 Undo 歷史
+
+### 文字拖曳與包覆
+
+- Edit Mode 內拖曳文字：
+  - 預設移動
+  - 按住 `Ctrl` 時複製
+- 選取文字後輸入左括號 `(`：
+  - 自動包成 `(selected)`
+
+### URL
+
+- Edit Mode 中 URL 支援 `Ctrl + Click` 開啟
+- 單擊不直接跳轉，避免干擾編輯
+
+---
+
+## V1 設定與語系規格
+
+### UI 語系
+
+- 第一次啟動時跟隨 Windows 顯示語言
+- 若 Windows 語系不在 MarkPad 支援清單中：
+  - 顯示語系選擇
+  - 不直接強制 Fallback 到固定語言
+- 語系切換立即生效，不需重新啟動
+
+### Theme
+
+- 第一次啟動預設跟隨 Windows System Theme
+- 後續可在 Light / Dark / System 間切換
+
+### Reset Settings
+
+- More 提供 `Reset Settings`
+- Reset 所有 MarkPad 設定至預設值
+- 執行前顯示確認視窗
+
+---
+
+## V1 Windows 整合規格
+
+### .md 檔案關聯
+
+- MarkPad 安裝後註冊為可開啟 `.md` 的應用程式
+- 不強制把 MarkPad 設成系統預設程式
+- 預設程式由 Windows / 使用者決定
+
+### 多檔案啟動
+
+- 同時雙擊／開啟多個 `.md` 時：
+  - 全部送入同一個 MarkPad 視窗
+  - 以多 Tab 開啟
+
+### Application Instance
+
+- MarkPad 採單一應用程式實例協調
+- 新啟動要求先送交既有 MarkPad 實例
+- 由既有實例依需求決定：
+  - 開新 Tab
+  - 或建立新視窗
+
+### Windows 工作列
+
+- 不自行干預工作列分組行為
+- 交給 Windows 預設處理
+
+### DPI
+
+- 支援 Per-Monitor DPI
+- 視窗移動至不同縮放比例螢幕時，UI 自動依所在螢幕縮放
+
+---
+
+## V1 可靠性、更新與隱私
+
+### Crash Recovery
+
+- MarkPad 背景暫存未儲存內容
+- 若程式異常 Crash：
+  - 下次啟動提供 Recover
+- Crash Recovery 暫存檔在以下情況清除：
+  - 文件正常儲存後
+  - Tab 正常關閉後
+
+### Local Log
+
+- 保留本機錯誤 Log
+- Log 不自動上傳
+- 不建立背景遙測上傳流程
+
+### 更新
+
+- App 更新主要交由 Microsoft Store
+- More 提供版本資訊與「檢查版本／更新」入口
+- MarkPad 不自行實作獨立 Updater
+
+### 隱私
+
+MarkPad V1 原則：
+
+- 不蒐集 Markdown 文件內容
+- 不做 Telemetry
+- 不需要帳號
+- 不自動上傳 Crash Report
+- 使用者文件預設只在本機處理
+
+---
+
+## V1 Spec Freeze
+
+**狀態：Frozen**
+
+MarkPad V1 的產品定位、UI、Preview、Edit、搜尋、檔案操作、分頁、多視窗、Windows 整合、可靠性與隱私規格已完成第一輪定義。
+
+從此階段開始：
+
+- 不再主動增加 V1 功能
+- 開發中遇到實際技術限制時才調整規格
+- 新想法優先放入 V1.1 / Backlog
+- 不因「順便可以做」而擴大 V1 範圍
+
+核心原則：
+
+> **先把 MarkPad 做到順手，再決定下一個功能。**
+
+
+---
+
 ## 技術方向
 
 暫定：
