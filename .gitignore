@@ -1,0 +1,29 @@
+# Visual Studio / .NET
+.vs/
+bin/
+obj/
+artifacts/
+TestResults/
+
+# User-specific files
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Build / package output
+*.nupkg
+*.snupkg
+AppPackages/
+BundleArtifacts/
+Package.StoreAssociation.xml
+
+# Logs / local state
+*.log
+*.tmp
+*.bak
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/

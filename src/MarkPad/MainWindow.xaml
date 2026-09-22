@@ -1,0 +1,45 @@
+<Window x:Class="MarkPad.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="MarkPad"
+        Width="900"
+        Height="720"
+        MinWidth="640"
+        MinHeight="480"
+        WindowStartupLocation="CenterScreen">
+
+    <!--
+        Initial compile-ready shell only.
+        The custom title bar, document tabs, left action rail,
+        Preview/Edit surfaces and WindowChrome are implemented
+        from docs/products/001_MarkPad.md in the next phase.
+    -->
+
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="44" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+
+        <Border Grid.Column="0"
+                BorderBrush="#D0D7DE"
+                BorderThickness="0,0,1,0">
+            <TextBlock Text="M"
+                       HorizontalAlignment="Center"
+                       VerticalAlignment="Top"
+                       Margin="0,12,0,0"
+                       FontWeight="SemiBold" />
+        </Border>
+
+        <Border Grid.Column="1"
+                Margin="24"
+                BorderBrush="#D0D7DE"
+                BorderThickness="1"
+                CornerRadius="4">
+            <TextBlock Text="MarkPad"
+                       HorizontalAlignment="Center"
+                       VerticalAlignment="Center"
+                       FontSize="16" />
+        </Border>
+    </Grid>
+</Window>

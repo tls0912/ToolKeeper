@@ -1,0 +1,18 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{60DC8134-EBA5-43B8-BCC9-BB4BC16C2548}") = "MarkPad", "src\MarkPad\MarkPad.csproj", "{7F7BE564-5A3F-4D5F-A0D0-0128C72A1E01}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{7F7BE564-5A3F-4D5F-A0D0-0128C72A1E01}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7F7BE564-5A3F-4D5F-A0D0-0128C72A1E01}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7F7BE564-5A3F-4D5F-A0D0-0128C72A1E01}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7F7BE564-5A3F-4D5F-A0D0-0128C72A1E01}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
