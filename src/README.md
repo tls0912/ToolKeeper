@@ -5,6 +5,7 @@
 目前：
 
 - `MarkPad/` — 001 MarkPad
+- `CabiDock/` — 002 CabiDock（分類與群組操作預覽）
 
 新增產品時使用：
 

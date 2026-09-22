@@ -1,0 +1,12 @@
+{
+  "categories": [
+    { "id": "folders", "name": "資料夾", "kind": "folder", "extensions": [] },
+    { "id": "shortcuts", "name": "捷徑", "extensions": ["lnk", "url"] },
+    { "id": "images", "name": "圖像類", "extensions": ["jpg", "jpeg", "png", "bmp", "gif", "webp", "tif", "tiff", "ico", "svg", "heic", "heif", "avif"] },
+    { "id": "documents", "name": "文件類", "extensions": ["pdf", "doc", "docx", "xls", "xlsx", "ppt", "pptx", "txt", "md", "markdown", "rtf", "csv", "odt", "ods", "odp"] },
+    { "id": "media", "name": "影音類", "extensions": ["mp3", "wav", "flac", "aac", "m4a", "ogg", "wma", "mp4", "mkv", "avi", "mov", "wmv", "webm", "mpeg", "mpg", "m4v"] },
+    { "id": "archives", "name": "壓縮檔", "extensions": ["zip", "7z", "rar", "tar", "gz", "bz2", "xz", "tgz"] },
+    { "id": "other", "name": "其他", "kind": "fallback", "extensions": [] }
+  ],
+  "keywordRules": []
+}

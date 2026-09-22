@@ -1,5 +1,7 @@
 # MarkPad 開發與可攜式發佈
 
+002 CabiDock 使用獨立的 `net10.0-windows` WPF 專案，建置、測試、群組操作預覽與桌面整合限制見 [CabiDock 開發說明](CABIDOCK-IMPLEMENTATION.md)。以下內容專屬 MarkPad。
+
 在 Windows 安裝 .NET 10 SDK。專案使用 WPF，編譯目標為 `net10.0-windows10.0.17763.0`。Preview 需要 [Microsoft Edge WebView2 Runtime](https://developer.microsoft.com/microsoft-edge/webview2/)。
 
 從儲存庫根目錄執行：

@@ -6,7 +6,7 @@ ToolKeeper 採用 **Monorepo + Standalone Apps**。
 
 每一個工具都是可獨立建置、獨立上架的 Windows App；ToolKeeper Launcher 本身不承載工具功能。
 
-目前第一個產品為 **001 — MarkPad**。
+目前產品為 **001 — MarkPad** 與 **002 — CabiDock**，各自使用獨立 WPF App Project。
 
 ## Repository Structure
 
@@ -110,7 +110,7 @@ docs/products/001_MarkPad.md
 ```text
 src/
 ├─ MarkPad/
-├─ Product002/
+├─ CabiDock/
 ├─ Product003/
 └─ ...
 ```

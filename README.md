@@ -33,7 +33,16 @@ dotnet run --project src/MarkPad/MarkPad.csproj -- ".\README.md"
 依類型與檔名關鍵字自動分類桌面；群組平時收合，點擊展開、滑鼠離開收合，保留檔案原始位置。
 
 - 產品規格：[`docs/products/002_CabiDock.md`](docs/products/002_CabiDock.md)
-- 狀態：核心需求已定案，待桌面整合原型驗證
+- 程式碼：[`src/CabiDock`](src/CabiDock)
+- 狀態：已建立可執行的分類與群組操作預覽；正式桌面整合尚未啟用
+
+目前可使用七個預設分類、自訂副檔名與關鍵字規則、分類保存、桌面監看、群組拖曳與系統匣。群組顯示於獨立預覽視窗，保留原生桌面圖示；尚未完成 V1 的桌面接管驗收。
+
+```powershell
+dotnet run --project src/CabiDock/CabiDock.csproj
+```
+
+啟動與驗證方式見 [CabiDock 實作狀態](docs/CABIDOCK-IMPLEMENTATION.md)，桌面整合限制見 [桌面原型驗證](docs/CABIDOCK-DESKTOP.md)。
 
 ## Documents
 
