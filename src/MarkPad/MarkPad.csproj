@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows10.0.17763.0</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <AssemblyName>MarkPad</AssemblyName>
+    <RootNamespace>MarkPad</RootNamespace>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon>Assets\MarkPad.ico</ApplicationIcon>
+    <Version>0.1.9</Version>
+    <Description>A small, offline Markdown reader and editor.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="AvalonEdit" Version="6.3.1.120" />
+    <PackageReference Include="Markdig" Version="1.4.0" />
+    <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.4191.47" />
+    <PackageReference Include="HtmlSanitizer" Version="9.2.1039" />
+    <EmbeddedResource Include="Resources\Preview.css" LogicalName="MarkPad.Resources.Preview.css" />
+    <EmbeddedResource Include="Resources\Preview.js" LogicalName="MarkPad.Resources.Preview.js" />
+    <Resource Include="Assets\MarkPad.ico" />
+  </ItemGroup>
+
+</Project>

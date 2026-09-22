@@ -1,0 +1,36 @@
+# ToolKeeper｜工具番
+
+ToolKeeper（工具番）是一個以「超好用的小工具」為核心的 Windows 軟體品牌與 Launcher。
+
+原則：
+
+- 小而專一
+- 開啟就能用
+- 不增加工作流程，只刪除工作流程
+- 低價、低維護、離線優先
+- 每個工具都是獨立 App
+
+## Products
+
+### 001 — MarkPad
+
+Markdown 文件閱讀與編輯工具。
+
+- 產品規格：[`docs/products/001_MarkPad.md`](docs/products/001_MarkPad.md)
+- 程式碼：[`src/MarkPad`](src/MarkPad)
+
+目前已有可執行的 Windows 開發版：包含多分頁閱讀／編輯、搜尋取代、主題與三語 UI、檔案保護與崩潰復原，以及先儲存原稿、再於旁邊產生附有時間戳記 PDF 的匯出功能。
+
+```powershell
+dotnet run --project src/MarkPad/MarkPad.csproj -- ".\README.md"
+```
+
+建置、測試、可攜版打包與選用的 Windows 檔案關聯，見 [開發說明](docs/DEVELOPMENT.md)。
+已實作範圍、驗證結果與待驗收項目，見 [實作狀態](docs/IMPLEMENTATION.md)。
+
+## Documents
+
+- [Product Vision](docs/PRODUCT_VISION.md)
+- [Architecture](docs/ARCHITECTURE.md)
+
+> 工具番可以越來越大，但每個工具本身保持簡單、直接、順手。

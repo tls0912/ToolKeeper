@@ -1,0 +1,8 @@
+{
+  "AvalonEdit": "6.3.1.120",
+  "Markdig": "1.4.0",
+  "HtmlSanitizer": "9.2.1039",
+  "AngleSharp": "1.7.2",
+  "AngleSharp.Css": "1.0.2",
+  "Microsoft.Web.WebView2": "1.0.4191.47"
+}

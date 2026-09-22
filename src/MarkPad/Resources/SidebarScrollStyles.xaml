@@ -1,0 +1,108 @@
+<ResourceDictionary
+ xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+ xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+ <!-- These keyed styles apply only to the action sidebar. The transparent
+      10px gutter keeps the thumb easy to grab without drawing a heavy track. -->
+ <Style x:Key="SidebarScrollPageButtonStyle" TargetType="RepeatButton">
+  <Setter Property="Focusable" Value="False" />
+  <Setter Property="IsTabStop" Value="False" />
+  <Setter Property="Template">
+   <Setter.Value>
+    <ControlTemplate TargetType="RepeatButton">
+     <Border Background="Transparent" />
+    </ControlTemplate>
+   </Setter.Value>
+  </Setter>
+ </Style>
+
+ <Style x:Key="SidebarScrollThumbStyle" TargetType="Thumb">
+  <Setter Property="MinHeight" Value="24" />
+  <Setter Property="Focusable" Value="False" />
+  <Setter Property="IsTabStop" Value="False" />
+  <Setter Property="Template">
+   <Setter.Value>
+    <ControlTemplate TargetType="Thumb">
+     <Border Background="Transparent">
+      <Border x:Name="ThumbBody" Background="{DynamicResource MutedBrush}"
+              CornerRadius="3" Margin="3,2" Opacity="0.45" />
+     </Border>
+     <ControlTemplate.Triggers>
+      <Trigger Property="IsMouseOver" Value="True">
+       <Setter TargetName="ThumbBody" Property="Margin" Value="2,2" />
+       <Setter TargetName="ThumbBody" Property="Opacity" Value="0.75" />
+      </Trigger>
+      <Trigger Property="IsDragging" Value="True">
+       <Setter TargetName="ThumbBody" Property="Margin" Value="2,2" />
+       <Setter TargetName="ThumbBody" Property="Opacity" Value="1" />
+      </Trigger>
+      <Trigger Property="IsEnabled" Value="False">
+       <Setter TargetName="ThumbBody" Property="Opacity" Value="0.2" />
+      </Trigger>
+     </ControlTemplate.Triggers>
+    </ControlTemplate>
+   </Setter.Value>
+  </Setter>
+ </Style>
+
+ <Style x:Key="SidebarVerticalScrollBarStyle" TargetType="ScrollBar">
+  <Setter Property="Width" Value="10" />
+  <Setter Property="MinWidth" Value="0" />
+  <Setter Property="Orientation" Value="Vertical" />
+  <Setter Property="Focusable" Value="False" />
+  <Setter Property="IsTabStop" Value="False" />
+  <Setter Property="Background" Value="Transparent" />
+  <Setter Property="Template">
+   <Setter.Value>
+    <ControlTemplate TargetType="ScrollBar">
+     <Grid Background="{TemplateBinding Background}">
+      <Track x:Name="PART_Track" Orientation="Vertical" IsDirectionReversed="True"
+             Minimum="{TemplateBinding Minimum}" Maximum="{TemplateBinding Maximum}"
+             Value="{TemplateBinding Value}" ViewportSize="{TemplateBinding ViewportSize}">
+       <Track.DecreaseRepeatButton>
+        <RepeatButton Style="{StaticResource SidebarScrollPageButtonStyle}"
+                      Command="{x:Static ScrollBar.PageUpCommand}" />
+       </Track.DecreaseRepeatButton>
+       <Track.Thumb>
+        <Thumb Style="{StaticResource SidebarScrollThumbStyle}" />
+       </Track.Thumb>
+       <Track.IncreaseRepeatButton>
+        <RepeatButton Style="{StaticResource SidebarScrollPageButtonStyle}"
+                      Command="{x:Static ScrollBar.PageDownCommand}" />
+       </Track.IncreaseRepeatButton>
+      </Track>
+     </Grid>
+    </ControlTemplate>
+   </Setter.Value>
+  </Setter>
+ </Style>
+
+ <Style x:Key="SidebarScrollViewerStyle" TargetType="ScrollViewer">
+  <Setter Property="HorizontalScrollBarVisibility" Value="Disabled" />
+  <Setter Property="CanContentScroll" Value="False" />
+  <Setter Property="PanningMode" Value="VerticalOnly" />
+  <Setter Property="Template">
+   <Setter.Value>
+    <ControlTemplate TargetType="ScrollViewer">
+     <Grid Background="{TemplateBinding Background}" SnapsToDevicePixels="True">
+      <Grid.ColumnDefinitions>
+       <ColumnDefinition Width="*" />
+       <ColumnDefinition Width="Auto" />
+      </Grid.ColumnDefinitions>
+      <ScrollContentPresenter x:Name="PART_ScrollContentPresenter"
+                              Content="{TemplateBinding Content}"
+                              ContentTemplate="{TemplateBinding ContentTemplate}"
+                              CanContentScroll="{TemplateBinding CanContentScroll}"
+                              Margin="{TemplateBinding Padding}" />
+      <!-- Collapsing the native computed visibility also removes the gutter. -->
+      <ScrollBar x:Name="PART_VerticalScrollBar" Grid.Column="1"
+                 Style="{StaticResource SidebarVerticalScrollBarStyle}"
+                 Visibility="{TemplateBinding ComputedVerticalScrollBarVisibility}"
+                 Minimum="0" Maximum="{TemplateBinding ScrollableHeight}"
+                 ViewportSize="{TemplateBinding ViewportHeight}"
+                 Value="{Binding VerticalOffset, RelativeSource={RelativeSource TemplatedParent}, Mode=OneWay}" />
+     </Grid>
+    </ControlTemplate>
+   </Setter.Value>
+  </Setter>
+ </Style>
+</ResourceDictionary>
