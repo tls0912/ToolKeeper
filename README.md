@@ -28,6 +28,13 @@ dotnet run --project src/MarkPad/MarkPad.csproj -- ".\README.md"
 建置、測試、可攜版打包與選用的 Windows 檔案關聯，見 [開發說明](docs/DEVELOPMENT.md)。
 已實作範圍、驗證結果與待驗收項目，見 [實作狀態](docs/IMPLEMENTATION.md)。
 
+### 002 — CabiDock
+
+依類型與檔名關鍵字自動分類桌面；群組平時收合，點擊展開、滑鼠離開收合，保留檔案原始位置。
+
+- 產品規格：[`docs/products/002_CabiDock.md`](docs/products/002_CabiDock.md)
+- 狀態：核心需求已定案，待桌面整合原型驗證
+
 ## Documents
 
 - [Product Vision](docs/PRODUCT_VISION.md)
