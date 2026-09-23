@@ -54,7 +54,7 @@ public sealed class SettingsServiceTests
             { "Theme": "Light", "Language": "en", "UiFontFamily": "", "UiFontSize": 13,
               "PreviewFontFamily": "", "PreviewFontSize": 20, "EditorFontFamily": "Consolas", "EditorFontSize": 18,
               "AutoSave": false, "MatchCase": true, "ToolbarPinned": false, "RememberWindowSize": false,
-              "WindowWidth": 1200, "WindowHeight": 720, "CodeLineNumbers": false, "EmojiShortcodes": false,
+              "WindowWidth": 1200, "WindowHeight": 720, "WindowMaximized": true, "CodeLineNumbers": false, "EmojiShortcodes": false,
               "RecentFiles": ["existing.md"] }
             """);
 
@@ -75,6 +75,7 @@ public sealed class SettingsServiceTests
         Assert.False(restored.RememberWindowSize);
         Assert.Equal(1200, restored.WindowWidth);
         Assert.Equal(720, restored.WindowHeight);
+        Assert.True(restored.WindowMaximized);
         Assert.False(restored.CodeLineNumbers);
         Assert.False(restored.EmojiShortcodes);
         Assert.Equal("existing.md", Assert.Single(restored.RecentFiles));
@@ -224,6 +225,7 @@ public sealed class SettingsServiceTests
         Assert.True(settings.RememberWindowSize);
         Assert.Equal(900, settings.WindowWidth);
         Assert.Equal(0, settings.WindowHeight);
+        Assert.False(settings.WindowMaximized);
         Assert.True(settings.CodeLineNumbers);
         Assert.True(settings.EmojiShortcodes);
         Assert.Empty(settings.RecentFiles);

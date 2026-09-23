@@ -17,6 +17,7 @@ public sealed class AppSettings
     public bool RememberWindowSize { get; set; } = true;
     public double WindowWidth { get; set; } = 900;
     public double WindowHeight { get; set; }
+    public bool WindowMaximized { get; set; }
     public bool CodeLineNumbers { get; set; } = true;
     public bool EmojiShortcodes { get; set; } = true;
     public List<string> RecentFiles { get; set; } = [];

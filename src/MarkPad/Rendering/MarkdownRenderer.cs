@@ -18,7 +18,8 @@ using Markdig.Syntax;
 namespace MarkPad.Rendering;
 
 public sealed record PreviewOptions(bool Dark = false, string FontFamily = "Segoe UI", double FontSize = 16,
-    bool CodeLineNumbers = false, bool EmojiShortcodes = false, string Language = "en", bool ReadOnly = false);
+    bool CodeLineNumbers = false, bool EmojiShortcodes = false, string Language = "en", bool ReadOnly = false,
+    string? DocumentTitle = null);
 
 internal sealed record RenderedPreview(string Html, string Token, IReadOnlyDictionary<string, string> Images);
 
@@ -110,7 +111,7 @@ public sealed class MarkdownRenderer
             <!doctype html><html lang="{{WebUtility.HtmlEncode(options.Language)}}" class="{{(options.Dark ? "dark" : "light")}}">
             <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
             <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'nonce-{{nonce}}'; style-src 'nonce-{{nonce}}'; img-src {{Origin}}; connect-src 'none'; frame-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
-            <title>MarkPad</title><style nonce="{{nonce}}">{{Styles.Value}}
+            <title>{{WebUtility.HtmlEncode(options.DocumentTitle ?? "MarkPad")}}</title><style nonce="{{nonce}}">{{Styles.Value}}
             :root { --reading-font: '{{font}}', 'Segoe UI', sans-serif; --reading-size: {{size.ToString(CultureInfo.InvariantCulture)}}px; }
             </style></head><body><main id="document" aria-label="Markdown">{{body.InnerHtml}}</main>
             <script nonce="{{nonce}}">window.markpadConfig={{config}};{{Script.Value}}</script></body></html>

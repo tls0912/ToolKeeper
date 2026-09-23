@@ -21,7 +21,7 @@ public sealed partial class PreviewPane
         var temporary = Path.Combine(Path.GetDirectoryName(destination)!, $".markpad-{Guid.NewGuid():N}.pdf.tmp");
         try
         {
-            await ShowAsync(markdown, filePath, options with { Dark = false, ReadOnly = true }).WaitAsync(TimeSpan.FromSeconds(45));
+            await ShowAsync(markdown, filePath, options with { Dark = false, ReadOnly = true, DocumentTitle = Path.GetFileName(destination) }).WaitAsync(TimeSpan.FromSeconds(45));
             if (_disposed || _browserFailed || _current is null || _ready?.Task.IsCompletedSuccessfully != true || !_ready.Task.Result)
                 throw new InvalidOperationException(MarkdownRenderer.Translate(options.Language,
                     "The document preview is unavailable. PDF export could not be completed.",

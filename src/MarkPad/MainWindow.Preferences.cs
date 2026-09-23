@@ -129,8 +129,12 @@ public partial class MainWindow
             : new[] { "#D9DEE4", "#E8EBEF", "#1F2328", "#656D76", "#BEC6CF", "#CDD4DD", "#0969DA" };
         var keys = new[] { "WindowBackground", "SurfaceBrush", "TextBrush", "MutedBrush", "LineBrush", "HoverBrush", "AccentBrush" };
         for (var i = 0; i < keys.Length; i++) Resources[keys[i]] = new SolidColorBrush((Color)ColorConverter.ConvertFromString(colors[i]));
-        _editor.ApplyOptions(_dark, Settings.EditorFontFamily, Settings.EditorFontSize);
-        _editor.ApplyLanguage(UiLanguage);
+        foreach (var view in _documentViews.Values)
+        {
+            view.Editor.ApplyOptions(_dark, Settings.EditorFontFamily, Settings.EditorFontSize);
+            view.Editor.ApplyLanguage(UiLanguage);
+            _ = GuardAsync(() => view.Preview.SetThemeAsync(_dark));
+        }
         EmptyLabel.Text = T("Drop or open Markdown", "拖入或開啟 Markdown", "Markdown をドロップまたは開く");
         EmptyOpenButton.Content = T("Open a document  ·  Ctrl+O", "開啟文件  ·  Ctrl+O", "文書を開く  ·  Ctrl+O");
         ExpandReplaceButton.Content = ReplaceButton.Content = T("Replace", "取代", "置換");

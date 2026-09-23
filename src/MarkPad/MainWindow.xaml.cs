@@ -21,8 +21,6 @@ public partial class MainWindow : Window
 {
     public List<DocumentTab> Documents { get; } = [];
     private DocumentTab? _current;
-    private readonly EditorPane _editor = new();
-    private readonly PreviewPane _preview = new(Path.Combine(App.Preferences.DataDirectory, "WebView2"));
     private readonly DispatcherTimer _renderTimer = new() { Interval = TimeSpan.FromMilliseconds(300) };
     private readonly DispatcherTimer _maintenance = new() { Interval = TimeSpan.FromSeconds(2) };
     private readonly DispatcherTimer _autoSaveTimer = new();
@@ -42,28 +40,22 @@ public partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
-        EditorHost.Content = _editor;
-        PreviewHost.Content = _preview;
-        Height = Math.Max(MinHeight, SystemParameters.WorkArea.Height * .85);
-        if (Settings.RememberWindowSize)
+        if (Settings.RememberWindowSize && Settings.WindowHeight > 0)
         {
-            Width = Math.Clamp(Settings.WindowWidth, MinWidth, SystemParameters.WorkArea.Width);
-            if (Settings.WindowHeight > 0) Height = Math.Clamp(Settings.WindowHeight, MinHeight, SystemParameters.WorkArea.Height);
+            Width = Math.Clamp(Settings.WindowWidth, MinWidth, Math.Max(MinWidth, SystemParameters.WorkArea.Width));
+            Height = Math.Clamp(Settings.WindowHeight, MinHeight, Math.Max(MinHeight, SystemParameters.WorkArea.Height));
+            WindowStartupLocation = WindowStartupLocation.Manual;
+            Left = SystemParameters.WorkArea.Left + (SystemParameters.WorkArea.Width - Width) / 2;
+            Top = SystemParameters.WorkArea.Top + (SystemParameters.WorkArea.Height - Height) / 2;
+            if (Settings.WindowMaximized) WindowState = WindowState.Maximized;
         }
-        WindowStartupLocation = WindowStartupLocation.Manual;
-        Left = SystemParameters.WorkArea.Left + (SystemParameters.WorkArea.Width - Width) / 2;
-        Top = SystemParameters.WorkArea.Top + (SystemParameters.WorkArea.Height - Height) / 2;
-        _editor.ContentChanged += (_, _) => { if (_current is not null) ContentModified(_current); };
-        _editor.SelectionChanged += (_, _) => UpdateStatus();
-        _editor.SearchChanged += (_, result) => ShowSearchResult(result.Index, result.Count, result.Wrapped);
-        _editor.PasteImageRequested += async (_, _) => await GuardAsync(PasteImageAsync);
-        _editor.OpenUrlRequested += async (_, url) => await GuardAsync(() => OpenLinkAsync(url));
-        _preview.MessageReceived += async (_, message) => await GuardAsync(() => HandlePreviewAsync(message));
+        else WindowState = WindowState.Maximized;
         _renderTimer.Tick += async (_, _) => { _renderTimer.Stop(); await GuardAsync(() => RenderAsync()); };
         _maintenance.Tick += async (_, _) => await MaintainAsync();
         _autoSaveTimer.Tick += async (_, _) => await AutoSaveDueAsync();
         _toastTimer.Tick += (_, _) => { _toastTimer.Stop(); StatusToast.Visibility = Visibility.Collapsed; };
         PreviewKeyDown += OnKeyDown;
+        DocumentHost.PreviewMouseWheel += OnContentMouseWheel;
         PreviewDragOver += OnDragOver;
         Drop += async (_, e) => await GuardAsync(() => DropAsync(e));
         Closing += OnClosing;
@@ -71,7 +63,8 @@ public partial class MainWindow : Window
         {
             _disposed = true;
             _maintenance.Stop(); _autoSaveTimer.Stop(); _renderTimer.Stop(); _toastTimer.Stop(); _fullScreenTimer.Stop();
-            _preview.Dispose();
+            foreach (var view in _documentViews.Values.ToArray()) ReleaseDocumentView(view.Document);
+            _currentView = null;
             foreach (var tab in Documents) tab.PropertyChanged -= TabChanged;
             SystemEvents.UserPreferenceChanged -= SystemPreferenceChanged;
         };
@@ -165,42 +158,75 @@ public partial class MainWindow : Window
         { _renderTimer.Stop(); _renderTimer.Start(); }
     }
 
-    private void SelectDocument(DocumentTab? tab)
+    private void SelectDocument(DocumentTab? tab, int? sourceLine = null)
     {
         if (_disposed) return;
         _renderTimer.Stop();
-        _preview.Suspend();
+        if (!ReferenceEquals(tab, _current)) _currentView?.SetActive(false);
         _current = tab;
-        _previewOverlay = false;
+        _currentView = tab is null ? null : GetDocumentView(tab);
+        _currentView?.SetActive(true);
+        _previewOverlay = _currentView?.PreviewOverlay == true;
         _previewLine = tab is null ? 1 : _previewSourceLines.GetValueOrDefault(tab.Id, 1);
         if (tab is not null) tab.LastActivatedUtc = DateTime.UtcNow;
-        _editor.Bind(tab);
-        if (!SearchPanel.IsVisible) _editor.Find("", Settings.MatchCase);
+        if (_currentView is not null && !SearchPanel.IsVisible) _editor.Find("", Settings.MatchCase);
         EmptyState.Visibility = tab is null ? Visibility.Visible : Visibility.Collapsed;
-        PreviewHost.Visibility = tab?.IsPreviewMode == true ? Visibility.Visible : Visibility.Collapsed;
-        EditorHost.Visibility = tab is not null && !tab.IsPreviewMode ? Visibility.Visible : Visibility.Collapsed;
         if (tab is null) SearchPanel.Visibility = Visibility.Collapsed;
         if (tab?.IsPreviewMode != false) ReplacePanel.Visibility = Visibility.Collapsed;
         ExpandReplaceButton.Visibility = tab?.IsPreviewMode == false ? Visibility.Visible : Visibility.Collapsed;
         BuildTabs(); BuildActions(); UpdateStatus();
-        if (tab?.IsPreviewMode == true) _ = GuardAsync(() => RenderAsync());
+        if (tab?.IsPreviewMode == true) _ = GuardAsync(() => RenderAsync(sourceLine));
         else if (tab is not null) { _editor.FocusEditor(); if (SearchPanel.IsVisible) _editor.Find(SearchBox.Text, Settings.MatchCase, restart: true); }
+    }
+
+    private async void OnPreviewMessageReceived(object? sender, PreviewMessage message)
+    {
+        if (_disposed || sender is not DocumentView view
+            || !_documentViews.TryGetValue(view.Document.Id, out var owner) || !ReferenceEquals(owner, view)) return;
+        await GuardAsync(async () =>
+        {
+            // Hidden pages may finish loading or scrolling; keep those updates with their owner.
+            switch (message.Type)
+            {
+                case "ready":
+                    // Loading may finish after a theme change, even while this tab is hidden.
+                    await view.Preview.SetThemeAsync(_dark);
+                    await view.Preview.SetFontSizeAsync(Settings.PreviewFontSize);
+                    return;
+                case "scroll":
+                    if (double.TryParse(message.Text, CultureInfo.InvariantCulture, out var scroll) && double.IsFinite(scroll))
+                        view.Document.PreviewScroll = Math.Max(0, scroll);
+                    _previewSourceLines[view.Document.Id] = Math.Max(1, message.Line);
+                    if (ReferenceEquals(view, _currentView)) _previewLine = Math.Max(1, message.Line);
+                    return;
+                case "overlay":
+                    view.PreviewOverlay = message.Flag;
+                    if (ReferenceEquals(view, _currentView)) _previewOverlay = message.Flag;
+                    return;
+                case "error":
+                    if (message.Text is not null) LocalLog.Write(new InvalidOperationException(message.Text));
+                    return;
+            }
+            if (ReferenceEquals(view, _currentView) && view.Document.IsPreviewMode)
+                await HandlePreviewAsync(message);
+        });
     }
 
     private async Task RenderAsync(int? line = null)
     {
         var tab = _current;
-        if (tab is null || _disposed || !tab.IsPreviewMode && tab.IsLargeFile) return;
-        var font = Settings.PreviewFontFamily;
-        if (string.IsNullOrWhiteSpace(font)) font = UiLanguage switch { "zh-TW" => "Microsoft JhengHei", "ja" => "Yu Gothic", _ => "Segoe UI" };
-        var options = new PreviewOptions(_dark, font, Settings.PreviewFontSize, Settings.CodeLineNumbers, Settings.EmojiShortcodes, UiLanguage, tab.IsReadOnly);
+        var view = _currentView;
+        if (tab is null || view is null || _disposed || !tab.IsPreviewMode && tab.IsLargeFile) return;
+        var options = new PreviewOptions(_dark, PreviewFontName, Settings.PreviewFontSize,
+            Settings.CodeLineNumbers, Settings.EmojiShortcodes, UiLanguage, tab.IsReadOnly);
         if (!tab.IsPreviewMode)
         {
-            await _preview.PrepareAsync(tab.Content, tab.FilePath, options);
+            await view.Preview.PrepareAsync(tab.Content, tab.FilePath, options);
             return;
         }
-        await _preview.ShowAsync(tab.Content, tab.FilePath, options, tab.PreviewScroll, line);
-        if (ReferenceEquals(tab, _current) && SearchPanel.IsVisible) await FindAsync(restart: true);
+        await view.Preview.ShowAsync(tab.Content, tab.FilePath, options, tab.PreviewScroll, line);
+        if (ReferenceEquals(view, _currentView) && ReferenceEquals(tab, _current) && tab.IsPreviewMode)
+            await view.Preview.FindAsync(SearchPanel.IsVisible ? SearchBox.Text : "", Settings.MatchCase, restart: true);
     }
 
     private async Task ToggleModeAsync(int? sourceLine = null)
@@ -220,8 +246,7 @@ public partial class MainWindow : Window
         {
             var line = _editor.Editor.TextArea.Caret.Line;
             tab.IsPreviewMode = true;
-            SelectDocument(tab);
-            await RenderAsync(line);
+            SelectDocument(tab, line);
         }
     }
 
@@ -329,6 +354,7 @@ public partial class MainWindow : Window
         _previewSourceLines.Remove(tab.Id);
         if (_current == tab) SelectDocument(Documents.OrderByDescending(d => d.LastActivatedUtc).FirstOrDefault());
         else BuildTabs();
+        ReleaseDocumentView(tab);
         ScheduleAutoSave();
     }
 
@@ -442,7 +468,12 @@ public partial class MainWindow : Window
                 return;
             }
             if (Settings.RememberWindowSize && !_fullScreen)
-            { Settings.WindowWidth = RestoreBounds.Width; Settings.WindowHeight = RestoreBounds.Height; App.Preferences.Save(); }
+            {
+                Settings.WindowWidth = RestoreBounds.Width;
+                Settings.WindowHeight = RestoreBounds.Height;
+                Settings.WindowMaximized = WindowState == WindowState.Maximized;
+                App.Preferences.Save();
+            }
             foreach (var tab in Documents) App.Recovery.Delete(tab.Id);
             _allowClose = true;
             // Clean documents reach here synchronously during Closing. Wait until that event
@@ -464,9 +495,6 @@ public partial class MainWindow : Window
                 if (message.Text is { } href)
                     Clipboard.SetText(href.StartsWith('#') && _current?.FilePath is { } file ? new Uri(file).AbsoluteUri + href : href);
                 break;
-            case "error":
-                if (message.Text is not null) LocalLog.Write(new InvalidOperationException(message.Text));
-                break;
             case "task":
                 if (_current is not { IsReadOnly: false } tab || message.Line < 1 || message.Line > tab.Document.LineCount) break;
                 var line = tab.Document.GetLineByNumber(message.Line);
@@ -475,12 +503,6 @@ public partial class MainWindow : Window
                 if (match.Success) tab.Document.Replace(line.Offset + match.Length - 2, 1, message.Flag ? "x" : " ");
                 break;
             case "search": ShowSearchResult(message.Index, message.Count, message.Flag); break;
-            case "scroll":
-                if (_current is not null && double.TryParse(message.Text, CultureInfo.InvariantCulture, out var scroll)) _current.PreviewScroll = scroll;
-                _previewLine = Math.Max(1, message.Line);
-                if (_current is not null) _previewSourceLines[_current.Id] = _previewLine;
-                break;
-            case "overlay": _previewOverlay = message.Flag; break;
             case "shortcut": if (message.Text is not null) await ShortcutAsync(message.Text); break;
         }
     }

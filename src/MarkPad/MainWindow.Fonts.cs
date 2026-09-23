@@ -37,6 +37,35 @@ public partial class MainWindow
         if (WindowChrome.GetWindowChrome(this) is { } chrome) chrome.CaptionHeight = _fullScreen ? 0 : UiTitleHeight;
     }
 
+    private async void OnContentMouseWheel(object sender, MouseWheelEventArgs e)
+    {
+        if (_disposed || _current is null || Keyboard.Modifiers != ModifierKeys.Control || e.Delta == 0) return;
+        // Intercept before AvalonEdit/WebView2 scrolls or applies its own zoom.
+        e.Handled = true;
+        var previewMode = _current.IsPreviewMode;
+        var previous = previewMode ? Settings.PreviewFontSize : Settings.EditorFontSize;
+        var size = Math.Clamp(previous + Math.Sign(e.Delta), 8, 72);
+        if (size == previous) return;
+        if (previewMode) Settings.PreviewFontSize = size;
+        else Settings.EditorFontSize = size;
+
+        await GuardAsync(async () =>
+        {
+            var updates = new List<Task>();
+            foreach (var window in Application.Current.Windows.OfType<MainWindow>())
+            {
+                if (window._disposed) continue;
+                foreach (var view in window._documentViews.Values)
+                {
+                    if (previewMode) updates.Add(view.Preview.SetFontSizeAsync(size));
+                    else view.Editor.Editor.FontSize = size;
+                }
+            }
+            App.Preferences.Save();
+            await Task.WhenAll(updates);
+        });
+    }
+
     private void ShowFontPicker()
     {
         var body = new StackPanel { Margin = new Thickness(14) };

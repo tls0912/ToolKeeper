@@ -75,8 +75,7 @@
     <Grid.ColumnDefinitions><ColumnDefinition x:Name="RailColumn" Width="44" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
     <Border x:Name="ContentFrame" Grid.Column="1" Margin="12" CornerRadius="4" BorderBrush="{DynamicResource LineBrush}" BorderThickness="1" Background="{DynamicResource SurfaceBrush}">
      <Grid ClipToBounds="True">
-      <ContentControl x:Name="PreviewHost" />
-      <ContentControl x:Name="EditorHost" Visibility="Collapsed" Margin="0,4" />
+      <Grid x:Name="DocumentHost" />
       <Grid x:Name="EmptyState" Background="{DynamicResource SurfaceBrush}">
        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Margin="24">
         <Border BorderBrush="{DynamicResource LineBrush}" BorderThickness="1" CornerRadius="8" Width="56" Height="64" Margin="0,0,0,20"><TextBlock Text="M↓" FontSize="23" FontWeight="SemiBold" Foreground="{DynamicResource MutedBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" /></Border>

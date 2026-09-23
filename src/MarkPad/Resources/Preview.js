@@ -292,6 +292,7 @@
   },{passive:true});
   window.markpad={find,selection:selectedText,scroll:()=>window.scrollY,closeOverlay:()=>{if(menu){closeMenu();return true;}return closeOverlay();},
     restore:(scroll,line)=>{const blocks=[...article.querySelectorAll('[data-source-line]')];const target=line?blocks.reduce((best,el)=>Number(el.dataset.sourceLine)<=line?el:best,null):null;if(target)target.scrollIntoView({block:'start',behavior:'instant'});else window.scrollTo({top:Math.max(0,scroll||0),behavior:'instant'});},
+    theme:dark=>{document.documentElement.classList.toggle('dark',dark);document.documentElement.classList.toggle('light',!dark);},
     anchor:openLink};
   send('ready');
 })();

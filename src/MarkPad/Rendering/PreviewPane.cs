@@ -33,6 +33,10 @@ public sealed partial class PreviewPane : UserControl, IDisposable
     private readonly string? _browserDataFolder;
     private (string Markdown, string? Path, PreviewOptions Options)? _buildInput;
     private Task<RenderedPreview>? _buildTask;
+    private (string Markdown, string? Path, PreviewOptions Options)? _displayInput;
+    private Task? _displayTask;
+    private bool HasReadyDocument => !_disposed && !_browserFailed && _current is not null
+        && _ready?.Task.IsCompletedSuccessfully == true && _ready.Task.Result;
 
     public event EventHandler<PreviewMessage>? MessageReceived;
 
@@ -48,10 +52,28 @@ public sealed partial class PreviewPane : UserControl, IDisposable
     public async Task ShowAsync(string markdown, string? filePath, PreviewOptions options, double scroll = 0, int? sourceLine = null)
     {
         if (_disposed) return;
+        var input = (markdown, filePath, options);
+        if (_displayInput != input || _displayTask is null || _displayTask.IsCompleted && !HasReadyDocument)
+        {
+            _displayInput = input;
+            _displayTask = LoadAsync(markdown, filePath, options, scroll, sourceLine);
+            await _displayTask;
+            return;
+        }
+
+        // Selecting an unchanged tab reuses its page, including an in-flight first load.
+        var version = _request;
+        await _displayTask;
+        if (sourceLine is not null && version == _request && HasReadyDocument)
+            await ExecuteAsync($"window.markpad?.restore(0,{sourceLine.Value.ToString(CultureInfo.InvariantCulture)})");
+    }
+
+    private async Task LoadAsync(string markdown, string? filePath, PreviewOptions options, double scroll, int? sourceLine)
+    {
+        if (_disposed) return;
         var version = ++_request;
         _language = options.Language;
-        _notice.Foreground = new SolidColorBrush(options.Dark ? Color.FromRgb(230, 237, 243) : Color.FromRgb(36, 41, 47));
-        _layout.Background = new SolidColorBrush(options.Dark ? Color.FromRgb(13, 17, 23) : Color.FromRgb(232, 235, 239));
+        ApplyThemeColors(options.Dark);
         try
         {
             // Parsing and sanitizing larger documents must not block typing or tab switching.
@@ -68,14 +90,16 @@ public sealed partial class PreviewPane : UserControl, IDisposable
             _restoreScroll = double.IsFinite(scroll) ? Math.Max(0, scroll) : 0;
             _restoreLine = sourceLine;
             _ready?.TrySetResult(false);
-            _ready = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+            var ready = _ready = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
             _notice.Visibility = Visibility.Collapsed;
             _browser.Visibility = Visibility.Visible;
-            _browser.DefaultBackgroundColor = options.Dark ? System.Drawing.Color.FromArgb(13,17,23) : System.Drawing.Color.FromArgb(232,235,239);
+            ApplyThemeColors(_displayInput?.Options.Dark ?? options.Dark);
+            // Ignore a superseded navigation's completion before the new NavigationStarting event.
+            _navigationId = 0;
             _browser.CoreWebView2.Navigate(DocumentUrl(rendered));
             // Bound this wait: a failed navigation should not keep the caller suspended indefinitely.
-            var completed = await Task.WhenAny(_ready.Task, Task.Delay(TimeSpan.FromSeconds(15)));
-            if (completed != _ready.Task && version == _request && !_disposed)
+            var completed = await Task.WhenAny(ready.Task, Task.Delay(TimeSpan.FromSeconds(15)));
+            if (completed != ready.Task && version == _request && !_disposed)
                 ShowNotice(MarkdownRenderer.Translate(_language, "Preview took too long to load. Switch to Edit and try again.", "預覽載入逾時，請切換至編輯模式後再試。", "プレビューの読み込みがタイムアウトしました。編集モードに切り替えて再試行してください。"));
         }
         catch (Exception ex)
@@ -84,6 +108,34 @@ public sealed partial class PreviewPane : UserControl, IDisposable
             ShowNotice(MarkdownRenderer.Translate(_language, "Preview could not be displayed. You can still use Edit mode.\n", "無法顯示預覽，您仍可使用編輯模式。\n", "プレビューを表示できません。編集モードは引き続き使えます。\n") + ex.Message);
             MessageReceived?.Invoke(this, new PreviewMessage("error", ex.Message));
         }
+    }
+
+    /// <summary>Synchronize retained pages and their native canvas without navigating again.</summary>
+    public async Task SetThemeAsync(bool dark)
+    {
+        if (_disposed) return;
+        ApplyThemeColors(dark);
+        if (_displayInput is { } input)
+            _displayInput = (input.Markdown, input.Path, input.Options with { Dark = dark });
+        await ExecuteAsync($"window.markpad?.theme({JsonSerializer.Serialize(dark)})");
+    }
+
+    private void ApplyThemeColors(bool dark)
+    {
+        var color = dark ? Color.FromRgb(13, 17, 23) : Color.FromRgb(232, 235, 239);
+        Background = _layout.Background = new SolidColorBrush(color);
+        _notice.Foreground = new SolidColorBrush(dark ? Color.FromRgb(230, 237, 243) : Color.FromRgb(36, 41, 47));
+        _browser.DefaultBackgroundColor = System.Drawing.Color.FromArgb(color.R, color.G, color.B);
+    }
+
+    /// <summary>Update text size in place so wheel gestures preserve the page and its state.</summary>
+    public async Task SetFontSizeAsync(double size)
+    {
+        var fontSize = Math.Clamp(double.IsFinite(size) ? size : 16, 8, 72);
+        if (_displayInput is { } input)
+            _displayInput = (input.Markdown, input.Path, input.Options with { FontSize = fontSize });
+        var pixels = fontSize.ToString(CultureInfo.InvariantCulture);
+        await ExecuteAsync($"document.documentElement.style.setProperty('--reading-size', '{pixels}px')");
     }
 
     public async Task<double> GetScrollAsync()
@@ -123,16 +175,6 @@ public sealed partial class PreviewPane : UserControl, IDisposable
         return _buildTask;
     }
 
-    /// <summary>Invalidate pending work and messages before switching the owning document or mode.</summary>
-    public void Suspend()
-    {
-        ++_request;
-        _current = null;
-        _ready?.TrySetResult(false);
-        if (!_disposed && !_browserFailed)
-            try { _browser.CoreWebView2?.Stop(); }
-            catch (Exception ex) when (ex is InvalidOperationException or System.Runtime.InteropServices.COMException) { }
-    }
 
     private async Task<bool> InitializeAsync()
     {
@@ -159,7 +201,7 @@ public sealed partial class PreviewPane : UserControl, IDisposable
             core.NavigationStarting += (_, args) =>
             {
                 // Only our current synthetic document can become the top-level page.
-                args.Cancel = _current is null || !string.Equals(args.Uri, DocumentUrl(_current), StringComparison.Ordinal);
+                args.Cancel = _disposed || _current is null || !string.Equals(args.Uri, DocumentUrl(_current), StringComparison.Ordinal);
                 if (!args.Cancel) _navigationId = args.NavigationId;
             };
             core.FrameNavigationStarting += (_, args) => args.Cancel = true;
@@ -169,7 +211,7 @@ public sealed partial class PreviewPane : UserControl, IDisposable
             core.WebMessageReceived += OnMessageReceived;
             core.NavigationCompleted += (_, args) =>
             {
-                if (!args.IsSuccess && !_disposed && args.NavigationId == _navigationId)
+                if (!args.IsSuccess && !_disposed && _current is not null && args.NavigationId == _navigationId)
                 {
                     _ready?.TrySetResult(false);
                     ShowNotice(MarkdownRenderer.Translate(_language, "Preview could not be loaded. Switch to Edit and try again.", "預覽載入失敗，請切換至編輯模式後再試。", "プレビューを読み込めませんでした。編集モードに切り替えて再試行してください。"));
@@ -209,18 +251,27 @@ public sealed partial class PreviewPane : UserControl, IDisposable
         }
         if (current is not null && args.Request.Method == "GET" && current.Images.TryGetValue(args.Request.Uri, out var path))
         {
-            using var deferral = args.GetDeferral();
             try
             {
-                // Re-check at read time in case a directory changed after the Markdown was rendered.
-                var relative = Path.GetRelativePath(Path.GetDirectoryName(_documentPath!)!, path);
-                if (!MarkdownRenderer.TryResolveImagePath(_documentPath, relative, out var verified)) throw new IOException("Image unavailable.");
-                var bytes = await File.ReadAllBytesAsync(verified);
-                if (bytes.Length > 20 * 1024 * 1024) throw new IOException("Image too large.");
-                args.Response = environment.CreateWebResourceResponse(new MemoryStream(bytes), 200, "OK", "Content-Type: " + ImageMime(path) + "\r\nCache-Control: no-store\r\nX-Content-Type-Options: nosniff\r\nContent-Security-Policy: default-src 'none'; sandbox");
+                using var deferral = args.GetDeferral();
+                try
+                {
+                    // Re-check at read time in case a directory changed after the Markdown was rendered.
+                    var relative = Path.GetRelativePath(Path.GetDirectoryName(_documentPath!)!, path);
+                    if (!MarkdownRenderer.TryResolveImagePath(_documentPath, relative, out var verified)) throw new IOException("Image unavailable.");
+                    var bytes = await File.ReadAllBytesAsync(verified);
+                    if (_disposed || !ReferenceEquals(current, _current)) return;
+                    if (bytes.Length > 20 * 1024 * 1024) throw new IOException("Image too large.");
+                    args.Response = environment.CreateWebResourceResponse(new MemoryStream(bytes), 200, "OK", "Content-Type: " + ImageMime(path) + "\r\nCache-Control: no-store\r\nX-Content-Type-Options: nosniff\r\nContent-Security-Policy: default-src 'none'; sandbox");
+                }
+                catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException)
+                {
+                    if (!_disposed && ReferenceEquals(current, _current))
+                        args.Response = environment.CreateWebResourceResponse(null, 404, "Not Found", "Content-Type: text/plain");
+                }
             }
-            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException)
-            { args.Response = environment.CreateWebResourceResponse(null, 404, "Not Found", "Content-Type: text/plain"); }
+            catch (Exception ex) when (_disposed && ex is (InvalidOperationException or System.Runtime.InteropServices.COMException))
+            { /* A tab switch can dispose the browser while an image deferral is pending. */ }
             return;
         }
         // Deny every other URL, including network requests initiated by embedded SVGs.
@@ -245,8 +296,8 @@ public sealed partial class PreviewPane : UserControl, IDisposable
                 var ready = _ready;
                 var token = _current.Token;
                 await ExecuteAsync($"window.markpad?.restore({_restoreScroll.ToString(CultureInfo.InvariantCulture)},{(_restoreLine?.ToString(CultureInfo.InvariantCulture) ?? "null")})");
-                ready?.TrySetResult(true);
                 if (_disposed || token != _current?.Token) return;
+                ready?.TrySetResult(true);
             }
             if (type == "link" && (text is null || !MarkdownRenderer.IsSafeLink(text))) return;
             MessageReceived?.Invoke(this, message);
@@ -281,9 +332,15 @@ public sealed partial class PreviewPane : UserControl, IDisposable
         if (_disposed) return;
         _disposed = true;
         ++_request;
+        _current = null;
+        _documentPath = null;
         _ready?.TrySetResult(false);
+        _ready = null;
+        MessageReceived = null;
         _buildTask = null;
         _buildInput = null;
+        _displayTask = null;
+        _displayInput = null;
         _browser.Dispose();
     }
 }

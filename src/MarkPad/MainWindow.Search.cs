@@ -71,9 +71,11 @@ public partial class MainWindow
     private async Task CloseSearchAsync()
     {
         SearchPanel.Visibility = ReplacePanel.Visibility = Visibility.Collapsed;
-        _editor.Find("", Settings.MatchCase);
-        await _preview.FindAsync("", Settings.MatchCase);
-        if (_current?.IsPreviewMode == false) _editor.FocusEditor();
+        var view = _currentView;
+        if (view is null) return;
+        view.Editor.Find("", Settings.MatchCase);
+        await view.Preview.FindAsync("", Settings.MatchCase);
+        if (ReferenceEquals(view, _currentView) && _current?.IsPreviewMode == false) view.Editor.FocusEditor();
     }
 
     private void ShowSearchResult(int index, int count, bool wrapped)
@@ -127,7 +129,7 @@ public partial class MainWindow
                 else if (ReplacePanel.IsVisible) ReplacePanel.Visibility = Visibility.Collapsed;
                 else if (SearchPanel.IsVisible) await CloseSearchAsync();
                 else if (_flyout?.IsOpen == true) _flyout.IsOpen = false;
-                else if (_editor.DismissSelectionToolbar()) { }
+                else if (_currentView?.Editor.DismissSelectionToolbar() == true) { }
                 else if (_fullScreen) ToggleFullScreen();
                 break;
         }

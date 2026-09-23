@@ -163,6 +163,16 @@ public sealed class MarkdownRendererTests
         Assert.Contains("--reading-size: 16px", document.QuerySelector("style")!.TextContent);
     }
 
+    [Fact]
+    public void DocumentTitleUsesExportNameAndEscapesHtml()
+    {
+        var html = new MarkdownRenderer().Render("# Heading", new PreviewOptions(DocumentTitle: "Report & Notes.pdf"));
+        var document = new HtmlParser().ParseDocument(html);
+        Assert.Equal("Report & Notes.pdf", document.Title);
+        Assert.Contains("<title>Report &amp; Notes.pdf</title>", html);
+        Assert.Equal("MarkPad", Render("# Heading").Title);
+    }
+
     private static IDocument Render(string markdown, PreviewOptions? options = null, string? documentPath = null) =>
         new HtmlParser().ParseDocument(new MarkdownRenderer().Render(markdown, options ?? new PreviewOptions(), documentPath));
 }
