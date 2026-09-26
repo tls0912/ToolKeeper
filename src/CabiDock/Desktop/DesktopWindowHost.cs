@@ -5,11 +5,10 @@ using System.Windows.Interop;
 namespace CabiDock.Desktop;
 
 /// <summary>
-/// Experimental child-window attachment. Deliberately unused by the normal app: attaching to
-/// Explorer's view is not a documented Shell extension contract and needs target-OS validation.
+/// Child-window attachment to the current Explorer desktop view.
 /// This class changes only our own HWND, never Explorer styles, desktop files, or native icons.
 /// </summary>
-public sealed class DesktopWindowHost : IDisposable
+public sealed class DesktopWindowHost : IDisposable, IDesktopGroupHost
 {
     private const long Child = 0x40000000, Popup = 0x80000000;
     private const int StyleIndex = -16, ExtendedStyleIndex = -20;
@@ -39,6 +38,22 @@ public sealed class DesktopWindowHost : IDisposable
     public bool IsAlive => !_disposed && IsOurWindow() && IsCurrentDesktop()
         && NativeDesktop.GetParent(_handle) == _view;
 
+    public double DpiScale
+    {
+        get
+        {
+            var dpi = GetDpiForWindow(_handle);
+            return (dpi == 0 ? 96 : dpi) / 96d;
+        }
+    }
+
+    public bool TrySetOpacity(double opacity, out string reason)
+    {
+        _window.Dispatcher.VerifyAccess();
+        reason = "桌面群組視窗已失效。";
+        return IsAlive && NativeWindowOpacity.TrySet(_handle, opacity, out reason);
+    }
+
     /// <summary>
     /// Use a hidden, borderless, nontransparent, unowned window. The caller must keep it hidden
     /// if this returns false. No top-level fallback is created, and native icons remain visible.
@@ -48,7 +63,7 @@ public sealed class DesktopWindowHost : IDisposable
     {
         window.Dispatcher.VerifyAccess();
         host = null;
-        reason = "桌面附掛尚未經產品相容性驗證。";
+        reason = "桌面附掛尚未完成。";
         if (!probe.Available || !NativeDesktop.IsWindow(probe.ViewWindow))
         {
             reason = "桌面檢查未成功；不附掛群組。";
@@ -57,7 +72,7 @@ public sealed class DesktopWindowHost : IDisposable
         if (window.IsVisible || window.Topmost || window.AllowsTransparency || window.ShowInTaskbar
             || window.WindowStyle != WindowStyle.None || window.Owner is not null)
         {
-            reason = "桌面原型需使用隱藏、無框線、不透明且無擁有者的群組視窗。";
+            reason = "桌面群組需使用隱藏、無框線、不透明且無擁有者的視窗。";
             return false;
         }
 
@@ -91,7 +106,7 @@ public sealed class DesktopWindowHost : IDisposable
                 throw new InvalidOperationException(reason);
 
             host = candidate;
-            reason = "已附掛原型視窗；原生桌面圖示仍保留，尚未通過 V1 桌面整合驗收。";
+            reason = "已附掛桌面群組。";
             return true;
         }
         catch (Exception error) when (error is not OutOfMemoryException)
@@ -102,6 +117,31 @@ public sealed class DesktopWindowHost : IDisposable
         }
     }
 
+    /// <summary>Shows only an already attached child, never a fallback top-level window.</summary>
+    public bool TryShow(Rect physicalScreenPixels, out string reason)
+    {
+        _window.Dispatcher.VerifyAccess();
+        if (!TrySetBounds(physicalScreenPixels, out reason)) return false;
+        try
+        {
+            _window.Show();
+            // WPF's first Show can apply its initial placement. Reapply screen-to-parent bounds.
+            return TrySetBounds(physicalScreenPixels, out reason);
+        }
+        catch (Exception error) when (error is not OutOfMemoryException)
+        {
+            Hide();
+            reason = $"無法顯示桌面群組：{error.Message}";
+            return false;
+        }
+    }
+
+    public void Hide()
+    {
+        _window.Dispatcher.VerifyAccess();
+        HideOwnWindow();
+    }
+
     /// <summary>Physical screen pixels, not WPF DIPs. Caller clamps to primary monitor work area.</summary>
     public bool TrySetBounds(Rect physicalScreenPixels, out string reason)
     {
@@ -110,7 +150,7 @@ public sealed class DesktopWindowHost : IDisposable
         if (!IsAlive)
         {
             HideOwnWindow();
-            reason = "Explorer 或群組視窗已變更；已停止顯示這個原型群組。";
+            reason = "Explorer 或群組視窗已變更；已停止顯示這個桌面群組。";
             return false;
         }
         if (!double.IsFinite(physicalScreenPixels.X) || !double.IsFinite(physicalScreenPixels.Y)
@@ -128,7 +168,7 @@ public sealed class DesktopWindowHost : IDisposable
                 0x10 | 0x20)) // NOACTIVATE | FRAMECHANGED; HWND_TOP only within this parent
         {
             HideOwnWindow();
-            reason = "無法更新桌面群組位置；已隱藏原型群組。";
+            reason = "無法更新桌面群組位置；已隱藏桌面群組。";
             return false;
         }
         return true;
@@ -142,6 +182,7 @@ public sealed class DesktopWindowHost : IDisposable
         _disposed = true;
         if (!IsOurWindow()) return;
         HideOwnWindow();
+        NativeWindowOpacity.TrySet(_handle, 1, out _);
         var parent = _originalParent != 0 && NativeDesktop.IsWindow(_originalParent) ? _originalParent : 0;
         NativeDesktop.SetParent(_handle, parent);
         NativeDesktop.WriteStyle(_handle, StyleIndex, _style);
@@ -168,4 +209,7 @@ public sealed class DesktopWindowHost : IDisposable
     }
 
     private static nint ToNativeStyle(long value) => nint.Size == 8 ? (nint)value : unchecked((nint)(int)value);
+
+    [DllImport("user32.dll")]
+    private static extern uint GetDpiForWindow(nint window);
 }

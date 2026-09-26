@@ -34,9 +34,9 @@ dotnet run --project src/MarkPad/MarkPad.csproj -- ".\README.md"
 
 - 產品規格：[`docs/products/002_CabiDock.md`](docs/products/002_CabiDock.md)
 - 程式碼：[`src/CabiDock`](src/CabiDock)
-- 狀態：已建立可執行的分類與群組操作預覽；正式桌面整合尚未啟用
+- 狀態：已實作分類、群組操作與桌面接管；真實 Explorer 相容性仍待驗收
 
-目前可使用七個預設分類、自訂副檔名與關鍵字規則、分類保存、桌面監看、群組拖曳與系統匣。群組顯示於獨立預覽視窗，保留原生桌面圖示；尚未完成 V1 的桌面接管驗收。
+目前可使用七個預設分類、自訂副檔名與關鍵字規則、分類保存、桌面監看、群組拖曳與系統匣。一般啟動會嘗試將群組附掛桌面，裁切受管理檔案的原生圖示並保留系統圖示；包含暫停恢復、獨立異常恢復程序與 Explorer 變更後重建。裁切仍保留 Explorer 原有鍵盤選取模型，尚未完成 V1 的真實桌面驗收。
 
 ```powershell
 dotnet run --project src/CabiDock/CabiDock.csproj

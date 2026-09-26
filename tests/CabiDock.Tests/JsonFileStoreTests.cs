@@ -1,4 +1,6 @@
 using System.IO;
+using System.Text.Json;
+using System.Text.Json.Nodes;
 using CabiDock.Models;
 using CabiDock.Services;
 using Xunit;
@@ -144,6 +146,55 @@ public sealed class JsonFileStoreTests : IDisposable
 
         Assert.True(loaded.RecoveredFromBackup);
         Assert.Equal(7, loaded.Value.Categories.Count);
+    }
+
+    [Fact]
+    public void GroupOpacityRoundtripPreservesClassificationSettings()
+    {
+        var store = new JsonFileStore<CabiDockConfiguration>(Path.Combine(_directory, "config.json"), ConfigurationService.ValidationError);
+        var configuration = ConfigurationService.LoadDefaults();
+        configuration.GroupOpacity = 0.65;
+        configuration.KeywordRules.Add(new KeywordRule { Keyword = "invoice", CategoryId = "documents" });
+
+        Assert.True(store.Save(configuration).Success);
+        var loaded = store.Load(ConfigurationService.LoadDefaults);
+
+        Assert.Null(loaded.Error);
+        Assert.Equal(0.65, loaded.Value.GroupOpacity);
+        Assert.Equal(7, loaded.Value.Categories.Count);
+        Assert.Equal("invoice", Assert.Single(loaded.Value.KeywordRules).Keyword);
+    }
+
+    [Fact]
+    public void LegacyConfigurationWithoutOpacityLoadsAsFullyOpaque()
+    {
+        var store = new JsonFileStore<CabiDockConfiguration>(Path.Combine(_directory, "config.json"), ConfigurationService.ValidationError);
+        var configuration = ConfigurationService.LoadDefaults();
+        configuration.Categories[0].Name = "原有分類";
+        var legacyJson = JsonSerializer.SerializeToNode(configuration, JsonFileStore<CabiDockConfiguration>.SerializerOptions)!.AsObject();
+        Assert.True(legacyJson.Remove("groupOpacity"));
+        Directory.CreateDirectory(_directory);
+        File.WriteAllText(store.FilePath, legacyJson.ToJsonString());
+
+        var loaded = store.Load(ConfigurationService.LoadDefaults);
+
+        Assert.Null(loaded.Error);
+        Assert.False(loaded.RecoveredFromBackup);
+        Assert.Equal(1, loaded.Value.GroupOpacity);
+        Assert.Equal("原有分類", loaded.Value.Categories[0].Name);
+    }
+
+    [Fact]
+    public void InvalidGroupOpacityDoesNotOverwriteSavedConfiguration()
+    {
+        var store = new JsonFileStore<CabiDockConfiguration>(Path.Combine(_directory, "config.json"), ConfigurationService.ValidationError);
+        var configuration = ConfigurationService.LoadDefaults();
+        configuration.GroupOpacity = 0.65;
+        Assert.True(store.Save(configuration).Success);
+        configuration.GroupOpacity = 0;
+
+        Assert.False(store.Save(configuration).Success);
+        Assert.Equal(0.65, store.Load(ConfigurationService.LoadDefaults).Value.GroupOpacity);
     }
 
     private static CabiDockState State(string name, string category = "images", ClassificationSource source = ClassificationSource.Auto) => new()

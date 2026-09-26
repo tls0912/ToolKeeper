@@ -12,6 +12,7 @@ public sealed class ConfigurationServiceTests
         var configuration = ConfigurationService.LoadDefaults();
         Assert.Equal(new[] { "資料夾", "捷徑", "圖像類", "文件類", "影音類", "壓縮檔", "其他" }, configuration.Categories.Select(category => category.Name));
         Assert.Empty(configuration.KeywordRules);
+        Assert.Equal(1, configuration.GroupOpacity);
         Assert.Empty(ConfigurationService.Validate(configuration));
         configuration.Categories.Clear();
         Assert.Equal(7, ConfigurationService.LoadDefaults().Categories.Count);
@@ -35,12 +36,41 @@ public sealed class ConfigurationServiceTests
     {
         var configuration = ConfigurationService.LoadDefaults();
         configuration.Categories.Add(Custom("technical", " 技術文件 ", " .MD ", "md"));
+        configuration.GroupOpacity = 0.65;
 
         var normalized = ConfigurationService.Normalize(configuration);
 
         Assert.Equal("md", Assert.Single(normalized.Categories[^1].Extensions));
         Assert.Equal("技術文件", normalized.Categories[^1].Name);
         Assert.Equal(2, configuration.Categories[^1].Extensions.Count);
+        Assert.Equal(0.65, normalized.GroupOpacity);
+    }
+
+    [Theory]
+    [InlineData(0.3)]
+    [InlineData(0.65)]
+    [InlineData(1.0)]
+    public void SupportedGroupOpacityValuesAreAccepted(double opacity)
+    {
+        var configuration = ConfigurationService.LoadDefaults();
+        configuration.GroupOpacity = opacity;
+
+        Assert.Empty(ConfigurationService.Validate(configuration));
+    }
+
+    [Theory]
+    [InlineData(0.0)]
+    [InlineData(0.299)]
+    [InlineData(1.01)]
+    [InlineData(double.NaN)]
+    [InlineData(double.PositiveInfinity)]
+    [InlineData(double.NegativeInfinity)]
+    public void InvalidGroupOpacityIsRejected(double opacity)
+    {
+        var configuration = ConfigurationService.LoadDefaults();
+        configuration.GroupOpacity = opacity;
+
+        Assert.Contains("不透明度", Assert.Single(ConfigurationService.Validate(configuration)));
     }
 
     [Fact]

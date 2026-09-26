@@ -27,6 +27,7 @@ public static class ConfigurationService
     {
         return new CabiDockConfiguration
         {
+            GroupOpacity = configuration.GroupOpacity,
             Categories = configuration.Categories.Select(category => new CategoryDefinition
             {
                 Id = category.Id.Trim(),
@@ -46,6 +47,8 @@ public static class ConfigurationService
     public static IReadOnlyList<string> Validate(CabiDockConfiguration configuration)
     {
         var errors = new List<string>();
+        if (!double.IsFinite(configuration.GroupOpacity) || configuration.GroupOpacity < 0.3 || configuration.GroupOpacity > 1)
+            errors.Add("分類區不透明度必須介於 30% 與 100% 之間。");
         if (configuration.Categories is null || configuration.KeywordRules is null)
         {
             errors.Add("設定必須包含分類與關鍵字規則清單。");

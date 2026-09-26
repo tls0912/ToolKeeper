@@ -8,7 +8,7 @@ using CabiDock.Views;
 namespace CabiDock;
 
 /// <summary>Exercises the group interactions inside an ordinary application window.
-/// No HWND is attached to Explorer until the native-icon suppression gate is validated.</summary>
+/// Opening this preview pauses the desktop session; this window never attaches to Explorer.</summary>
 public sealed class GroupPreviewWindow : Window
 {
     private readonly Canvas _canvas = new() { Background = new SolidColorBrush(Color.FromRgb(232, 240, 237)), ClipToBounds = true };
@@ -37,7 +37,7 @@ public sealed class GroupPreviewWindow : Window
         caption.Children.Add(new TextBlock { Text = "群組操作預覽", FontSize = 22, FontWeight = FontWeights.SemiBold });
         caption.Children.Add(new TextBlock
         {
-            Text = "單擊展開 · 雙擊開啟項目 · 拖曳標題移動群組 · 拖曳項目改分類\n檔案保留原位。目前保留原生桌面圖示，正式桌面整合仍待驗證。",
+            Text = "單擊展開 · 雙擊開啟項目 · 拖曳標題移動群組 · 拖曳項目改分類\n預覽時桌面接管暫停，原生圖示保留。可回到設定啟用桌面接管。",
             Margin = new Thickness(0, 8, 0, 0), Foreground = Brushes.DimGray, TextWrapping = TextWrapping.Wrap
         });
         DockPanel.SetDock(caption, Dock.Top);
@@ -102,6 +102,7 @@ public sealed class GroupPreviewWindow : Window
                 };
             }
             group.CardContent.Visibility = members.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
+            group.CardContent.Opacity = configuration.GroupOpacity;
             group.UpdateItems(members, configuration.Categories);
         }
         _empty.Visibility = membership.Count == 0 ? Visibility.Visible : Visibility.Collapsed;

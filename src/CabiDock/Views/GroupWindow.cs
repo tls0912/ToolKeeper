@@ -30,18 +30,19 @@ public sealed class GroupWindow : Window
     private int _operations;
     private bool _dragOver;
     private bool _headerMoved;
-    private bool _pendingCollapse;
     private bool _itemDragActive;
     private bool _renderPending;
     private System.Windows.Point _itemDragStart;
 
     public string CategoryId => _category.Id;
     public bool IsExpanded { get; private set; }
+    public bool IsInteractionActive => _operations > 0 || _dragOver;
     public FrameworkElement CardContent => _card;
     public event Action<DesktopItem>? ItemOpenRequested;
     public event Action<DesktopItem, string>? ManualAssignmentRequested;
     public event Action<GroupLayout>? LayoutChanged;
     public event EventHandler? Expanded;
+    public event Action? InteractionEnded;
 
     public GroupWindow(CategoryDefinition category, GroupLayout layout)
     {
@@ -67,7 +68,7 @@ public sealed class GroupWindow : Window
             SnapsToDevicePixels = true, AllowDrop = true, ClipToBounds = true
         };
 
-        _collapseTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(200) };
+        _collapseTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(3) };
         _collapseTimer.Tick += (_, _) =>
         {
             _collapseTimer.Stop();
@@ -138,7 +139,7 @@ public sealed class GroupWindow : Window
         Controls.Grid.SetRow(footer, 2);
         grid.Children.Add(footer);
 
-        _card.MouseEnter += (_, _) => { _collapseTimer.Stop(); _pendingCollapse = false; };
+        _card.MouseEnter += (_, _) => _collapseTimer.Stop();
         _card.MouseLeave += (_, _) => ScheduleCollapse();
         _card.DragEnter += CardDragEnter;
         _card.DragOver += (_, e) =>
@@ -155,6 +156,7 @@ public sealed class GroupWindow : Window
             _dragOver = false;
             _hoverTimer.Stop();
             ScheduleCollapse();
+            if (!IsInteractionActive) InteractionEnded?.Invoke();
         };
         _card.Drop += (_, e) =>
         {
@@ -167,6 +169,7 @@ public sealed class GroupWindow : Window
                 e.Handled = true;
             }
             ScheduleCollapse();
+            if (!IsInteractionActive) InteractionEnded?.Invoke();
         };
         Closed += (_, _) => { _collapseTimer.Stop(); _hoverTimer.Stop(); };
         RenderBody();
@@ -208,9 +211,8 @@ public sealed class GroupWindow : Window
 
     public void Collapse()
     {
-        if (_operations > 0 || _dragOver) { _pendingCollapse = true; return; }
+        if (_operations > 0 || _dragOver) return;
         _collapseTimer.Stop();
-        _pendingCollapse = false;
         if (!IsExpanded) return;
         IsExpanded = false;
         Width = TileWidth;
@@ -284,7 +286,13 @@ public sealed class GroupWindow : Window
             try { System.Windows.DragDrop.DoDragDrop(tile, new System.Windows.DataObject(ItemDragFormat, item), System.Windows.DragDropEffects.Move); }
             finally { _itemDragActive = false; EndOperation(); }
         };
-        tile.KeyDown += (_, e) => { if (e.Key == Key.Enter) { ItemOpenRequested?.Invoke(item); e.Handled = true; } };
+        tile.KeyDown += (_, e) =>
+        {
+            if (e.Key == Key.Enter) { ItemOpenRequested?.Invoke(item); e.Handled = true; }
+            else if (e.Key == Key.F2) { RenameItem(tile, item); e.Handled = true; }
+        };
+        // A small WPF fallback keeps classification and rename available if a Shell extension fails.
+        // Normally ContextMenuOpening is handled below by the actual Windows Shell menu.
         var menu = new Controls.ContextMenu();
         var open = new Controls.MenuItem { Header = "開啟" };
         open.Click += (_, _) => ItemOpenRequested?.Invoke(item);
@@ -297,10 +305,39 @@ public sealed class GroupWindow : Window
             move.Items.Add(choice);
         }
         menu.Items.Add(move);
+        var rename = new Controls.MenuItem { Header = "重新命名", InputGestureText = "F2" };
+        rename.Click += (_, _) => RenameItem(tile, item);
+        menu.Items.Add(rename);
         menu.Opened += (_, _) => BeginOperation();
         menu.Closed += (_, _) => EndOperation();
         tile.ContextMenu = menu;
+        tile.ContextMenuOpening += (_, e) =>
+        {
+            tile.Focus();
+            BeginOperation();
+            try
+            {
+                var point = e.CursorLeft < 0 ? new Point(tile.ActualWidth / 2, tile.ActualHeight / 2) : Mouse.GetPosition(tile);
+                ShellContextMenu.Show(tile, item, _categories.ToArray(), CategoryId, tile.PointToScreen(point),
+                    category => ManualAssignmentRequested?.Invoke(item, category), () => RenameItem(tile, item));
+                e.Handled = true;
+            }
+            catch (Exception error) when (error is System.Runtime.InteropServices.COMException
+                or System.ComponentModel.Win32Exception or InvalidOperationException or IOException)
+            {
+                // Leave this event unhandled so WPF opens the fallback menu.
+                menu.ToolTip = $"Windows 選單無法載入：{error.Message}";
+            }
+            finally { EndOperation(); }
+        };
         return tile;
+    }
+
+    private void RenameItem(FrameworkElement anchor, DesktopItem item)
+    {
+        BeginOperation();
+        try { RenameItemDialog.Show(anchor, item); }
+        finally { EndOperation(); }
     }
 
     private FrameworkElement BuildIcon(DesktopItem item, double size)
@@ -329,12 +366,13 @@ public sealed class GroupWindow : Window
     {
         _operations = Math.Max(0, _operations - 1);
         if (_operations == 0 && _renderPending) RenderBody();
-        if (_operations == 0 && _pendingCollapse && !_card.IsMouseOver && !_dragOver) Collapse();
-        else ScheduleCollapse();
+        ScheduleCollapse();
+        if (!IsInteractionActive) InteractionEnded?.Invoke();
     }
     private void ScheduleCollapse()
     {
-        if (IsExpanded && _operations == 0 && !_dragOver) { _collapseTimer.Stop(); _collapseTimer.Start(); }
+        if (IsExpanded && !_card.IsMouseOver && _operations == 0 && !_dragOver)
+        { _collapseTimer.Stop(); _collapseTimer.Start(); }
     }
     private void ClampPosition()
     {

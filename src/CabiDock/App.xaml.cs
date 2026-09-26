@@ -14,10 +14,18 @@ public partial class App : System.Windows.Application
         base.OnStartup(e);
         try
         {
+            if (DesktopRecoveryGuard.TryRun(e.Args)) { Shutdown(); return; }
             var options = ParseArguments(e.Args);
+            if (options.TryGetValue("--diagnose-group-opacity", out var opacityReportPath))
+            {
+                var report = NativeWindowOpacityDiagnostics.Capture();
+                File.WriteAllText(Path.GetFullPath(opacityReportPath), JsonSerializer.Serialize(report, new JsonSerializerOptions { WriteIndented = true }));
+                Shutdown(report.Succeeded ? 0 : 1);
+                return;
+            }
             if (options.TryGetValue("--diagnose-desktop", out var reportPath))
             {
-                var report = DesktopProbe.Capture();
+                var report = DesktopProbe.CaptureDiagnostics();
                 File.WriteAllText(Path.GetFullPath(reportPath), JsonSerializer.Serialize(report, new JsonSerializerOptions { WriteIndented = true }));
                 Shutdown();
                 return;
@@ -51,7 +59,7 @@ public partial class App : System.Windows.Application
         for (var index = 0; index < args.Length; index += 2)
         {
             var key = args[index];
-            if (key is not ("--diagnose-desktop" or "--data-directory" or "--desktop-directory")
+            if (key is not ("--diagnose-desktop" or "--diagnose-group-opacity" or "--data-directory" or "--desktop-directory")
                 || index + 1 >= args.Length || string.IsNullOrWhiteSpace(args[index + 1]))
                 throw new ArgumentException($"不支援的啟動參數：{key}");
             if (!result.TryAdd(key, args[index + 1])) throw new ArgumentException($"重複的啟動參數：{key}");

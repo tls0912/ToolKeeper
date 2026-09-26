@@ -26,4 +26,5 @@ public sealed class CabiDockConfiguration
 {
     public List<CategoryDefinition> Categories { get; set; } = [];
     public List<KeywordRule> KeywordRules { get; set; } = [];
+    public double GroupOpacity { get; set; } = 1;
 }

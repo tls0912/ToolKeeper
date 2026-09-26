@@ -6,6 +6,7 @@ using System.Windows.Threading;
 using CabiDock.Models;
 using CabiDock.Services;
 using CabiDock.Views;
+using CabiDock.Desktop;
 using Forms = System.Windows.Forms;
 
 namespace CabiDock;
@@ -19,8 +20,10 @@ internal sealed class AppController : IDisposable
     private readonly DesktopWatcher _watcher = new();
     private readonly ClassificationService _classification = new();
     private readonly DispatcherTimer _refreshTimer;
+    private readonly DispatcherTimer _changeTimer;
     private readonly DispatcherTimer _layoutTimer;
     private readonly SettingsWindow _settings;
+    private readonly DesktopTakeoverService? _desktop;
     private readonly Forms.NotifyIcon _tray;
     private readonly IReadOnlyList<string>? _overrideRoots;
     private IReadOnlyList<string> _roots;
@@ -56,10 +59,28 @@ internal sealed class AppController : IDisposable
         _settings = new SettingsWindow(_configuration);
         _settings.SaveRequested += SaveSettings;
         _settings.PreviewRequested += (_, _) => ShowPreview();
+        if (roots is null)
+        {
+            _desktop = new DesktopTakeoverService(_app.Dispatcher);
+            _desktop.ItemOpenRequested += OpenItem;
+            _desktop.ManualAssignmentRequested += AssignManually;
+            _desktop.LayoutChanged += SaveLayout;
+            _desktop.StatusChanged += () =>
+            {
+                _settings.SetDesktopState(_desktop.Enabled);
+                ShowStatus();
+            };
+            _settings.DesktopToggleRequested += (_, _) =>
+            {
+                if (!_desktop.Enabled) _preview?.Hide();
+                _desktop.SetEnabled(!_desktop.Enabled);
+            };
+        }
+        _settings.SetDesktopState(_desktop?.Enabled == true, _desktop is not null);
         _app.MainWindow = _settings;
         _tray = new Forms.NotifyIcon
         {
-            Text = "CabiDock｜開發預覽",
+            Text = "CabiDock",
             Icon = System.Drawing.SystemIcons.Application,
             ContextMenuStrip = new Forms.ContextMenuStrip()
         };
@@ -69,6 +90,9 @@ internal sealed class AppController : IDisposable
         _refreshTimer = new DispatcherTimer(TimeSpan.FromSeconds(5), DispatcherPriority.Background,
             async (_, _) => await RefreshAsync(), _app.Dispatcher);
         _refreshTimer.Stop();
+        _changeTimer = new DispatcherTimer(TimeSpan.FromMilliseconds(120), DispatcherPriority.Background,
+            async (_, _) => { _changeTimer!.Stop(); await RefreshAsync(); }, _app.Dispatcher);
+        _changeTimer.Stop();
         _layoutTimer = new DispatcherTimer(TimeSpan.FromMilliseconds(300), DispatcherPriority.Background,
             (_, _) => { _layoutTimer!.Stop(); SaveState(); }, _app.Dispatcher);
         _layoutTimer.Stop();
@@ -102,18 +126,13 @@ internal sealed class AppController : IDisposable
 
     private void ShowPreview()
     {
+        _desktop?.SetEnabled(false);
         if (_preview is null)
         {
             _preview = new GroupPreviewWindow();
             _preview.ItemOpenRequested += OpenItem;
             _preview.ManualAssignmentRequested += AssignManually;
-            _preview.LayoutChanged += (categoryId, layout) =>
-            {
-                _state.Groups[categoryId] = layout;
-                _stateDirty = true;
-                _layoutTimer.Stop();
-                _layoutTimer.Start();
-            };
+            _preview.LayoutChanged += SaveLayout;
         }
         _preview.SetItems(_configuration, _state, _items);
         _stateDirty = true; // Initial layouts also need persistence.
@@ -121,6 +140,14 @@ internal sealed class AppController : IDisposable
         _preview.Show();
         if (_preview.WindowState == WindowState.Minimized) _preview.WindowState = WindowState.Normal;
         _preview.Activate();
+    }
+
+    private void SaveLayout(string categoryId, GroupLayout layout)
+    {
+        _state.Groups[categoryId] = layout;
+        _stateDirty = true;
+        _layoutTimer.Stop();
+        _layoutTimer.Start();
     }
 
     private async Task RefreshAsync()
@@ -142,6 +169,7 @@ internal sealed class AppController : IDisposable
             if (version != _version) { _rescanRequested = true; return; }
             if (!result.Succeeded)
             {
+                _desktop?.Suspend("桌面掃描未完成，已恢復原生圖示。");
                 _lastStatus = null;
                 _settings.SetStatus("桌面掃描未完成，已保留原有分類清單。\n" + result.Error, true);
                 return;
@@ -154,11 +182,13 @@ internal sealed class AppController : IDisposable
             _state.ConfigurationFingerprint = fingerprint;
             _pendingRules = false;
             if (itemsChanged || _stateDirty) _preview?.SetItems(_configuration, _state, _items);
+            _desktop?.Update(_configuration, _state, _items);
             SaveState();
             ShowStatus();
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException)
         {
+            _desktop?.Suspend("無法更新桌面分類，已恢復原生圖示。");
             _lastStatus = null;
             _settings.SetStatus("無法更新桌面分類，既有紀錄保留。\n" + ex.Message, true);
         }
@@ -182,8 +212,10 @@ internal sealed class AppController : IDisposable
             _stateDirty |= _classification.Remove(change.FullPath, _state);
         else if (change.Kind == WatcherChangeTypes.Renamed && change.OldFullPath is not null)
             _stateDirty |= _classification.Rename(change.OldFullPath, new DesktopItem(change.FullPath, false), _state);
-        SaveState();
-        _ = RefreshAsync();
+        // Rename/copy operations commonly raise several notifications. Preserve the attached
+        // groups while one scan reconciles the burst; native geometry is watched separately.
+        _changeTimer.Stop();
+        _changeTimer.Start();
     }
 
     private async void SaveSettings(object? sender, SettingsSaveRequestedEventArgs e)
@@ -198,8 +230,16 @@ internal sealed class AppController : IDisposable
         var configuration = ConfigurationService.Normalize(e.Configuration);
         var saved = _configurationFile.Save(configuration);
         if (!saved.Success) { e.ErrorMessage = saved.Error; return; }
+        var classificationChanged = Fingerprint(_configuration) != Fingerprint(configuration);
         _configuration = configuration;
         _lastStatus = null;
+        if (!classificationChanged)
+        {
+            _preview?.SetItems(_configuration, _state, _items);
+            _desktop?.Update(_configuration, _state, _items);
+            ShowStatus();
+            return;
+        }
         // A different fingerprint in the saved state makes interrupted rule updates recoverable.
         ++_version;
         _pendingRules = true;
@@ -214,6 +254,7 @@ internal sealed class AppController : IDisposable
         _stateDirty |= _classification.AssignManually(item, categoryId, _state, _configuration);
         SaveState();
         _preview?.SetItems(_configuration, _state, _items);
+        _desktop?.Update(_configuration, _state, _items);
         ShowStatus();
     }
 
@@ -222,7 +263,7 @@ internal sealed class AppController : IDisposable
         try { Process.Start(new ProcessStartInfo(item.FullPath) { UseShellExecute = true }); }
         catch (Exception ex) when (ex is System.ComponentModel.Win32Exception or IOException or InvalidOperationException)
         {
-            System.Windows.MessageBox.Show(_preview, "無法開啟此項目。\n\n" + ex.Message, "CabiDock", MessageBoxButton.OK, MessageBoxImage.Information);
+            System.Windows.MessageBox.Show("無法開啟此項目。\n\n" + ex.Message, "CabiDock", MessageBoxButton.OK, MessageBoxImage.Information);
         }
     }
 
@@ -241,7 +282,8 @@ internal sealed class AppController : IDisposable
 
     private void ShowStatus()
     {
-        var status = $"已掃描 {_items.Count} 個桌面項目 · {_configuration.Categories.Count} 個分類\n開發預覽：原生桌面圖示保留。可開啟群組預覽操作，桌面接管尚未啟用。";
+        var status = $"已掃描 {_items.Count} 個桌面項目 · {_configuration.Categories.Count} 個分類\n"
+            + (_desktop?.Status ?? "自訂目錄預覽：保留真實桌面圖示。");
         if (!string.IsNullOrWhiteSpace(_loadWarning)) status += "\n" + _loadWarning;
         if (_saveError is not null) status += "\n分類尚未儲存：" + _saveError;
         // Idle polling must not erase a validation error the user is currently correcting.
@@ -251,7 +293,8 @@ internal sealed class AppController : IDisposable
     }
 
     private static string Fingerprint(CabiDockConfiguration configuration) =>
-        Convert.ToHexString(SHA256.HashData(JsonSerializer.SerializeToUtf8Bytes(configuration, JsonFileStore<CabiDockConfiguration>.SerializerOptions)));
+        Convert.ToHexString(SHA256.HashData(JsonSerializer.SerializeToUtf8Bytes(
+            new { configuration.Categories, configuration.KeywordRules }, JsonFileStore<CabiDockConfiguration>.SerializerOptions)));
 
     private static bool SameItems(IReadOnlyList<DesktopItem> first, IReadOnlyList<DesktopItem> second) =>
         first.Count == second.Count && first.Zip(second).All(pair => pair.First.FullPath == pair.Second.FullPath
@@ -259,6 +302,7 @@ internal sealed class AppController : IDisposable
 
     public void PrepareExit()
     {
+        _desktop?.Dispose();
         _settings.AllowClose = true;
         if (_preview is not null) _preview.AllowClose = true;
         _layoutTimer.Stop();
@@ -272,6 +316,7 @@ internal sealed class AppController : IDisposable
         _disposed = true;
         _watcher.Dispose();
         _refreshTimer.Stop();
+        _changeTimer.Stop();
         _tray.Visible = false;
         _tray.Dispose();
         _preview?.Close();

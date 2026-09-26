@@ -25,11 +25,14 @@ public sealed class SettingsWindow : Window
     private readonly Controls.DataGrid _categoryGrid;
     private readonly Controls.DataGrid _ruleGrid;
     private readonly Controls.TextBlock _status;
+    private readonly Controls.Button _desktopToggle;
+    private readonly Controls.Slider _groupOpacity;
     private System.Windows.Point _ruleDragStart;
     private bool _isDraggingRule;
 
     public event EventHandler<SettingsSaveRequestedEventArgs>? SaveRequested;
     public event EventHandler? PreviewRequested;
+    public event EventHandler? DesktopToggleRequested;
     public bool AllowClose { get; set; }
     public ObservableCollection<CategoryEditor> Categories => _categories;
 
@@ -52,6 +55,7 @@ public sealed class SettingsWindow : Window
         root.RowDefinitions.Add(new() { Height = new GridLength(1.1, GridUnitType.Star) });
         root.RowDefinitions.Add(new() { Height = new GridLength(1, GridUnitType.Star) });
         root.RowDefinitions.Add(new() { Height = GridLength.Auto });
+        root.RowDefinitions.Add(new() { Height = GridLength.Auto });
         Content = root;
 
         var header = new Controls.Grid { Margin = new Thickness(0, 0, 0, 22) };
@@ -63,8 +67,12 @@ public sealed class SettingsWindow : Window
         header.Children.Add(brand);
         var preview = ViewTheme.Button("開啟群組操作預覽", (_, _) => PreviewRequested?.Invoke(this, EventArgs.Empty));
         preview.VerticalAlignment = VerticalAlignment.Center;
-        Controls.Grid.SetColumn(preview, 1);
-        header.Children.Add(preview);
+        var actions = new Controls.StackPanel { VerticalAlignment = VerticalAlignment.Center };
+        _desktopToggle = ViewTheme.Button("暫停桌面接管", (_, _) => DesktopToggleRequested?.Invoke(this, EventArgs.Empty));
+        actions.Children.Add(_desktopToggle);
+        actions.Children.Add(preview);
+        Controls.Grid.SetColumn(actions, 1);
+        header.Children.Add(actions);
         root.Children.Add(header);
 
         _categoryGrid = CreateGrid(_categories);
@@ -130,10 +138,44 @@ public sealed class SettingsWindow : Window
         Controls.Grid.SetRow(rulesSection, 2);
         root.Children.Add(rulesSection);
 
+        var opacityRow = new Controls.Grid
+        {
+            Margin = new Thickness(0, 0, 0, 8),
+            ToolTip = "100% 為完全不透明；儲存後套用至所有分類區。"
+        };
+        opacityRow.ColumnDefinitions.Add(new() { Width = GridLength.Auto });
+        opacityRow.ColumnDefinitions.Add(new() { Width = new GridLength(1, GridUnitType.Star) });
+        opacityRow.ColumnDefinitions.Add(new() { Width = GridLength.Auto });
+        var opacityLabel = ViewTheme.Text("分類區不透明度", 14);
+        opacityLabel.VerticalAlignment = VerticalAlignment.Center;
+        opacityLabel.Margin = new Thickness(0, 0, 16, 0);
+        opacityRow.Children.Add(opacityLabel);
+        _groupOpacity = new Controls.Slider
+        {
+            Minimum = 30, Maximum = 100, Value = configuration.GroupOpacity * 100,
+            TickFrequency = 1, IsSnapToTickEnabled = true, SmallChange = 1, LargeChange = 10,
+            VerticalAlignment = VerticalAlignment.Center, AutoToolTipPlacement = Controls.Primitives.AutoToolTipPlacement.TopLeft,
+            AutoToolTipPrecision = 0
+        };
+        System.Windows.Automation.AutomationProperties.SetName(_groupOpacity, "分類區不透明度百分比");
+        Controls.Grid.SetColumn(_groupOpacity, 1);
+        opacityRow.Children.Add(_groupOpacity);
+        var opacityValue = ViewTheme.Text(string.Empty, 14);
+        opacityValue.MinWidth = 46;
+        opacityValue.Margin = new Thickness(12, 0, 0, 0);
+        opacityValue.VerticalAlignment = VerticalAlignment.Center;
+        opacityValue.TextAlignment = TextAlignment.Right;
+        opacityValue.SetBinding(Controls.TextBlock.TextProperty,
+            new Binding(nameof(Controls.Slider.Value)) { Source = _groupOpacity, StringFormat = "{0:0}%" });
+        Controls.Grid.SetColumn(opacityValue, 2);
+        opacityRow.Children.Add(opacityValue);
+        Controls.Grid.SetRow(opacityRow, 3);
+        root.Children.Add(opacityRow);
+
         var footer = new Controls.Grid { Margin = new Thickness(0, 8, 0, 0) };
         footer.ColumnDefinitions.Add(new() { Width = new GridLength(1, GridUnitType.Star) });
         footer.ColumnDefinitions.Add(new() { Width = GridLength.Auto });
-        _status = ViewTheme.Text("桌面整合尚在驗證中，可先在操作預覽中試用群組。", 12, ViewTheme.Muted);
+        _status = ViewTheme.Text("正在準備桌面接管；群組會顯示在桌面上。", 12, ViewTheme.Muted);
         _status.Margin = new Thickness(0, 0, 20, 0);
         footer.Children.Add(new Controls.ScrollViewer
         {
@@ -144,7 +186,7 @@ public sealed class SettingsWindow : Window
         var save = ViewTheme.Button("儲存並套用", Save, true);
         Controls.Grid.SetColumn(save, 1);
         footer.Children.Add(save);
-        Controls.Grid.SetRow(footer, 3);
+        Controls.Grid.SetRow(footer, 4);
         root.Children.Add(footer);
         Closing += (_, e) => { if (!AllowClose) { e.Cancel = true; Hide(); } };
     }
@@ -153,6 +195,13 @@ public sealed class SettingsWindow : Window
     {
         _status.Text = message;
         _status.Foreground = isError ? ViewTheme.Brush("#B03C32") : ViewTheme.Muted;
+    }
+
+    public void SetDesktopState(bool enabled, bool available = true)
+    {
+        _desktopToggle.Content = enabled ? "暫停桌面接管" : "啟用桌面接管";
+        _desktopToggle.IsEnabled = available;
+        _desktopToggle.ToolTip = available ? "暫停後立即恢復原生桌面圖示。" : "自訂掃描目錄使用群組預覽，不接管真實桌面。";
     }
 
     private static Binding EditBinding(string property) => new(property)
@@ -260,6 +309,7 @@ public sealed class SettingsWindow : Window
         _ruleGrid.CommitEdit(Controls.DataGridEditingUnit.Row, true);
         var configuration = new CabiDockConfiguration
         {
+            GroupOpacity = _groupOpacity.Value / 100,
             Categories = _categories.Select(c => c.ToDefinition()).ToList(),
             KeywordRules = _rules.Select(r => new KeywordRule { Keyword = r.Keyword.Trim(), CategoryId = r.CategoryId }).ToList()
         };
@@ -267,7 +317,7 @@ public sealed class SettingsWindow : Window
         if (errors.Count > 0) { SetStatus(string.Join("\n", errors), true); return; }
         var args = new SettingsSaveRequestedEventArgs(ConfigurationService.Normalize(configuration));
         SaveRequested?.Invoke(this, args);
-        SetStatus(args.ErrorMessage ?? "設定已儲存，正在更新自動分類；有效的手動指定會保留。", args.ErrorMessage is not null);
+        SetStatus(args.ErrorMessage ?? "設定已儲存並套用；有效的手動指定會保留。", args.ErrorMessage is not null);
     }
 
     private static T? FindParent<T>(DependencyObject? element) where T : DependencyObject
