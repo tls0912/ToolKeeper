@@ -119,13 +119,15 @@ MainName - SubName
 
 ## 4. ToolKeeper 本體的角色
 
-ToolKeeper 本體以免費工具目錄與 Launcher 為主，另外規劃提供少量免費小工具；它不是把所有獨立產品功能都塞進同一個工具盒。
+ToolKeeper 本體以免費工具目錄、Launcher 與平台入口為主，另外提供少量免費小工具。自 2026-09-28 起，002 CabiDock 的桌面能力納入 ToolKeeper 平台，形成 **單一主執行入口 + 內部桌面模組**；這不代表其他獨立產品都要併入同一個 EXE。
 
 ToolKeeper 本體負責：
 
 - 集中展示工具番產品，讓使用者瀏覽與發現工具。
 - 啟動已安裝的獨立工具；尚未安裝時開啟 Microsoft Store 商品頁。
 - 提供少量免費、範圍明確的小工具功能。
+- 載入並管理 CabiDock 桌面模組，提供桌面分類、桌面群組與 Explorer 整合。
+- 在桌面提供「工具番」專屬群組，集中呈現已安裝或可啟動的工具番產品。
 
 ToolKeeper 不負責下載模組、管理授權、內購或自行安裝獨立工具；安裝與更新由 Microsoft Store 處理。
 
@@ -140,6 +142,32 @@ ToolKeeper 本體免費提供以下兩項小工具：
 
 **JSON Viewer 已歸入 003 — ConvAnvil**，不列為 ToolKeeper 本體內建功能。其他獨立工具仍各自是 Windows App。
 
+### CabiDock 桌面模組
+
+002 CabiDock 的定位調整為 ToolKeeper 的桌面能力模組。使用者端以 `ToolKeeper.exe` 作為單一主入口；ToolKeeper 啟動後，可依設定啟動 CabiDock 的桌面掃描、分類、監看、Explorer 接管、桌面群組與恢復能力。
+
+此整併採「產品合體、程式模組化」原則：
+
+```text
+ToolKeeper.exe
+    │
+    ├─ ToolKeeper 本體
+    │   ├─ 工具目錄 / Launcher
+    │   ├─ Hash Checker
+    │   ├─ Image → ICO
+    │   └─ 工具狀態與平台整合
+    │
+    └─ CabiDock / ToolKeeper.Desktop 模組
+        ├─ 桌面掃描
+        ├─ 分類引擎
+        ├─ Desktop Watcher
+        ├─ Explorer 接管
+        ├─ 桌面群組
+        └─ Recovery
+```
+
+CabiDock 的桌面程式碼仍保持清楚模組邊界，不直接散落於 ToolKeeper 主視窗。其他產品如汗青、ConvAnvil 與未來工具仍可維持獨立 App。
+
 ---
 
 ## 5. Standalone App + ToolKeeper 雙軌策略
@@ -153,12 +181,12 @@ Microsoft Store
 │
 ├─ ToolKeeper          免費（工具目錄、Launcher 與免費小工具）
 ├─ MarkPad             獨立產品
-├─ CabiDock            獨立產品
+├─ CabiDock            併入 ToolKeeper 的桌面模組
 ├─ ConvAnvil           獨立產品
 └─ 其他工具            依個別產品規劃
 ```
 
-ToolKeeper 本體提供目錄、啟動入口與少量免費小工具；各獨立產品仍可單獨使用與發行。
+ToolKeeper 本體提供目錄、啟動入口、少量免費小工具與 CabiDock 桌面模組；除 CabiDock 外，各獨立產品仍可單獨使用與發行。
 
 這樣做的好處：
 
@@ -183,6 +211,31 @@ ToolKeeper 本體提供目錄、啟動入口與少量免費小工具；各獨立
 - 提供上方列出的免費小工具：Image → ICO 與 Hash Checker
 
 ---
+
+### 5.1 工具番桌面群組
+
+ToolKeeper 透過 CabiDock 桌面模組提供一個特殊的 **「工具番」桌面群組**。
+
+此群組不是以副檔名分類桌面檔案，而是由 ToolKeeper 的產品目錄與安裝／啟動狀態驅動：
+
+```text
+工具番
+├─ 汗青
+├─ ConvAnvil
+├─ Tool 004
+├─ Tool 005
+└─ ...
+```
+
+預期行為：
+
+- 工具安裝完成後，可自動出現在「工具番」群組。
+- 工具可用時，點擊入口直接啟動。
+- 工具不可用或尚未安裝時，可依 ToolKeeper Launcher 規則顯示取得入口。
+- 不要求使用者先建立傳統桌面捷徑，也不需要靠一般 CabiDock 副檔名規則辨識工具番產品。
+- 未來產品數量增加時，桌面仍維持單一清楚的工具番群組，而不是散落大量捷徑。
+
+因此，CabiDock 對 ToolKeeper 的角色不只是「桌面檔案分類器」，而是 ToolKeeper 的 **Desktop Experience / Desktop Layer**。
 
 ## 6. ToolKeeper 啟動工具的方式
 
