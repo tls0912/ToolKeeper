@@ -8,14 +8,16 @@ ToolKeeper（工具番）是一個以「超好用的小工具」為核心的 Win
 - 開啟就能用
 - 不增加工作流程，只刪除工作流程
 - 低價、低維護、離線優先
-- 每個工具都是獨立 App
+- 各正式工具原則上維持獨立 App；002 CabiDock 例外，作為 ToolKeeper 的桌面模組由本體載入
 - 所有軟體的標題列都顯示主標題與副標題，格式為 `MainName - SubName`（見[全域規則](docs/PRODUCT_VISION.md#21-軟體標題與副標題全域規則)）
 
-ToolKeeper 本體、002 CabiDock 與 003 ConvAnvil 採用 `ToolKeeper.UI` 共用主視窗外觀：原生標題列顯示主標題與副標題，內容左上顯示 30 DIP 主標題及 14 DIP 產品簡介。標題同一行右側提供「風格、語言、關於」，功能區同步切換五種風格與中英日語言，各產品分別保存偏好。產品簡介獨立於副標題；各產品的功能與資料處理仍由各自專案負責。001 汗青保留既有自訂介面，本輪不加入共用主視窗。範圍見[架構說明](docs/ARCHITECTURE.md#2-依實際需求抽取共用介面)。
+ToolKeeper、CabiDock 現有設定介面與 003 ConvAnvil 已使用 `ToolKeeper.UI` 的共用視窗元件。後續整併後，使用者以 `ToolKeeper.exe` 作為唯一主入口；CabiDock 的桌面掃描、分類、監看、Explorer 接管、桌面群組與 Recovery 保持模組邊界，由 ToolKeeper 載入與管理。003 ConvAnvil 及其他正式工具仍保留自己的 App。001 汗青維持既有自訂介面。範圍見[架構說明](docs/ARCHITECTURE.md)。
 
 ## ToolKeeper 本體
 
-免費的 Hash Checker 與 Image → ICO 已可使用：左上拖入檔案顯示 MD5／SHA-1／SHA-256，右上拖入 PNG／JPG／BMP 直接在原資料夾產生 ICO；全部在本機離線處理。
+ToolKeeper 是平台與單一主執行入口。免費的 Hash Checker 與 Image → ICO 已可使用；後續並負責載入 CabiDock 桌面模組、工具目錄、Launcher、系統匣與「工具番」桌面群組。桌面群組可集中呈現汗青、ConvAnvil 與未來工具的啟動入口，避免大量工具捷徑散落桌面。
+
+Hash Checker 可顯示 MD5／SHA-1／SHA-256；Image → ICO 可將 PNG／JPG／BMP 在原資料夾轉成 ICO，全部在本機離線處理。
 
 下方以同一份工具列表呈現目錄與 Launcher 的規劃版面，左側名稱、右側「開啟／取得」。**目錄與 Launcher 的實際啟動／取得功能依本輪要求暫不實作**，按鈕停用。
 
@@ -51,19 +53,20 @@ dotnet run --project src/MarkPad/MarkPad.csproj -- ".\README.md"
 建置、測試、可攜版打包與選用的 Windows 檔案關聯，見 [開發說明](docs/DEVELOPMENT.md)。
 已實作範圍、驗證結果與待驗收項目，見 [實作狀態](docs/IMPLEMENTATION.md)。
 
-### 002 — CabiDock
+### 002 — CabiDock（ToolKeeper Desktop Module）
 
-依類型與檔名關鍵字自動分類桌面；群組平時收合，點擊展開、滑鼠離開收合，保留檔案原始位置。
+CabiDock 原有的桌面分類能力納入 ToolKeeper，定位為 **Desktop Experience / Desktop Layer**。使用者端最終不需要另外啟動 CabiDock 常駐程式，而是由 `ToolKeeper.exe` 作為單一主入口載入桌面模組。
 
 - 產品規格：[`docs/products/002_CabiDock.md`](docs/products/002_CabiDock.md)
-- 程式碼：[`src/CabiDock`](src/CabiDock)
+- 目前程式碼：[`src/CabiDock`](src/CabiDock)
+- 目標：逐步整理為可由 ToolKeeper 引用的桌面模組（例如 `ToolKeeper.Desktop`）
 - 狀態：已實作分類、群組操作與桌面接管；真實 Explorer 相容性仍待驗收
 
-目前可使用七個預設分類、自訂副檔名與關鍵字規則、分類保存、桌面監看、群組拖曳與系統匣。一般啟動會嘗試將群組附掛桌面，裁切受管理檔案的原生圖示並保留系統圖示；包含暫停恢復、獨立異常恢復程序與 Explorer 變更後重建。裁切仍保留 Explorer 原有鍵盤選取模型，尚未完成 V1 的真實桌面驗收。
+CabiDock 模組負責桌面掃描、分類規則、狀態保存、桌面監看、Explorer 接管、群組互動與異常恢復；ToolKeeper 負責主程式生命週期、系統匣、Launcher 與平台整合。桌面接管程式碼保持獨立模組邊界，不直接堆入 ToolKeeper 主視窗。
 
-```powershell
-dotnet run --project src/CabiDock/CabiDock.csproj
-```
+除了七個一般桌面分類，未來增加由 ToolKeeper 產品目錄驅動的 **「工具番」專屬群組**，直接呈現已安裝或可啟動的工具番產品，不要求先建立傳統桌面捷徑。
+
+目前 `src/CabiDock` 仍可獨立執行供開發與桌面整合驗證；這是過渡期工程入口，不代表最終產品仍有第二個主執行入口。
 
 啟動與驗證方式見 [CabiDock 實作狀態](docs/CABIDOCK-IMPLEMENTATION.md)，桌面整合限制見 [桌面原型驗證](docs/CABIDOCK-DESKTOP.md)。
 
