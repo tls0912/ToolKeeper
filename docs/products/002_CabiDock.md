@@ -23,8 +23,40 @@ CabiDock 是一款 Windows 桌面自動分類工具。啟動後即可依類型�
 - 以簡單、順手、低維護為優先，不要求功能必須市場獨有。
 - 使用預設分類即可工作，不要求先完成設定。
 - 低價或免費皆可，實際售價與上架方式另定。
-- 002 是可獨立使用的正式產品。
+- 002 的桌面能力將併入 ToolKeeper 平台，由 **ToolKeeper.exe 作為單一主執行入口**；CabiDock 保留為桌面模組與功能名稱，不再要求使用者啟動第二個常駐主程式。
 - Hash Checker 與 JPG／BMP／PNG → ICO 規劃為工具番本體的免費小功能；JSON Viewer 已歸入 003 — ConvAnvil。以上均不列入 002。
+
+## 與 ToolKeeper 的整併方向
+
+2026-09-28 起，002 的產品定位調整如下：
+
+- 使用者端維持 **單一主執行入口：`ToolKeeper.exe`**。
+- CabiDock 不再以另一個常駐主程式作為主要使用方式，而是成為 ToolKeeper 的桌面模組。
+- ToolKeeper 負責主程式生命週期、系統匣、工具目錄、Launcher 與平台整合；CabiDock 提供桌面整理與桌面群組能力。
+- 其他正式工具（例如汗青、ConvAnvil 與未來產品）仍可維持各自獨立 App；這次整併只表示 **ToolKeeper + CabiDock 合體**，不表示所有產品都改成同一個 EXE。
+
+### 工具番專屬桌面群組
+
+CabiDock 除了一般桌面分類外，未來需支援一個由 ToolKeeper 管理的 **「工具番」專屬群組**。
+
+此群組與一般副檔名分類不同：
+
+- 一般群組分類的是桌面現有檔案與捷徑。
+- 「工具番」群組呈現的是 ToolKeeper 已知且可啟動的產品入口。
+- 新工具安裝後，ToolKeeper 可讓該工具自動出現在「工具番」群組。
+- 工具移除或不可用時，入口可自動移除或切換為取得狀態。
+- 使用者不需要手動建立桌面捷徑，再等待 CabiDock 重新分類。
+
+```text
+工具番
+├─ 汗青
+├─ ConvAnvil
+├─ Tool 004
+├─ Tool 005
+└─ ...
+```
+
+此設計的目的，是讓 ToolKeeper 未來擁有大量小工具時，桌面仍只需要一個清楚的工具番入口與群組，而不是散落大量捷徑。
 
 ## V1 範圍
 
@@ -231,7 +263,28 @@ CabiDock 是一款 Windows 桌面自動分類工具。啟動後即可依類型�
 
 ## 技術方向與必要驗證
 
-延續工具番的一個正式產品、一個獨立 App／Project 原則。優先評估既有 .NET 10／WPF 技術，Windows 桌面整合集中於必要的程式區域，不預先拆出多層專案或外掛系統。
+CabiDock 的產品能力改採 **單一執行入口、內部模組化**。ToolKeeper 本體負責程式生命週期、主入口與平台層整合；CabiDock 負責桌面掃描、分類、監看、Explorer 接管、桌面群組與恢復等桌面能力。
+
+目標結構：
+
+```text
+ToolKeeper.exe
+    │
+    ├─ ToolKeeper 本體
+    │   ├─ 工具目錄 / Launcher
+    │   ├─ 免費小工具
+    │   └─ 工具安裝狀態與啟動入口
+    │
+    └─ CabiDock / ToolKeeper.Desktop 模組
+        ├─ DesktopScanner
+        ├─ DesktopWatcher
+        ├─ Classification
+        ├─ DesktopTakeover
+        ├─ Desktop Group
+        └─ Recovery
+```
+
+CabiDock 不應將桌面接管程式碼直接堆入 ToolKeeper 主視窗或單一類別；實作時應保留清楚模組邊界。原 `src/CabiDock` 可作為整併來源，後續可逐步調整為供 ToolKeeper 引用的桌面模組（例如 `ToolKeeper.Desktop`）。
 
 ### Windows 相容目標
 
