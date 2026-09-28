@@ -2,13 +2,15 @@
 
 ## 目標
 
-ToolKeeper 採用 **Monorepo + Standalone Apps**。
+ToolKeeper 採用 **Monorepo + Standalone Products + Integrated Desktop Module**。
 
-每一個正式產品都是可獨立建置、獨立上架的 Windows App。ToolKeeper 本體負責工具目錄與 Launcher，並可提供 [產品願景](PRODUCT_VISION.md) 明列的少量免費小工具。
+ToolKeeper 本體是平台與 **單一主執行入口**，負責工具目錄、Launcher、少量免費小工具，以及 CabiDock 桌面模組的生命週期與平台整合。
 
-目前產品為 **001 — MarkPad**、**002 — CabiDock** 與 **003 — ConvAnvil**，各自使用獨立 WPF App Project。免費本體使用 `src/ToolKeeper`，已實作 Hash Checker 與 Image → ICO；目錄與 Launcher 目前只有合併列表版面，實際啟動／取得操作暫緩。
+正式工具原則上仍可獨立建置、獨立上架，例如 **001 — 汗青**、**003 — ConvAnvil** 與未來產品。**002 — CabiDock 是例外**：其產品能力納入 ToolKeeper，作為 Desktop Experience / Desktop Layer，不再要求使用者啟動第二個常駐主程式。
 
-ToolKeeper 本體、002 與 003 的主視窗共用 `src/ToolKeeper.UI/ToolKeeper.UI.csproj` 的 `AppWindow`，標題行右側提供風格、語言與關於入口，各產品仍保留獨立入口與業務邏輯。001 汗青保留自訂視窗，使用同一模組的語言、主題／字體、偏好選單與「關於」內容。
+目前 `src/CabiDock` 仍保留可獨立執行的 WPF App，供既有功能與 Explorer 桌面整合驗證；後續逐步將桌面掃描、分類、監看、Explorer 接管、桌面群組與 Recovery 整理為可由 ToolKeeper 引用的模組（例如 `ToolKeeper.Desktop`）。這是 **產品合體、程式模組化**，不是把 CabiDock 程式碼直接搬進 ToolKeeper 主視窗。
+
+ToolKeeper、CabiDock 現有設定介面與 ConvAnvil 使用 `ToolKeeper.UI` 共用視窗元件；汗青保留自訂視窗並使用其中可獨立採用的語言、主題／字體、偏好選單與「關於」元件。
 
 ## Repository Structure
 
@@ -34,8 +36,9 @@ ToolKeeper/
 │  │  ├─ MainWindow.xaml.cs
 │  │  ├─ app.manifest
 │  │  └─ MarkPad.csproj
-│  ├─ CabiDock/
-│  ├─ ToolKeeper/
+│  ├─ CabiDock/              # 過渡期：既有 002 實作與獨立驗證入口
+│  ├─ ToolKeeper/            # 最終單一主執行入口
+│  ├─ ToolKeeper.Desktop/    # 目標模組；由 CabiDock 桌面能力逐步整理而來
 │  ├─ ToolKeeper.UI/
 │  └─ ConvAnvil/
 │
@@ -51,7 +54,11 @@ ToolKeeper/
 
 ## 核心原則
 
-### 1. 一個產品先維持一個 Project
+### 1. 獨立產品維持簡單；平台桌面能力保持模組邊界
+
+汗青、ConvAnvil 與未來獨立產品仍優先維持單一 App Project，不為低價小工具預先拆分大量業務層。
+
+CabiDock 是特殊案例：它已成為 ToolKeeper 的桌面能力，因此最終由 ToolKeeper 主程式管理生命週期，但桌面整合仍保持獨立模組邊界。**單一執行入口不等於單一 Project。**
 
 MarkPad 的產品邏輯維持在單一 App Project：
 
@@ -79,7 +86,7 @@ src/MarkPad/MarkPad.csproj
 
 > 先重複，再抽象；不要為想像中的未來抽象。
 
-2026-09-28 依使用者要求，ToolKeeper 本體、002 CabiDock 與 003 ConvAnvil 抽取實際共用的 WPF 主視窗至 `src/ToolKeeper.UI/ToolKeeper.UI.csproj`。這是已確認的介面共用需求，不將各產品拆成額外的業務層專案。
+2026-09-28 依實際共用需求，ToolKeeper、CabiDock 現有設定介面與 ConvAnvil 抽取 WPF 共用視窗至 `src/ToolKeeper.UI/ToolKeeper.UI.csproj`。後續 CabiDock 併入 ToolKeeper 後，共用 UI 與桌面業務模組仍分開：`ToolKeeper.UI` 管介面共用，CabiDock／`ToolKeeper.Desktop` 管桌面能力。
 
 共用 `AppWindow` 負責：
 
@@ -89,7 +96,7 @@ src/MarkPad/MarkPad.csproj
 - 簡介右側保留可選的 `HeaderActions` 插槽供離線標示等內容；002 的產品操作放在自身 `Workspace`。
 - 剩餘 `Workspace` 區域，承載產品自己的功能介面。
 
-三個產品的主視窗繼承 `AppWindow`。`Window.Content` 由共用視窗結構持有，產品內容應指定給 `Workspace`；002 的桌面接管切換與群組操作預覽按鈕，放在自身 `Workspace` 第一列靠右的水平工具列。分類、桌面整合、編碼／位元組轉換、雜湊與 ICO 轉換等業務邏輯，以及各產品的狀態與資料儲存，仍留在各產品專案。
+目前 ToolKeeper、CabiDock 設定視窗與 ConvAnvil 的主視窗使用 `AppWindow`。`Window.Content` 由共用視窗結構持有，產品內容指定給 `Workspace`。整併完成後，CabiDock 不再需要作為第二個產品主入口，但分類、桌面整合與 Recovery 等業務邏輯仍留在桌面模組；ToolKeeper 只負責組合、生命週期與平台入口。
 
 同日新增可獨立採用的語言、主題／字體、偏好選單與「關於」元件，先接入汗青，再依使用者要求接入 `AppWindow` 及三個工具的功能區。汗青的 `MainWindow` 仍繼承 WPF `Window`，保留自訂標題列、文件分頁及既有操作入口；全品牌標題規則仍適用。
 
@@ -146,16 +153,28 @@ docs/products/001_MarkPad.md
 
 ## Future Products
 
-未來工具直接新增：
+未來一般工具仍直接新增獨立 App：
 
 ```text
 src/
+├─ ToolKeeper/            # 平台與單一主入口
+├─ ToolKeeper.Desktop/    # CabiDock 桌面模組
+├─ ToolKeeper.UI/
 ├─ MarkPad/
-├─ CabiDock/
 ├─ ConvAnvil/
+├─ Product004/
 └─ ...
 ```
 
-每個產品仍以 Standalone App 為原則。
+一般產品仍以 Standalone App 為原則；**CabiDock 不再套用這條規則**，因為它已成為 ToolKeeper 平台的桌面層。
 
-ToolKeeper 本體已建立獨立 WPF App Project；`FileHashService` 以串流一次計算三種 HASH，`IconConversionService` 使用 Windows WPF 影像解碼器與 ICO 封裝在本機轉檔，未新增第三方執行期套件。內建功能與本輪暫緩範圍見 [實作與問題報告](TOOLKEEPER-IMPLEMENTATION.md)。
+ToolKeeper 與桌面模組的責任分界：
+
+- **ToolKeeper**：程式生命週期、系統匣、工具目錄、Launcher、免費小工具、產品狀態與「工具番」桌面群組資料來源。
+- **CabiDock / ToolKeeper.Desktop**：DesktopScanner、DesktopWatcher、分類引擎、Explorer 接管、桌面群組、Shell／HWND 整合與 Recovery。
+- **ToolKeeper.UI**：可共用的視窗、主題、語言、字體、偏好與 About UI。
+- **獨立工具**：自己的產品業務與獨立執行檔。
+
+「工具番」桌面群組是平台資料驅動的特殊群組，不依靠一般副檔名分類：工具安裝或可啟動後可直接出現在群組，讓未來大量工具不必各自在桌面留下傳統捷徑。
+
+ToolKeeper 本體已建立 WPF App Project；`FileHashService` 以串流一次計算三種 HASH，`IconConversionService` 使用 Windows WPF 影像解碼器與 ICO 封裝在本機轉檔。內建功能與目前實作範圍見 [實作與問題報告](TOOLKEEPER-IMPLEMENTATION.md)。
