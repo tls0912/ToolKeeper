@@ -9,8 +9,8 @@ param(
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
 $repositoryRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
-$assets = Get-Content -LiteralPath (Join-Path $repositoryRoot 'src\MarkPad\obj\project.assets.json') -Raw | ConvertFrom-Json
-$reviewed = Get-Content -LiteralPath (Join-Path $repositoryRoot 'packaging\reviewed-packages.json') -Raw | ConvertFrom-Json
+$assets = Get-Content -LiteralPath (Join-Path $repositoryRoot 'src\MarkPad\obj\project.assets.json') -Raw -Encoding UTF8 | ConvertFrom-Json
+$reviewed = Get-Content -LiteralPath (Join-Path $repositoryRoot 'packaging\reviewed-packages.json') -Raw -Encoding UTF8 | ConvertFrom-Json
 foreach ($library in $assets.libraries.PSObject.Properties) {
     if ($library.Value.type -ne 'package') { continue }
     $parts = $library.Name.Split('/')

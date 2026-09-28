@@ -1,6 +1,7 @@
 # Internal helpers shared by the two explicit, per-user registration scripts.
 Set-StrictMode -Version Latest
 
+# Stable identifiers preserve registrations made before the Hanqing rename.
 $script:RegistrationOwner = 'ToolKeeper.MarkPad.Portable.v1'
 $script:MarkdownProgId = 'ToolKeeper.MarkPad.Markdown'
 $script:ProtocolProgId = 'ToolKeeper.MarkPad.Protocol'
@@ -36,7 +37,7 @@ function Assert-MarkPadRegistrationAvailable {
         try {
             $existing = $applications.GetValue('MarkPad')
             if ($null -ne $existing -and $existing -ne $script:CapabilitiesPath) {
-                throw 'Another application already registered the name MarkPad. Its registration has been preserved.'
+                throw 'Another application owns the legacy MarkPad registration name used by Hanqing. Its registration has been preserved.'
             }
         }
         finally { $applications.Dispose() }
@@ -71,4 +72,3 @@ namespace MarkPadRegistration {
     }
     catch { Write-Warning 'Registration changed; sign out and back in if Explorer does not refresh its Open With list.' }
 }
-

@@ -1,6 +1,7 @@
 using System.IO;
 using System.Text.Json;
 using MarkPad.Models;
+using ToolKeeper.UI;
 
 namespace MarkPad.Services;
 
@@ -54,8 +55,8 @@ public sealed class SettingsService
     {
         // Fresh installs, Reset and invalid-value recovery share one source of defaults.
         var defaults = new AppSettings();
-        if (Settings.Theme is not ("System" or "Light" or "Dark")) Settings.Theme = defaults.Theme;
-        if (Settings.Language is not ("System" or "en" or "zh-TW" or "ja")) Settings.Language = defaults.Language;
+        if (!UiTheme.IsSupported(Settings.Theme)) Settings.Theme = defaults.Theme;
+        if (!UiLanguage.IsSupported(Settings.Language)) Settings.Language = defaults.Language;
         Settings.UiFontFamily ??= defaults.UiFontFamily;
         Settings.PreviewFontFamily ??= defaults.PreviewFontFamily;
         if (string.IsNullOrWhiteSpace(Settings.EditorFontFamily)) Settings.EditorFontFamily = defaults.EditorFontFamily;

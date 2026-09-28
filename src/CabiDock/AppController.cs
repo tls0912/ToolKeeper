@@ -56,7 +56,10 @@ internal sealed class AppController : IDisposable
         _canSave = configuration.CanSave && state.CanSave;
         _loadWarning = string.Join("\n", new[] { configuration.Error, state.Error }.Where(value => !string.IsNullOrWhiteSpace(value)));
         _pendingRules = _state.ConfigurationFingerprint is not null && _state.ConfigurationFingerprint != Fingerprint(_configuration);
-        _settings = new SettingsWindow(_configuration);
+        _settings = new SettingsWindow(_configuration)
+        {
+            PreferencesPath = Path.Combine(dataDirectory, "ui-preferences.json")
+        };
         _settings.SaveRequested += SaveSettings;
         _settings.PreviewRequested += (_, _) => ShowPreview();
         if (roots is null)
@@ -102,7 +105,9 @@ internal sealed class AppController : IDisposable
             if (!_disposed)
             {
                 _lastStatus = null;
-                _settings.SetStatus("桌面監看暫時中斷，將重新掃描並保留既有分類。\n" + message, true);
+                _settings.SetLocalizedStatus("Desktop monitoring was interrupted. Existing categories will be retained during a rescan.\n" + message,
+                    "桌面監看暫時中斷，將重新掃描並保留既有分類。\n" + message,
+                    "デスクトップの監視が中断しました。分類を保持して再スキャンします。\n" + message, true);
             }
         });
     }
@@ -171,7 +176,9 @@ internal sealed class AppController : IDisposable
             {
                 _desktop?.Suspend("桌面掃描未完成，已恢復原生圖示。");
                 _lastStatus = null;
-                _settings.SetStatus("桌面掃描未完成，已保留原有分類清單。\n" + result.Error, true);
+                _settings.SetLocalizedStatus("Desktop scan did not finish. Existing categories are retained.\n" + result.Error,
+                    "桌面掃描未完成，已保留原有分類清單。\n" + result.Error,
+                    "デスクトップのスキャンが完了しませんでした。既存の分類は保持されています。\n" + result.Error, true);
                 return;
             }
             var itemsChanged = !SameItems(_items, result.Items);
@@ -190,7 +197,9 @@ internal sealed class AppController : IDisposable
         {
             _desktop?.Suspend("無法更新桌面分類，已恢復原生圖示。");
             _lastStatus = null;
-            _settings.SetStatus("無法更新桌面分類，既有紀錄保留。\n" + ex.Message, true);
+            _settings.SetLocalizedStatus("Could not update desktop categories. Existing records are retained.\n" + ex.Message,
+                "無法更新桌面分類，既有紀錄保留。\n" + ex.Message,
+                "デスクトップの分類を更新できませんでした。既存の記録は保持されています。\n" + ex.Message, true);
         }
         finally
         {
@@ -249,7 +258,12 @@ internal sealed class AppController : IDisposable
 
     private void AssignManually(DesktopItem item, string categoryId)
     {
-        if (!_canSave) { _settings.SetStatus("無法安全保存分類，請先修復狀態檔案。", true); ShowSettings(); return; }
+        if (!_canSave)
+        {
+            _settings.SetLocalizedStatus("Categories cannot be saved safely. Repair the state file first.",
+                "無法安全保存分類，請先修復狀態檔案。", "分類を安全に保存できません。先に状態ファイルを修復してください。", true);
+            ShowSettings(); return;
+        }
         if (!_items.Any(value => string.Equals(value.FullPath, item.FullPath, StringComparison.OrdinalIgnoreCase))) return;
         _stateDirty |= _classification.AssignManually(item, categoryId, _state, _configuration);
         SaveState();
@@ -276,7 +290,9 @@ internal sealed class AppController : IDisposable
         else
         {
             _lastStatus = null;
-            _settings.SetStatus("分類尚未儲存，將自動重試。\n" + saved.Error, true);
+            _settings.SetLocalizedStatus("Categories have not been saved. Saving will be retried automatically.\n" + saved.Error,
+                "分類尚未儲存，將自動重試。\n" + saved.Error,
+                "分類はまだ保存されていません。自動的に再試行します。\n" + saved.Error, true);
         }
     }
 
@@ -289,7 +305,16 @@ internal sealed class AppController : IDisposable
         // Idle polling must not erase a validation error the user is currently correcting.
         if (_lastStatus == status) return;
         _lastStatus = status;
-        _settings.SetStatus(status, !_canSave || _saveError is not null);
+        var details = string.Join("\n", new[] { _desktop?.Status, _loadWarning }.Where(value => !string.IsNullOrWhiteSpace(value)));
+        _settings.SetLocalizedStatus(
+            $"Scanned {_items.Count} desktop items · {_configuration.Categories.Count} categories\n"
+                + (_desktop is null ? "Custom folder preview: native desktop icons are preserved.\n" : "") + details
+                + (_saveError is null ? "" : "\nCategories have not been saved: " + _saveError),
+            status,
+            $"デスクトップ項目 {_items.Count} 件をスキャン · 分類 {_configuration.Categories.Count} 個\n"
+                + (_desktop is null ? "指定フォルダーのプレビュー：標準デスクトップアイコンを保持します。\n" : "") + details
+                + (_saveError is null ? "" : "\n分類はまだ保存されていません：" + _saveError),
+            !_canSave || _saveError is not null);
     }
 
     private static string Fingerprint(CabiDockConfiguration configuration) =>

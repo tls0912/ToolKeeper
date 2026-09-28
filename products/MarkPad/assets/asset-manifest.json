@@ -1,0 +1,280 @@
+{
+    "generatedUtc":  "2026-09-28T07:35:25.0709839Z",
+    "sourceBrand":  "src/MarkPad/Assets/MarkPad.svg",
+    "sourceRenderer":  "scripts/MarkPadIconRenderer.cs",
+    "packageAssetsSource":  "artifacts/msix/Hanqing-1.0.2.0-x64-store/Layout/Assets",
+    "officialGuidance":  "https://learn.microsoft.com/en-us/windows/apps/publish/publish-your-app/msix/screenshots-and-images",
+    "notes":  [
+                  "app-icon-300.png is the Store listing icon.",
+                  "msix-package contains exact copies of the selected 23 package logos.",
+                  "optional-art contains promotional illustrations, not app screenshots.",
+                  "Box and poster are optional backup art; game-oriented main-logo guidance does not make them required for this app.",
+                  "Hero has no title, text, monogram, application UI, or device imagery."
+              ],
+    "files":  [
+                  {
+                      "file":  "app-icon-300.png",
+                      "bytes":  30761,
+                      "dimensions":  {
+                                         "height":  300,
+                                         "width":  300
+                                     },
+                      "sha256":  "c21eb63db3f7fdc097524f269d6f61b5e4e02b74623e3982dce73fb5011d40a0"
+                  },
+                  {
+                      "file":  "bamboo-icon-preview.png",
+                      "bytes":  58847,
+                      "dimensions":  {
+                                         "height":  512,
+                                         "width":  512
+                                     },
+                      "sha256":  "d3bb49409b0abb8c7a72873dd64d97d3e8dcc2f10a68f9e664e9b3407096ae78"
+                  },
+                  {
+                      "file":  "msix-package/Square150x150Logo.png",
+                      "bytes":  12150,
+                      "dimensions":  {
+                                         "height":  150,
+                                         "width":  150
+                                     },
+                      "sha256":  "9fa2db86cec0808d005b76e0d2db68428ae889847391e6cd357783a4496d2779"
+                  },
+                  {
+                      "file":  "msix-package/Square150x150Logo.scale-100.png",
+                      "bytes":  12150,
+                      "dimensions":  {
+                                         "height":  150,
+                                         "width":  150
+                                     },
+                      "sha256":  "9fa2db86cec0808d005b76e0d2db68428ae889847391e6cd357783a4496d2779"
+                  },
+                  {
+                      "file":  "msix-package/Square150x150Logo.scale-125.png",
+                      "bytes":  16214,
+                      "dimensions":  {
+                                         "height":  188,
+                                         "width":  188
+                                     },
+                      "sha256":  "1796d6911b11cfb1024b77abbdcbf070c3c64afcc0fa9fb35fdb6efc2248fb1e"
+                  },
+                  {
+                      "file":  "msix-package/Square150x150Logo.scale-150.png",
+                      "bytes":  20457,
+                      "dimensions":  {
+                                         "height":  225,
+                                         "width":  225
+                                     },
+                      "sha256":  "5e6a1ea483fb8297ccd8ad12b49c3ee97dd8c93b04c2adbfc5c2be40dda40f85"
+                  },
+                  {
+                      "file":  "msix-package/Square150x150Logo.scale-200.png",
+                      "bytes":  30761,
+                      "dimensions":  {
+                                         "height":  300,
+                                         "width":  300
+                                     },
+                      "sha256":  "c21eb63db3f7fdc097524f269d6f61b5e4e02b74623e3982dce73fb5011d40a0"
+                  },
+                  {
+                      "file":  "msix-package/Square150x150Logo.scale-400.png",
+                      "bytes":  77194,
+                      "dimensions":  {
+                                         "height":  600,
+                                         "width":  600
+                                     },
+                      "sha256":  "c7119bf8bbe0c08064c1e0953939f97b26b4d70e7ce3f4fc5c3fe5d23b58b358"
+                  },
+                  {
+                      "file":  "msix-package/Square44x44Logo.png",
+                      "bytes":  3078,
+                      "dimensions":  {
+                                         "height":  44,
+                                         "width":  44
+                                     },
+                      "sha256":  "52edfb6aa0f3d0238671e586941bb15ff6b90db87bc3b3ff914b3d40805c133a"
+                  },
+                  {
+                      "file":  "msix-package/Square44x44Logo.scale-100.png",
+                      "bytes":  3078,
+                      "dimensions":  {
+                                         "height":  44,
+                                         "width":  44
+                                     },
+                      "sha256":  "52edfb6aa0f3d0238671e586941bb15ff6b90db87bc3b3ff914b3d40805c133a"
+                  },
+                  {
+                      "file":  "msix-package/Square44x44Logo.scale-125.png",
+                      "bytes":  3882,
+                      "dimensions":  {
+                                         "height":  55,
+                                         "width":  55
+                                     },
+                      "sha256":  "4110daf4a347243d4b452c9e1c668a12db460adc69624c2042ff9dbad5c57576"
+                  },
+                  {
+                      "file":  "msix-package/Square44x44Logo.scale-150.png",
+                      "bytes":  4769,
+                      "dimensions":  {
+                                         "height":  66,
+                                         "width":  66
+                                     },
+                      "sha256":  "f0180dad94e044dcc57796571bc65085c4e425b43dfc0006ff2a438b78765b70"
+                  },
+                  {
+                      "file":  "msix-package/Square44x44Logo.scale-200.png",
+                      "bytes":  6449,
+                      "dimensions":  {
+                                         "height":  88,
+                                         "width":  88
+                                     },
+                      "sha256":  "90223d6e038e7a9657331f9fa5dd3b3a3fe436d442f7fcbaf3f0522b81a3093a"
+                  },
+                  {
+                      "file":  "msix-package/Square44x44Logo.scale-400.png",
+                      "bytes":  15140,
+                      "dimensions":  {
+                                         "height":  176,
+                                         "width":  176
+                                     },
+                      "sha256":  "d68b742ac68645bddcf4ec7449c02f28c5673a183f0dbb49ab02a38cff892331"
+                  },
+                  {
+                      "file":  "msix-package/Square44x44Logo.targetsize-16_altform-unplated.png",
+                      "bytes":  895,
+                      "dimensions":  {
+                                         "height":  16,
+                                         "width":  16
+                                     },
+                      "sha256":  "bfb4a23a1e2ad890312f74554a35f713fa5fd24e79fb7e2224122085c9618fd7"
+                  },
+                  {
+                      "file":  "msix-package/Square44x44Logo.targetsize-24_altform-unplated.png",
+                      "bytes":  1520,
+                      "dimensions":  {
+                                         "height":  24,
+                                         "width":  24
+                                     },
+                      "sha256":  "f8ff80cd2a13d1b32ed410537b4fa3c24de564f40ed9d9cd987e63f4f04f0c57"
+                  },
+                  {
+                      "file":  "msix-package/Square44x44Logo.targetsize-256_altform-unplated.png",
+                      "bytes":  22098,
+                      "dimensions":  {
+                                         "height":  256,
+                                         "width":  256
+                                     },
+                      "sha256":  "06316620feefb9a13cb2b8018d6d224506056ac6b4b2e7dffed05a2142e19616"
+                  },
+                  {
+                      "file":  "msix-package/Square44x44Logo.targetsize-32_altform-unplated.png",
+                      "bytes":  2053,
+                      "dimensions":  {
+                                         "height":  32,
+                                         "width":  32
+                                     },
+                      "sha256":  "67c23dedf39c55a0ec1a9c385f831735b0f7531e6d1477d460039838db40d64b"
+                  },
+                  {
+                      "file":  "msix-package/Square44x44Logo.targetsize-48_altform-unplated.png",
+                      "bytes":  3386,
+                      "dimensions":  {
+                                         "height":  48,
+                                         "width":  48
+                                     },
+                      "sha256":  "6d506e6eb4746a011fbe1e311cfd9b3e355fb3a4fb57077f65796c0b84b6ef63"
+                  },
+                  {
+                      "file":  "msix-package/StoreLogo.png",
+                      "bytes":  3498,
+                      "dimensions":  {
+                                         "height":  50,
+                                         "width":  50
+                                     },
+                      "sha256":  "16d573e8607faf08e3ca59c9aa776283d635a409fc35b1423ae2022ece589ec5"
+                  },
+                  {
+                      "file":  "msix-package/StoreLogo.scale-100.png",
+                      "bytes":  3498,
+                      "dimensions":  {
+                                         "height":  50,
+                                         "width":  50
+                                     },
+                      "sha256":  "16d573e8607faf08e3ca59c9aa776283d635a409fc35b1423ae2022ece589ec5"
+                  },
+                  {
+                      "file":  "msix-package/StoreLogo.scale-125.png",
+                      "bytes":  4506,
+                      "dimensions":  {
+                                         "height":  63,
+                                         "width":  63
+                                     },
+                      "sha256":  "c634eb15ffce062a0af477bc3b8f1bbfe299d0fb0e53fae67a62a3ca38568920"
+                  },
+                  {
+                      "file":  "msix-package/StoreLogo.scale-150.png",
+                      "bytes":  5560,
+                      "dimensions":  {
+                                         "height":  75,
+                                         "width":  75
+                                     },
+                      "sha256":  "c9e4772e2dcb4bdfc1080175828d798fa428ab21f4b584dba453d002bd13f536"
+                  },
+                  {
+                      "file":  "msix-package/StoreLogo.scale-200.png",
+                      "bytes":  7554,
+                      "dimensions":  {
+                                         "height":  100,
+                                         "width":  100
+                                     },
+                      "sha256":  "914a1289210d2f0b0b8664dff29263f5d095907cf3d26d975d64f15056136317"
+                  },
+                  {
+                      "file":  "msix-package/StoreLogo.scale-400.png",
+                      "bytes":  17705,
+                      "dimensions":  {
+                                         "height":  200,
+                                         "width":  200
+                                     },
+                      "sha256":  "c546946298ac6b67c4cf6a339354769802d9276692d356462f8f409952d89b3b"
+                  },
+                  {
+                      "file":  "optional-art/box-art-1080.png",
+                      "bytes":  249880,
+                      "dimensions":  {
+                                         "height":  1080,
+                                         "width":  1080
+                                     },
+                      "sha256":  "8ef21510e50c92dc28a369913fddc7b74ae78fccfb78b666a47bb5780df44533"
+                  },
+                  {
+                      "file":  "optional-art/hero-art-1920x1080.png",
+                      "bytes":  412745,
+                      "dimensions":  {
+                                         "height":  1080,
+                                         "width":  1920
+                                     },
+                      "sha256":  "08fb80146321d9162f1e9926c9050c505f0af81523863f9a02297157ebdfa09e"
+                  },
+                  {
+                      "file":  "optional-art/poster-art-720x1080.png",
+                      "bytes":  182467,
+                      "dimensions":  {
+                                         "height":  1080,
+                                         "width":  720
+                                     },
+                      "sha256":  "b5b1d8c4f067928afa57d121a684c2594eed7c630fe774d2f0791813e3faf0ec"
+                  },
+                  {
+                      "file":  "source-brand/MarkPad.ico",
+                      "bytes":  47676,
+                      "dimensions":  null,
+                      "sha256":  "f1f5219211e28ad93eecfa3df2dfd245ea7b3dc23e705a616259148f015f020a"
+                  },
+                  {
+                      "file":  "source-brand/MarkPad.svg",
+                      "bytes":  19242,
+                      "dimensions":  null,
+                      "sha256":  "9ca42710d47f1f672014074f6a9f0b79f83c1d0eb5a802a2b1c8196c73411a77"
+                  }
+              ]
+}

@@ -5,15 +5,18 @@
 - 產品代號：**003**。
 - 正式產品名稱：**ConvAnvil**。
 - 產品副標題：**Text, Encoding & Byte Converter**。
-- 更新日期：2026-09-26。
-- 狀態：**產品方向與名稱已定，細部功能與 UI 尚未定案**。
-- 本階段先確認產品要解決的問題與核心能力，不提前凍結完整 V1 規格。
+- 更新日期：2026-09-28。
+- 狀態：**已建立 0.1 開發預覽；完整 V1 規格與正式發行尚未定案**。
+- 本輪採用可調整的實作預設，完成 File／Text／Bytes 核心流程；JSON Viewer 已納入 003 產品範圍，但尚未實作。其他完整 V1 細節不提前凍結。
+- 已實作範圍與限制見 [實作狀態](../CONVANVIL-IMPLEMENTATION.md)，自行採用的預設與待決事項見 [決策報告](../CONVANVIL-DECISIONS.md)。
 
 ## 產品定位
 
-**ConvAnvil — Text, Encoding & Byte Converter** 是一款 Windows 上的 **文字編碼、位元組與文字格式診斷／轉換工具**。
+**ConvAnvil — Text, Encoding & Byte Converter** 是一款 Windows 上的 **文字編碼、位元組與文字格式診斷／轉換工具，並提供 JSON 檢視與格式整理**。
 
 它不是一般文字編輯器，也不是大型 IDE 的附屬功能集合。
+
+主視窗採用 `ToolKeeper.UI` 共用外觀，原生標題列為 `ConvAnvil - Text, Encoding & Byte Converter`。內容左上以 30 DIP 顯示 `ConvAnvil`，下方以 14 DIP 顯示獨立的產品簡介；右側保留產品操作區，File／Text／Bytes 介面放在下方工作區。產品簡介與副標題分開定義，應反映目前可用功能；JSON Viewer 尚未實作。共用視窗不共用編碼、轉檔或位元組處理邏輯。
 
 主要解決以下實際問題：
 
@@ -23,10 +26,11 @@
 - 需要確認 CRLF / LF、BOM 等文字檔格式。
 - 工程開發或通訊除錯時，需要在 **Text 與 Bytes** 之間快速雙向轉換。
 - 希望在轉換前先看清楚結果，而不是直接改檔後才發現內容損壞。
+- 需要格式化 JSON、以樹狀結構檢視、壓縮輸出或複製結果。
 
 核心方向：
 
-> **把文字、Encoding、Bytes 之間發生了什麼，一次看清楚。**
+> **看清文字、Encoding、Bytes 與 JSON 結構，並在確認結果後安全轉換。**
 
 ## 主要使用情境
 
@@ -48,10 +52,11 @@
 5. 通訊或 Protocol 開發時，需要把文字直接轉成 Hex Bytes。
 6. 拿到一串 Hex Bytes，希望指定 Encoding 後還原成人類可讀文字。
 7. 轉檔前希望知道是否存在無法表示或可能遺失的字元。
+8. 需要格式化 JSON、以樹狀結構檢視、壓縮或複製結果，不需要完整編輯器。
 
 ## 核心能力
 
-目前方向分為三個相互關聯的功能區。
+目前產品包含 File、Text、Bytes 三個編碼與轉換功能區，以及一個聚焦的 JSON Viewer 功能區。
 
 ### 1. File
 
@@ -164,6 +169,19 @@ ABC中文
 
 需能處理常見 Byte 輸入格式，並在輸入格式不合法時指出錯誤位置，而不是靜默忽略。
 
+### 4. JSON Viewer
+
+提供基本 JSON 格式整理與檢視，不發展成完整編輯器。
+
+預計能力：
+
+- 格式化 JSON。
+- 以樹狀結構檢視 JSON。
+- 壓縮 JSON。
+- 複製格式化或壓縮後的 JSON。
+
+JSON Viewer 已確定納入 003 產品範圍；現行 0.1 開發預覽尚未實作，實際介面與操作流程待 V1 設計。
+
 ## 工程使用情境
 
 003 應特別考慮通訊與設備整合工作常見需求。
@@ -274,6 +292,7 @@ Text ↔ Bytes
 - Hex / Decimal / Binary 顯示。
 - 常見 Byte 輸入格式解析。
 - 常見控制字元可視化。
+- JSON 格式化、樹狀檢視、壓縮與複製；不提供完整編輯器。
 - 全部本機處理。
 
 ### V1 暫不納入
@@ -284,7 +303,7 @@ Text ↔ Bytes
 - Serial Port Terminal。
 - Socket Client。
 - PLC Protocol Tool。
-- Base64 / URL / JSON / XML 等與 Encoding 核心無關的大型 Converter 集合。
+- Base64 / URL / XML 等與 Encoding 核心無關的大型 Converter 集合。
 - AI。
 - Cloud。
 - Account / Login。
@@ -335,7 +354,7 @@ Text ↔ Bytes
 
 目前一句話定義：
 
-> **ConvAnvil 是一款把文字檔 Encoding、文字格式與 Bytes 之間的關係看清楚，並安全完成雙向轉換的 Windows 小工具。**
+> **ConvAnvil 是一款檢視與轉換文字檔 Encoding、文字格式及 Bytes，並整理 JSON 結構的 Windows 小工具。**
 
 ## 待定項目
 
@@ -347,6 +366,7 @@ Text ↔ Bytes
 - File / Text / Bytes 三區的實際 UI。
 - 轉換時採覆寫、另存新檔或兩者皆提供。
 - Large File 行為。
+- JSON Viewer 的實際介面與操作流程。
 - Microsoft Store 售價與上架方式。
 
 ## 文件編號規則

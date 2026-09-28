@@ -1,0 +1,2 @@
+本次套件適用於 64 位元 Windows（x64）。
+預覽與 PDF 匯出需要 Microsoft Edge WebView2 Evergreen Runtime。

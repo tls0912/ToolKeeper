@@ -7,13 +7,13 @@ namespace MarkPad.Editing;
 
 internal static class MarkdownHighlighting
 {
-    public static IHighlightingDefinition Create(bool dark)
+    public static IHighlightingDefinition Create(bool dark, bool ink = false)
     {
-        var heading = dark ? "#79C0FF" : "#0550AE";
-        var code = dark ? "#A5D6FF" : "#0A3069";
-        var link = dark ? "#58A6FF" : "#0969DA";
-        var muted = dark ? "#8B949E" : "#6E7781";
-        var marker = dark ? "#D2A8FF" : "#8250DF";
+        var heading = ink ? (dark ? "#C5D4C3" : "#304C43") : dark ? "#79C0FF" : "#0550AE";
+        var code = ink ? (dark ? "#CFB78B" : "#605C48") : dark ? "#A5D6FF" : "#0A3069";
+        var link = ink ? (dark ? "#A2BEA9" : "#456B61") : dark ? "#58A6FF" : "#0969DA";
+        var muted = ink ? (dark ? "#AAAFA3" : "#73786F") : dark ? "#8B949E" : "#6E7781";
+        var marker = ink ? (dark ? "#D79B89" : "#A64B3C") : dark ? "#D2A8FF" : "#8250DF";
         var definition = $$"""
             <SyntaxDefinition name="Markdown" extensions=".md;.markdown" xmlns="http://icsharpcode.net/sharpdevelop/syntaxdefinition/2008">
               <Color name="Heading" foreground="{{heading}}" fontWeight="bold" />

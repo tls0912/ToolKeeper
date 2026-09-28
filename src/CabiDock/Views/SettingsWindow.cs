@@ -7,6 +7,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using CabiDock.Models;
 using CabiDock.Services;
+using ToolKeeper.UI;
 using Controls = System.Windows.Controls;
 
 namespace CabiDock.Views;
@@ -17,7 +18,7 @@ public sealed class SettingsSaveRequestedEventArgs(CabiDockConfiguration configu
     public string? ErrorMessage { get; set; }
 }
 
-public sealed class SettingsWindow : Window
+public sealed partial class SettingsWindow : AppWindow
 {
     private const string RuleDragFormat = "CabiDock.KeywordRule";
     private readonly ObservableCollection<CategoryEditor> _categories = [];
@@ -38,42 +39,44 @@ public sealed class SettingsWindow : Window
 
     public SettingsWindow(CabiDockConfiguration configuration)
     {
-        Title = "CabiDock — 設定";
+        MainName = "CabiDock";
+        SubName = "Desktop Organizer";
+        Description = "桌面檔案自動分組，平時收起，需要時點開。";
         var workArea = SystemParameters.WorkArea;
         Width = Math.Min(940, Math.Max(320, workArea.Width - 32));
         Height = Math.Min(830, Math.Max(320, workArea.Height - 32));
         MinWidth = Math.Min(740, Width);
         MinHeight = Math.Min(660, Height);
         WindowStartupLocation = WindowStartupLocation.CenterScreen;
-        ViewTheme.Apply(this);
+        Resources.MergedDictionaries.Add(new ResourceDictionary
+        {
+            Source = new Uri("/CabiDock;component/Views/SettingsStyles.xaml", UriKind.Relative)
+        });
+        AboutAuthor = "不告訴你";
         DataContext = this;
         foreach (var category in configuration.Categories) _categories.Add(new(category));
         foreach (var rule in configuration.KeywordRules) _rules.Add(new(rule));
 
-        var root = new Controls.Grid { Margin = new Thickness(28, 22, 28, 20) };
+        var root = new Controls.Grid();
         root.RowDefinitions.Add(new() { Height = GridLength.Auto });
         root.RowDefinitions.Add(new() { Height = new GridLength(1.1, GridUnitType.Star) });
         root.RowDefinitions.Add(new() { Height = new GridLength(1, GridUnitType.Star) });
         root.RowDefinitions.Add(new() { Height = GridLength.Auto });
         root.RowDefinitions.Add(new() { Height = GridLength.Auto });
-        Content = root;
+        Workspace = root;
 
-        var header = new Controls.Grid { Margin = new Thickness(0, 0, 0, 22) };
-        header.ColumnDefinitions.Add(new() { Width = new GridLength(1, GridUnitType.Star) });
-        header.ColumnDefinitions.Add(new() { Width = GridLength.Auto });
-        var brand = new Controls.StackPanel();
-        brand.Children.Add(new Controls.TextBlock { Text = "CabiDock", FontSize = 30, FontWeight = FontWeights.SemiBold });
-        brand.Children.Add(ViewTheme.Text("桌面檔案自動分組，平時收起，需要時點開。", 14, ViewTheme.Muted));
-        header.Children.Add(brand);
         var preview = ViewTheme.Button("開啟群組操作預覽", (_, _) => PreviewRequested?.Invoke(this, EventArgs.Empty));
         preview.VerticalAlignment = VerticalAlignment.Center;
-        var actions = new Controls.StackPanel { VerticalAlignment = VerticalAlignment.Center };
+        var actions = new Controls.WrapPanel
+        {
+            Name = "WorkspaceActions", HorizontalAlignment = HorizontalAlignment.Right,
+            Margin = new Thickness(0, 0, 0, 12)
+        };
         _desktopToggle = ViewTheme.Button("暫停桌面接管", (_, _) => DesktopToggleRequested?.Invoke(this, EventArgs.Empty));
+        _desktopToggle.Margin = new Thickness(0, 0, 8, 0);
         actions.Children.Add(_desktopToggle);
         actions.Children.Add(preview);
-        Controls.Grid.SetColumn(actions, 1);
-        header.Children.Add(actions);
-        root.Children.Add(header);
+        root.Children.Add(actions);
 
         _categoryGrid = CreateGrid(_categories);
         _categoryGrid.Columns.Add(new Controls.DataGridTextColumn
@@ -89,7 +92,9 @@ public sealed class SettingsWindow : Window
         extensionText.SetBinding(IsEnabledProperty, new Binding(nameof(CategoryEditor.CanEditExtensions)));
         extensionText.SetValue(Controls.Control.BorderThicknessProperty, new Thickness(0));
         extensionText.SetValue(Controls.Control.BackgroundProperty, Brushes.Transparent);
-        extensionText.SetValue(Controls.Control.ToolTipProperty, "以逗號或空白分隔，例如：md, pdf, .txt");
+        extensionText.SetResourceReference(Controls.Control.ForegroundProperty, "TextBrush");
+        extensionText.SetResourceReference(Controls.TextBox.CaretBrushProperty, "TextBrush");
+        extensionText.SetResourceReference(Controls.Control.ToolTipProperty, "ExtensionsHelp");
         _categoryGrid.Columns.Add(new Controls.DataGridTemplateColumn
         {
             Header = "副檔名（以逗號或空白分隔）", CellTemplate = new DataTemplate { VisualTree = extensionText },
@@ -113,7 +118,7 @@ public sealed class SettingsWindow : Window
         grip.SetValue(Controls.TextBlock.FontSizeProperty, 22d);
         grip.SetValue(Controls.TextBlock.PaddingProperty, new Thickness(9, 2, 9, 2));
         grip.SetValue(CursorProperty, Cursors.SizeAll);
-        grip.SetValue(ToolTipProperty, "拖曳以調整規則順序");
+        grip.SetResourceReference(ToolTipProperty, "RuleOrderHelp");
         grip.AddHandler(MouseLeftButtonDownEvent, new MouseButtonEventHandler((_, e) => _ruleDragStart = e.GetPosition(_ruleGrid)));
         grip.AddHandler(MouseMoveEvent, new MouseEventHandler(RuleGripMouseMove));
         _ruleGrid.Columns.Add(new Controls.DataGridTemplateColumn { Header = "排序", Width = 52, CellTemplate = new DataTemplate { VisualTree = grip } });
@@ -128,7 +133,8 @@ public sealed class SettingsWindow : Window
         target.SetBinding(Controls.ComboBox.SelectedValueProperty, EditBinding(nameof(RuleEditor.CategoryId)));
         target.SetValue(Controls.Control.PaddingProperty, new Thickness(6));
         target.SetValue(Controls.Control.BorderThicknessProperty, new Thickness(0));
-        target.SetValue(Controls.Control.BackgroundProperty, Brushes.White);
+        target.SetResourceReference(Controls.Control.BackgroundProperty, "SurfaceBrush");
+        target.SetResourceReference(Controls.Control.ForegroundProperty, "TextBrush");
         _ruleGrid.Columns.Add(new Controls.DataGridTemplateColumn
         {
             Header = "目標分類", Width = 200, CellTemplate = new DataTemplate { VisualTree = target }
@@ -188,20 +194,33 @@ public sealed class SettingsWindow : Window
         footer.Children.Add(save);
         Controls.Grid.SetRow(footer, 4);
         root.Children.Add(footer);
+        StateChanged += (_, _) =>
+        {
+            if (WindowState != WindowState.Minimized) return;
+            // Let the native minimize transition finish before hiding the taskbar entry.
+            Dispatcher.BeginInvoke(() => { if (WindowState == WindowState.Minimized && IsVisible) Hide(); });
+        };
         Closing += (_, e) => { if (!AllowClose) { e.Cancel = true; Hide(); } };
+        InitializePreferences();
     }
 
     public void SetStatus(string message, bool isError = false)
     {
+        _statusText = () => message;
         _status.Text = message;
-        _status.Foreground = isError ? ViewTheme.Brush("#B03C32") : ViewTheme.Muted;
+        _status.SetResourceReference(Controls.TextBlock.ForegroundProperty, isError ? "ErrorBrush" : "MutedBrush");
     }
 
     public void SetDesktopState(bool enabled, bool available = true)
     {
-        _desktopToggle.Content = enabled ? "暫停桌面接管" : "啟用桌面接管";
+        _desktopEnabled = enabled;
+        _desktopAvailable = available;
+        _desktopToggle.Content = enabled ? T("Pause desktop control", "暫停桌面接管", "デスクトップ制御を一時停止")
+            : T("Enable desktop control", "啟用桌面接管", "デスクトップ制御を有効化");
         _desktopToggle.IsEnabled = available;
-        _desktopToggle.ToolTip = available ? "暫停後立即恢復原生桌面圖示。" : "自訂掃描目錄使用群組預覽，不接管真實桌面。";
+        _desktopToggle.ToolTip = available
+            ? T("Pausing immediately restores native desktop icons.", "暫停後立即恢復原生桌面圖示。", "一時停止すると標準のデスクトップアイコンに戻ります。")
+            : T("Custom folders use group preview without controlling the real desktop.", "自訂掃描目錄使用群組預覽，不接管真實桌面。", "指定フォルダーはグループプレビューを使用し、実際のデスクトップを変更しません。");
     }
 
     private static Binding EditBinding(string property) => new(property)
@@ -244,26 +263,28 @@ public sealed class SettingsWindow : Window
 
     private void AddCategory(object sender, RoutedEventArgs e)
     {
+        var baseName = T("New category", "新分類", "新しい分類");
         var category = new CategoryEditor(new CategoryDefinition
         {
-            Id = Guid.NewGuid().ToString("N"), Name = "新分類", IsCustom = true, Kind = CategoryKind.Extension
+            Id = Guid.NewGuid().ToString("N"), Name = baseName, IsCustom = true, Kind = CategoryKind.Extension
         });
+        category.SetLanguage(ResolvedLanguage);
         var number = 2;
-        while (_categories.Any(c => c.Name == category.Name)) category.Name = $"新分類 {number++}";
+        while (_categories.Any(c => c.Name == category.Name)) category.Name = $"{baseName} {number++}";
         _categories.Add(category);
         _categoryGrid.SelectedItem = category;
         _categoryGrid.ScrollIntoView(category);
-        SetStatus("請輸入分類名稱與副檔名，完成後按「儲存並套用」。");
+        SetLocalizedStatus("Enter a category name and extensions, then choose Save and apply.", "請輸入分類名稱與副檔名，完成後按「儲存並套用」。", "分類名と拡張子を入力し、「保存して適用」を押してください。");
     }
 
     private void DeleteCategory(object sender, RoutedEventArgs e)
     {
         if (_categoryGrid.SelectedItem is not CategoryEditor category) return;
-        if (!category.IsCustom) { SetStatus("預設分類可改名或調整副檔名，但不能刪除。", true); return; }
+        if (!category.IsCustom) { SetLocalizedStatus("Default categories can be renamed or edited, but cannot be deleted.", "預設分類可改名或調整副檔名，但不能刪除。", "既定の分類は名前や拡張子を変更できますが、削除はできません。", true); return; }
         _categories.Remove(category);
         var removed = _rules.Where(r => r.CategoryId == category.Id).ToList();
         foreach (var rule in removed) _rules.Remove(rule);
-        SetStatus($"已移除「{category.Name}」及 {removed.Count} 條相關規則；儲存後生效。");
+        SetLocalizedStatus($"Removed “{category.Name}” and {removed.Count} related rules; save to apply.", $"已移除「{category.Name}」及 {removed.Count} 條相關規則；儲存後生效。", $"「{category.Name}」と関連ルール {removed.Count} 件を削除しました。保存すると適用されます。");
     }
 
     private void AddRule(object sender, RoutedEventArgs e)
@@ -273,7 +294,7 @@ public sealed class SettingsWindow : Window
         _rules.Add(rule);
         _ruleGrid.SelectedItem = rule;
         _ruleGrid.ScrollIntoView(rule);
-        SetStatus("輸入檔名關鍵字並選擇目標分類，可拖曳左側把手調整優先順序。");
+        SetLocalizedStatus("Enter a filename keyword and choose a category. Drag the left handle to reorder rules.", "輸入檔名關鍵字並選擇目標分類，可拖曳左側把手調整優先順序。", "ファイル名のキーワードと分類を指定してください。左のハンドルで優先順位を変更できます。");
     }
 
     private void DeleteRule(object sender, RoutedEventArgs e)
@@ -314,10 +335,17 @@ public sealed class SettingsWindow : Window
             KeywordRules = _rules.Select(r => new KeywordRule { Keyword = r.Keyword.Trim(), CategoryId = r.CategoryId }).ToList()
         };
         var errors = ConfigurationService.Validate(configuration);
-        if (errors.Count > 0) { SetStatus(string.Join("\n", errors), true); return; }
+        if (errors.Count > 0)
+        {
+            var details = string.Join("\n", errors);
+            SetLocalizedStatus("Please correct the configuration:\n" + details, "請修正設定：\n" + details, "設定を修正してください：\n" + details, true);
+            return;
+        }
         var args = new SettingsSaveRequestedEventArgs(ConfigurationService.Normalize(configuration));
         SaveRequested?.Invoke(this, args);
-        SetStatus(args.ErrorMessage ?? "設定已儲存並套用；有效的手動指定會保留。", args.ErrorMessage is not null);
+        if (args.ErrorMessage is { } error)
+            SetLocalizedStatus("Could not save settings:\n" + error, "無法儲存設定：\n" + error, "設定を保存できませんでした：\n" + error, true);
+        else SetLocalizedStatus("Settings saved and applied; valid manual assignments are retained.", "設定已儲存並套用；有效的手動指定會保留。", "設定を保存して適用しました。有効な手動割り当ては保持されます。");
     }
 
     private static T? FindParent<T>(DependencyObject? element) where T : DependencyObject
@@ -335,7 +363,14 @@ public sealed class SettingsWindow : Window
         public bool IsCustom { get; } = category.IsCustom;
         public CategoryKind Kind { get; } = category.Kind;
         public bool CanEditExtensions => Kind == CategoryKind.Extension;
-        public string KindLabel => IsCustom ? "自訂" : Kind switch { CategoryKind.Folder => "資料夾", CategoryKind.Fallback => "兜底", _ => "預設" };
+        private string _language = "zh-TW";
+        public string KindLabel => IsCustom ? UiLanguage.Text(_language, "Custom", "自訂", "カスタム") : Kind switch
+        {
+            CategoryKind.Folder => UiLanguage.Text(_language, "Folder", "資料夾", "フォルダー"),
+            CategoryKind.Fallback => UiLanguage.Text(_language, "Fallback", "兜底", "その他"),
+            _ => UiLanguage.Text(_language, "Default", "預設", "既定")
+        };
+        public void SetLanguage(string language) { _language = language; Changed(nameof(KindLabel)); }
         public CategoryDefinition ToDefinition() => new()
         {
             Id = Id, Name = Name.Trim(), Kind = Kind, IsCustom = IsCustom,

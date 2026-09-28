@@ -6,11 +6,15 @@ namespace MarkPad.Tests;
 
 public sealed class EditorPaneTests
 {
-    [Fact]
-    public Task ThemesAndLanguageLoadWithMarkdownHighlighting() => StaTest.Run(() =>
+    [Theory]
+    [InlineData(false, false)]
+    [InlineData(true, false)]
+    [InlineData(false, true)]
+    [InlineData(true, true)]
+    public Task ThemesAndLanguageLoadWithMarkdownHighlighting(bool dark, bool ink) => StaTest.Run(() =>
     {
         var pane = new EditorPane();
-        pane.ApplyOptions(true, "Consolas", 18);
+        pane.ApplyOptions(dark, "Consolas", 18, ink);
         pane.ApplyLanguage("zh-TW");
         pane.ApplyLanguage("ja-JP");
         Assert.Equal("Markdown", pane.Editor.SyntaxHighlighting.Name);
@@ -133,6 +137,85 @@ public sealed class EditorPaneTests
     });
 
     [Fact]
+    public Task BodyRemovesAtxHeadingsOnlyAndUndoesMultipleLinesInOneStep() => StaTest.Run(() =>
+    {
+        const string source = "# first\n   ## second\n  plain\n    # indented code\n##not-heading";
+        const string expected = "first\nsecond\n  plain\n    # indented code\n##not-heading";
+        var pane = new EditorPane();
+        var tab = Tab(source);
+        pane.Bind(tab);
+        pane.Editor.Select(0, source.Length);
+
+        pane.SetHeading(0);
+
+        Assert.Equal(expected, tab.Content);
+        pane.Editor.Undo();
+        Assert.Equal(source, tab.Content);
+        Assert.False(tab.Document.UndoStack.CanUndo);
+        pane.Editor.Redo();
+        Assert.Equal(expected, tab.Content);
+
+        var plain = Tab("  unchanged\nplain text");
+        pane.Bind(plain);
+        pane.Editor.Select(0, plain.Content.Length);
+        pane.SetHeading(0);
+        Assert.Equal("  unchanged\nplain text", plain.Content);
+        Assert.False(plain.Document.UndoStack.CanUndo);
+        return Task.CompletedTask;
+    });
+
+    [Theory]
+    [InlineData("See this now", 4, 4, "See [this](https://) now")]
+    [InlineData("See this now", 4, 0, "See [](https://)this now")]
+    [InlineData("", 0, 0, "[](https://)")]
+    public Task InsertLinkUsesSelectionOrCaretAndUndoesInOneStep(string source, int start, int length, string expected) => StaTest.Run(() =>
+    {
+        var pane = new EditorPane();
+        var tab = Tab(source);
+        pane.Bind(tab);
+        pane.Editor.Select(start, length);
+
+        pane.InsertLink();
+
+        Assert.Equal(expected, tab.Content);
+        Assert.Equal("https://", pane.SelectedText);
+        Assert.Equal(start + length + 3, pane.Editor.SelectionStart);
+        pane.Editor.Undo();
+        Assert.Equal(source, tab.Content);
+        Assert.False(tab.Document.UndoStack.CanUndo);
+        pane.Editor.Redo();
+        Assert.Equal(expected, tab.Content);
+        return Task.CompletedTask;
+    });
+
+    [Fact]
+    public Task ChangingEditorFontPreservesContentSelectionAndExistingUndo() => StaTest.Run(() =>
+    {
+        var pane = new EditorPane();
+        var tab = Tab("keep text");
+        pane.Bind(tab);
+        pane.Editor.Document.Insert(9, "!");
+        pane.Editor.Select(5, 4);
+        var caret = pane.Editor.CaretOffset;
+        var changes = 0;
+        pane.ContentChanged += (_, _) => changes++;
+
+        pane.ApplyOptions(true, "Georgia", 24, ink: true);
+
+        Assert.Equal("keep text!", tab.Content);
+        Assert.Equal("text", pane.SelectedText);
+        Assert.Equal(5, pane.Editor.SelectionStart);
+        Assert.Equal(caret, pane.Editor.CaretOffset);
+        Assert.Equal(0, changes);
+        pane.Editor.Undo();
+        Assert.Equal("keep text", tab.Content);
+        Assert.False(tab.Document.UndoStack.CanUndo);
+        pane.Editor.Redo();
+        Assert.Equal("keep text!", tab.Content);
+        return Task.CompletedTask;
+    });
+
+    [Fact]
     public Task ReadOnlyDocumentBlocksAllFormattingAndReplaceCommands() => StaTest.Run(() =>
     {
         var pane = new EditorPane();
@@ -144,8 +227,17 @@ public sealed class EditorPaneTests
         Assert.Equal(0, pane.ReplaceAll("keep", "change", false));
         pane.WrapSelection("**", "**");
         pane.SetHeading(1);
+        pane.SetHeading(0);
+        pane.InsertLink();
         Assert.Equal("keep me", tab.Content);
+        Assert.Equal("keep", pane.SelectedText);
         Assert.False(tab.Document.UndoStack.CanUndo);
+        var heading = Tab("# keep heading");
+        heading.IsReadOnly = true;
+        pane.Bind(heading);
+        pane.SetHeading(0);
+        Assert.Equal("# keep heading", heading.Content);
+        Assert.False(heading.Document.UndoStack.CanUndo);
         return Task.CompletedTask;
     });
 

@@ -1,0 +1,23 @@
+{
+  "zh-TW": [
+    {"file":"01-preview-bamboo-light.png","caption":"竹子亮色介面搭配宣紙底色，章節列表自動整理 H1–H6 標題，點選即可跳轉。"},
+    {"file":"02-preview-bamboo-dark.png","caption":"竹子深色預覽保留宣紙紋理與章節導覽，依閱讀習慣選擇深色介面。"},
+    {"file":"03-preview-light.png","caption":"一般亮色預覽以清晰的淺色版面呈現 Markdown，支援章節跳轉、表格與待辦清單。"},
+    {"file":"04-preview-dark.png","caption":"一般深色預覽以深色底搭配明亮文字，閱讀 Markdown 時同樣可使用章節導覽。"},
+    {"file":"05-edit-bamboo-light.png","caption":"竹子亮色編輯模式：左側編輯 Markdown，右側即時預覽；上方工具列可調整字型、字級與文字格式。"}
+  ],
+  "en-US": [
+    {"file":"01-preview-bamboo-light.png","caption":"Read on a paper-inspired canvas with the Bamboo Light theme. The chapter list gathers H1–H6 headings for quick navigation."},
+    {"file":"02-preview-bamboo-dark.png","caption":"Choose Bamboo Dark for a darker reading surface, with paper texture and chapter navigation kept in view."},
+    {"file":"03-preview-light.png","caption":"Preview Markdown with the clean Light theme. Navigate chapters and read formatted tables and task lists."},
+    {"file":"04-preview-dark.png","caption":"Read Markdown with bright text on the Dark theme's muted background. Use the chapter list to jump to a heading."},
+    {"file":"05-edit-bamboo-light.png","caption":"Write in Bamboo Light: edit Markdown on the left with a live preview on the right. Adjust fonts, size, and formatting from the toolbar above."}
+  ],
+  "ja-JP": [
+    {"file":"01-preview-bamboo-light.png","caption":"竹のライトテーマと宣紙の背景で文書を閲覧。H1–H6 の見出しを一覧から選び、目的の章へ移動できます。"},
+    {"file":"02-preview-bamboo-dark.png","caption":"竹のダークテーマに切り替えて、落ち着いた明るさで閲覧。宣紙の風合いと章一覧もそのまま使えます。"},
+    {"file":"03-preview-light.png","caption":"標準のライトテーマで Markdown をプレビュー。章一覧から移動し、表やタスクリストを読みやすい表示で確認できます。"},
+    {"file":"04-preview-dark.png","caption":"標準のダークテーマでは暗い背景と明るい文字で文書を表示。章一覧から目的の見出しへ移動できます。"},
+    {"file":"05-edit-bamboo-light.png","caption":"竹のライトテーマで編集。左側に Markdown、右側にライブプレビューを表示し、上部のツールバーでフォント、文字サイズ、書式を調整できます。"}
+  ]
+}

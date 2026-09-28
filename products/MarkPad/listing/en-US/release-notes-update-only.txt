@@ -1,0 +1,5 @@
+Adds startup license checks: valid trials can continue; expired licenses show a purchase prompt and close the app.
+After a full license is confirmed, later launches for the same Windows user and computer do not query the Store again.
+Includes Bamboo Light and Dark themes, xuan paper backgrounds, and traditional lettering options.
+Reading mode offers chapter navigation; editing mode provides a side-by-side live preview and font toolbar.
+

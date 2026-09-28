@@ -1,3 +1,4 @@
+using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
@@ -11,6 +12,8 @@ using Xunit;
 
 namespace CabiDock.Tests;
 
+// WPF property descriptors share a process-wide cache with the preview's layout bindings.
+[Collection("WPF layout bindings")]
 public sealed class DesktopGroupPresenterTests
 {
     private static readonly DesktopProbeResult Desktop = new()
@@ -39,7 +42,7 @@ public sealed class DesktopGroupPresenterTests
         Assert.Equal(2, state.Groups.Count);
         Assert.True(presenter.TryUpdate(config, state, items, Desktop, out reason), reason);
         Assert.Equal(2, hosts.Count);
-        Assert.All(hosts, host => Assert.Equal(1, host.ShowCount));
+        Assert.All(hosts, host => Assert.Equal(2, host.ShowCount)); // Reconfirm presentation after each verified refresh.
 
         var first = hosts[0];
         var header = Descendants<Thumb>((DependencyObject)first.Window.Content).First();
@@ -110,19 +113,50 @@ public sealed class DesktopGroupPresenterTests
         Assert.Equal(2, hosts.Count);
         Assert.False(first.Disposed);
         Assert.Equal(360, first.Bounds.Width);
-        Assert.Equal(1, first.ShowCount);
+        Assert.Equal(2, first.ShowCount);
         Assert.Contains(items[0].FullPath, presenter.RepresentedFilePaths);
 
         presenter.SuspendVisibility();
         Assert.True(presenter.IsAlive);
         Assert.All(hosts, host => Assert.True(host.Hidden));
         Assert.True(presenter.TryUpdate(config, state, items, Desktop, out reason, show: false), reason);
-        Assert.Equal(1, first.ShowCount);
-        Assert.True(presenter.TryShow(out reason), reason);
         Assert.Equal(2, first.ShowCount);
+        Assert.True(presenter.TryShow(out reason), reason);
+        Assert.Equal(3, first.ShowCount);
         Assert.False(first.Hidden);
         Assert.Equal(360, first.Bounds.Width);
         Assert.Equal(2, hosts.Count);
+    });
+
+    [Fact]
+    public Task VerifiedRefreshRestoresExternallyHiddenGroupsWithoutRecreatingThem() => OnSta(() =>
+    {
+        var hosts = new List<FakeHost>();
+        using var presenter = CreatePresenter(hosts, new Rect(0, 0, 1920, 1040));
+        var (config, state, items) = Data();
+        Assert.True(presenter.TryUpdate(config, state, items, Desktop, out var reason), reason);
+        var first = hosts[0];
+        var header = Descendants<Thumb>((DependencyObject)first.Window.Content).First();
+        header.RaiseEvent(new DragStartedEventArgs(0, 0) { RoutedEvent = Thumb.DragStartedEvent });
+        header.RaiseEvent(new DragCompletedEventArgs(0, 0, false) { RoutedEvent = Thumb.DragCompletedEvent });
+        Assert.Equal(360, first.Bounds.Width);
+
+        // Explorer can change native presentation while the presenter still considers it shown.
+        foreach (var host in hosts) host.Hide();
+        Assert.True(presenter.IsAlive);
+        Assert.True(presenter.TryUpdate(config, state, items, Desktop, out reason, show: false), reason);
+        Assert.All(hosts, host => { Assert.True(host.Hidden); Assert.Equal(1, host.ShowCount); });
+
+        // The service calls TryShow only after it has verified and applied current icon geometry.
+        Assert.True(presenter.TryShow(out reason), reason);
+        Assert.Equal(2, hosts.Count);
+        Assert.All(hosts, host =>
+        {
+            Assert.False(host.Hidden);
+            Assert.False(host.Disposed);
+            Assert.Equal(2, host.ShowCount);
+        });
+        Assert.Equal(360, first.Bounds.Width);
     });
 
     [Fact]
@@ -357,12 +391,72 @@ public sealed class DesktopGroupPresenterTests
             Assert.Equal(50, bounds.Left);
             Assert.Equal(70, bounds.Top);
             Assert.Equal(138, bounds.Right - bounds.Left);
+            host.Hide();
+            Assert.Equal(0, NativeDesktop.ReadStyle(childHandle, -16).ToInt64() & 0x10000000L); // WS_VISIBLE
+            Assert.True(host.IsAlive);
+            Assert.True(host.TryShow(new Rect(50, 70, 138, 160), out reason), reason);
+            Assert.NotEqual(0, NativeDesktop.ReadStyle(childHandle, -16).ToInt64() & 0x10000000L);
+            Assert.False(parent.IsVisible); // Native visibility recovery must not show the test parent.
             parent.Close();
             Assert.False(host.IsAlive);
             Assert.False(host.TrySetBounds(new Rect(0, 0, 138, 160), out _));
         }
         finally { host?.Dispose(); child.Close(); parent.Close(); }
     });
+
+    [Fact]
+    public Task NativeHostReturnsAboveSiblingAfterExplorerStyleReordering() => OnSta(() =>
+    {
+        // Both children and the hidden parent belong to this test; no Explorer HWND is changed.
+        var parent = new Window { Width = 800, Height = 600, ShowInTaskbar = false };
+        var child = new Window
+        {
+            Width = 138, Height = 160, WindowStyle = WindowStyle.None, ShowInTaskbar = false,
+            ShowActivated = false, ResizeMode = ResizeMode.NoResize
+        };
+        var sibling = new Window
+        {
+            Width = 138, Height = 160, WindowStyle = WindowStyle.None, ShowInTaskbar = false,
+            ShowActivated = false, ResizeMode = ResizeMode.NoResize
+        };
+        DesktopWindowHost? childHost = null;
+        DesktopWindowHost? siblingHost = null;
+        try
+        {
+            var parentHandle = new WindowInteropHelper(parent).EnsureHandle();
+            NativeDesktop.GetWindowThreadProcessId(parentHandle, out var process);
+            var probe = new DesktopProbeResult
+            {
+                Available = true, ShellWindow = NativeDesktop.GetShellWindow(),
+                ViewWindow = parentHandle, ShellProcessId = process
+            };
+            Assert.True(DesktopWindowHost.TryAttach(child, probe, out childHost, out var reason), reason);
+            Assert.True(DesktopWindowHost.TryAttach(sibling, probe, out siblingHost, out reason), reason);
+            var bounds = new Rect(50, 70, 138, 160);
+            Assert.True(childHost!.TryShow(bounds, out reason), reason);
+            Assert.True(siblingHost!.TryShow(bounds, out reason), reason);
+            var childHandle = new WindowInteropHelper(child).Handle;
+            var siblingHandle = new WindowInteropHelper(sibling).Handle;
+            Assert.Equal(siblingHandle, GetWindow(childHandle, 3)); // GW_HWNDPREV: sibling is above our group.
+
+            Assert.True(childHost.TryShow(bounds, out reason), reason);
+            Assert.Equal(nint.Zero, GetWindow(childHandle, 3));
+            Assert.Equal(childHandle, GetWindow(siblingHandle, 3));
+            Assert.Equal(parentHandle, NativeDesktop.GetParent(childHandle));
+            Assert.False(parent.IsVisible);
+        }
+        finally
+        {
+            siblingHost?.Dispose();
+            childHost?.Dispose();
+            sibling.Close();
+            child.Close();
+            parent.Close();
+        }
+    });
+
+    [DllImport("user32.dll")]
+    private static extern nint GetWindow(nint window, uint command);
 
     private static DesktopGroupPresenter CreatePresenter(List<FakeHost> hosts, Rect bounds, double scale = 1) =>
         new((window, _) =>

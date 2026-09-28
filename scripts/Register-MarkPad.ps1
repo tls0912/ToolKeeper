@@ -1,12 +1,12 @@
-#Requires -Version 5.1
+﻿#Requires -Version 5.1
 <#
 .SYNOPSIS
-Adds a portable MarkPad build to the current user's Open With list and registers its URI.
+Adds a portable Hanqing (汗青) build to the current user's Open With list and registers its URI.
 .DESCRIPTION
 Writes only HKCU. Does not change .md defaults, UserChoice, or other users' settings.
 An existing registration created by this script can be updated to a new executable path.
 .EXAMPLE
-.\Register-MarkPad.ps1 -ExecutablePath 'C:\Apps\MarkPad\MarkPad.exe' -WhatIf
+.\Register-MarkPad.ps1 -ExecutablePath 'C:\Apps\Hanqing\Hanqing.exe' -WhatIf
 #>
 [CmdletBinding(SupportsShouldProcess = $true, ConfirmImpact = 'Medium')]
 param(
@@ -21,7 +21,7 @@ if ($env:OS -ne 'Windows_NT') { throw 'Windows is required for app registration.
 . (Join-Path $PSScriptRoot 'Registration.Common.ps1')
 
 $executable = Get-Item -LiteralPath $ExecutablePath -ErrorAction Stop
-if ($executable.PSIsContainer -or $executable.Extension -ine '.exe') { throw 'ExecutablePath must point to the published MarkPad.exe.' }
+if ($executable.PSIsContainer -or $executable.Name -ine 'Hanqing.exe') { throw 'ExecutablePath must point to the published Hanqing.exe.' }
 $fullPath = $executable.FullName
 if ($fullPath.Contains('"')) { throw 'The executable path contains an invalid quote.' }
 Assert-MarkPadRegistrationAvailable
@@ -38,7 +38,7 @@ if ($PSCmdlet.ShouldProcess("HKCU app registration for $fullPath", 'Register .md
 
     foreach ($root in @("Software\Classes\$script:ProtocolProgId", $script:ProtocolPath)) {
         Set-MarkPadRegistryValues $root @{
-            '' = 'URL:MarkPad Protocol'; 'URL Protocol' = '';
+            '' = 'URL:汗青 Protocol'; 'URL Protocol' = '';
             'ToolKeeperRegistrationOwner' = $script:RegistrationOwner
         }
         Set-MarkPadRegistryValues "$root\DefaultIcon" @{ '' = $icon }
@@ -46,7 +46,7 @@ if ($PSCmdlet.ShouldProcess("HKCU app registration for $fullPath", 'Register .md
     }
 
     Set-MarkPadRegistryValues $script:CapabilitiesPath @{
-        'ApplicationName' = 'MarkPad'; 'ApplicationDescription' = 'Offline Markdown reader and editor';
+        'ApplicationName' = '汗青'; 'ApplicationDescription' = 'Offline Markdown reader and editor';
         'ApplicationIcon' = $icon; 'ToolKeeperRegistrationOwner' = $script:RegistrationOwner
     }
     Set-MarkPadRegistryValues "$script:CapabilitiesPath\FileAssociations" @{ '.md' = $script:MarkdownProgId }
@@ -57,6 +57,5 @@ if ($PSCmdlet.ShouldProcess("HKCU app registration for $fullPath", 'Register .md
     try { $openWith.SetValue($script:MarkdownProgId, [byte[]]@(), [Microsoft.Win32.RegistryValueKind]::None) }
     finally { $openWith.Dispose() }
     Send-MarkPadAssociationChanged
-    Write-Output 'Registered MarkPad for this user. Choose a default app in Windows Settings if desired.'
+    Write-Output 'Registered 汗青 for this user. Choose a default app in Windows Settings if desired.'
 }
-

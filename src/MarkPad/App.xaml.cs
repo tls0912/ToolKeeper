@@ -18,21 +18,29 @@ public partial class App : Application
         base.OnStartup(e);
         try
         {
-            Preferences = new SettingsService();
-            Recovery = new RecoveryService(Path.Combine(Preferences.DataDirectory, "recovery"));
-            _instance = new SingleInstanceService();
             var newWindow = Keyboard.Modifiers.HasFlag(ModifierKeys.Shift);
             var paths = ParsePaths(e.Args);
+            Preferences = new SettingsService();
+            var licensing = new StoreLicenseService();
+            ShutdownMode = ShutdownMode.OnExplicitShutdown;
+            if (!licensing.CanStartWithoutStore && !await new StartupLicenseWindow(Preferences.Settings).CheckAsync(licensing))
+            {
+                Shutdown();
+                return;
+            }
+            Recovery = new RecoveryService(Path.Combine(Preferences.DataDirectory, "recovery"));
+            _instance = new SingleInstanceService(licensing.InstanceName);
             if (!_instance.IsPrimary)
             {
                 if (!await _instance.ForwardAsync(paths, newWindow))
-                    MessageBox.Show("MarkPad is still starting. Please try opening the file again.", "MarkPad");
+                    MessageBox.Show("汗青 is still starting. Please try opening the file again.", "汗青");
                 Shutdown();
                 return;
             }
             var window = new MainWindow();
             MainWindow = window;
             window.Show();
+            ShutdownMode = ShutdownMode.OnLastWindowClose;
             ApplyPreferences();
             _instance.StartListening((files, separate) => Dispatcher.BeginInvoke(new Action(async () =>
             {
@@ -47,7 +55,7 @@ public partial class App : Application
             {
                 var result = MessageBox.Show(window,
                     window.T("Recover unsaved documents from the previous session?", "要復原上次未儲存的文件嗎？", "前回の未保存の文書を復元しますか？"),
-                    "MarkPad", MessageBoxButton.YesNo, MessageBoxImage.Question);
+                    "汗青", MessageBoxButton.YesNo, MessageBoxImage.Question);
                 if (result == MessageBoxResult.Yes)
                     foreach (var document in recoverable) window.AddDocument(document);
                 else Recovery.Clear();
@@ -57,7 +65,7 @@ public partial class App : Application
         catch (Exception ex)
         {
             LocalLog.Write(ex);
-            MessageBox.Show(ex.Message, "MarkPad", MessageBoxButton.OK, MessageBoxImage.Error);
+            MessageBox.Show(ex.Message, "汗青", MessageBoxButton.OK, MessageBoxImage.Error);
             Shutdown(1);
         }
     }

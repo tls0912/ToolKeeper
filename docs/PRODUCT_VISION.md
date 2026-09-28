@@ -56,6 +56,39 @@ ToolKeeper 的產品哲學，就是把這些摩擦一個一個拿掉。
 
 「工具番」只保留俏皮的語感與工具管理概念。
 
+### 2.1 軟體標題與副標題（全域規則）
+
+ToolKeeper 旗下所有軟體（包含 ToolKeeper 本體、既有產品與未來新增產品）都必須具備主標題與副標題，並在視窗標題列中顯示，統一格式為：
+
+```text
+MainName - SubName
+```
+
+- `MainName`：軟體的正式產品名稱。
+- `SubName`：產品副標題，可為用途說明或品牌中文名稱，須於各產品規格中明確定義。
+- 分隔符號固定使用半形連字號 `-`，左右各一個半形空格。
+- 原生或自訂標題列都必須顯示完整主標題與副標題；視窗的 `Title` 亦使用相同文字。
+- 此規則自 2026-09-28 起適用；既有產品規格若僅要求顯示產品名稱，應依此規則更新。
+
+已定義名稱的範例：
+
+- `ToolKeeper - 工具番`
+- `汗青 - Markdown Writer`
+- `CabiDock - Desktop Organizer`
+- `ConvAnvil - Text, Encoding & Byte Converter`
+
+### 2.2 共用主視窗介面
+
+2026-09-28 起，ToolKeeper 本體、002 CabiDock 與 003 ConvAnvil 採用同一套主視窗外觀，由 `ToolKeeper.UI` 維護。001 汗青本輪保留既有自訂視窗與文件分頁。
+
+- 原生標題列遵守前述 `MainName - SubName` 格式。
+- 內容左上方顯示 30 DIP 主標題，下方以 14 DIP 顯示產品簡介；標題上方不留空白列或額外上邊距。
+- 產品簡介是獨立文字，用於說明目前功能與用途，不直接以副標題代替。
+- 共用標頭右側保留可選插槽，下方工作區由各產品提供；002 的操作按鈕放在自己的工作區第一列靠右處。
+- 共用範圍為主視窗外觀與配置；每個產品的功能、資料處理與狀態仍由自己的專案負責。
+
+本體主標題為 `ToolKeeper`、副標題為 `工具番`；002 本輪依桌面整理用途採用 `CabiDock` 與 `Desktop Organizer`；003 沿用 `ConvAnvil` 與 `Text, Encoding & Byte Converter`。實作邊界見[架構說明](ARCHITECTURE.md#2-依實際需求抽取共用介面)。
+
 ---
 
 ## 3. 商業模式
@@ -86,64 +119,46 @@ ToolKeeper 的產品哲學，就是把這些摩擦一個一個拿掉。
 
 ## 4. ToolKeeper 本體的角色
 
-ToolKeeper 本體**不是工具盒本身**。
+ToolKeeper 本體以免費工具目錄與 Launcher 為主，另外規劃提供少量免費小工具；它不是把所有獨立產品功能都塞進同一個工具盒。
 
-它不：
+ToolKeeper 本體負責：
 
-- 內建其他工具功能
-- 下載模組
-- 管理授權
-- 進行內購
-- 自己安裝工具
-- 承載 Markdown / JSON / Diff 等功能
+- 集中展示工具番產品，讓使用者瀏覽與發現工具。
+- 啟動已安裝的獨立工具；尚未安裝時開啟 Microsoft Store 商品頁。
+- 提供少量免費、範圍明確的小工具功能。
 
-ToolKeeper 的角色只有兩個：
+ToolKeeper 不負責下載模組、管理授權、內購或自行安裝獨立工具；安裝與更新由 Microsoft Store 處理。
 
-1. **工具目錄**
-2. **工具 Launcher**
+**2026-09-26 實作範圍：** 目錄與 Launcher 規劃合併成同一份工具列表，左側顯示名稱，右側提供「開啟／取得」；目前僅呈現版面、停用操作，尚不實作安裝偵測、URI 啟動或商店導向。本輪先完成上方左側 Hash Checker 與右側 Image → ICO。後文 Launcher 流程為後續規劃。
 
-概念：
+### ToolKeeper 本體的免費小工具
 
-```text
-ToolKeeper
-│
-├─ Markdown Editor
-│   ├─ 已安裝 → 直接啟動
-│   └─ 未安裝 → 開啟 Microsoft Store 商品頁
-│
-├─ JSON Viewer
-│   ├─ 已安裝 → 直接啟動
-│   └─ 未安裝 → 開啟 Microsoft Store 商品頁
-│
-├─ Quick Diff
-│   └─ ...
-│
-└─ Hash Checker
-    └─ ...
-```
+ToolKeeper 本體免費提供以下兩項小工具：
 
-因此每個工具都是完全獨立的 Windows App。
+- **Image → ICO**：將 JPG、BMP 或 PNG 圖片拖入介面，在原圖片所在資料夾產生 ICO 檔。
+- **Hash Checker**：計算 MD5、SHA-1、SHA-256；可比對雜湊值並驗證檔案。
+
+**JSON Viewer 已歸入 003 — ConvAnvil**，不列為 ToolKeeper 本體內建功能。其他獨立工具仍各自是 Windows App。
 
 ---
 
 ## 5. Standalone App + ToolKeeper 雙軌策略
 
-每一個工具都可以單獨上架 Microsoft Store。
+獨立產品可以各自上架 Microsoft Store，與免費的 ToolKeeper 本體並行。
 
 例如：
 
 ```text
 Microsoft Store
 │
-├─ ToolKeeper          免費
-├─ Markdown Editor     付費
-├─ JSON Viewer         付費
-├─ Quick Diff          付費
-├─ Hash Checker        付費
-└─ Batch Rename        付費
+├─ ToolKeeper          免費（工具目錄、Launcher 與免費小工具）
+├─ MarkPad             獨立產品
+├─ CabiDock            獨立產品
+├─ ConvAnvil           獨立產品
+└─ 其他工具            依個別產品規劃
 ```
 
-ToolKeeper 只是把這些工具串在一起。
+ToolKeeper 本體提供目錄、啟動入口與少量免費小工具；各獨立產品仍可單獨使用與發行。
 
 這樣做的好處：
 
@@ -165,23 +180,21 @@ ToolKeeper 只是把這些工具串在一起。
 - 已安裝工具快速啟動
 - 未安裝工具導向 Microsoft Store
 - 讓既有使用者發現其他工具
+- 提供上方列出的免費小工具：Image → ICO 與 Hash Checker
 
 ---
 
 ## 6. ToolKeeper 啟動工具的方式
 
-每個獨立工具註冊自己的 URI Protocol。
+每個可由 Launcher 啟動的獨立工具註冊自己的 URI Protocol。
 
 例如：
 
 ```text
-toolkeeper-markdown:
-toolkeeper-json:
-toolkeeper-diff:
-toolkeeper-hash:
+toolkeeper-<product>:
 ```
 
-ToolKeeper 點擊某項工具時：
+ToolKeeper 點擊某項獨立產品時：
 
 ```text
 點擊工具
@@ -387,17 +400,14 @@ WebView2
 
 ## 11. 後續工具候選
 
-目前可考慮：
+其他可考慮的獨立工具：
 
-- JSON Viewer / Formatter
 - XML Viewer
 - CSV Viewer
 - Quick Diff
-- Hash Checker
 - Batch Rename
 - Folder Size
 - Clipboard Cleaner / Plain Paste
-- Image → ICO
 - Wake Lock
 - File Organizer
 - Encoding Converter

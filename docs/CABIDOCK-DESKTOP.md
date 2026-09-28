@@ -7,7 +7,7 @@
 - 啟動 `dotnet run --project src/CabiDock/CabiDock.csproj`，設定視窗顯示目前接管狀態與失敗原因。
 - 「暫停桌面接管」會撤下群組並恢復原生圖示；「啟用桌面接管」重新嘗試。此暫停只影響本次執行。
 - 開啟群組操作預覽會先暫停接管。`--desktop-directory` 自訂掃描目錄僅提供預覽，不操作真實桌面。
-- 關閉設定視窗繼續在系統匣運作；「結束程式」或登出會恢復桌面。
+- 最小化或關閉設定視窗會縮至系統匣，不佔工作列；從系統匣「設定」恢復視窗。「結束程式」或登出會恢復桌面。
 - 展開後滑鼠離開 3 秒才收合；移回取消。選單、改名與拖曳期間保持展開，結束後重新計時。
 - 檔案右鍵使用 Windows Shell 傳統完整選單（Windows 11「顯示其他選項」類型），附加「CabiDock 分類」子選單；選擇重新命名或按 F2 可修改檔名。改名由 Shell 執行，分類記錄交由監看流程更新。
 - 設定中的「分類區不透明度」提供 30–100%，儲存後套用所有群組，預設 100%。只改不透明度不重新分類。
@@ -21,6 +21,8 @@
 `DesktopGroupPresenter` 將群組附掛為 Explorer view 的子視窗，先全部附掛成功才顯示，不使用置頂視窗。群組配置限制在主螢幕工作區，避開保留的原生圖示。跨程序 DPI awareness 不一致會拒絕附掛。`DesktopTakeoverService` 每秒重新核對 Shell、群組與恢復程序；檔案事件以 120ms 合併掃描，WinEvent 取得新幾何映射後在既有 session 更新，不再每次拆除接管並等待 5 秒。分類 membership 使用完整掃描副本，避免 watcher 先更新路徑、掃描稍後完成時誤刪群組。原生選單操作中的群組延後替換內容與撤下視窗，裁切只包含實際已呈現的檔案。
 
 若 Shell 與 MSAA 幾何暫時不一致，先恢復原生 region、暫藏並保留群組 HWND 與展開狀態，以 100ms 間隔重試；持續 2 秒仍失敗或 Explorer／恢復程序失效才完整停止。這保留安全恢復，並不承諾所有桌面異常均無閃動。首次變更前仍會在恢復程序及群組就緒後重新核對圖示快照。
+
+幾何核對成功後，每次更新都以原生 `SetWindowPos` 恢復群組的顯示旗標與桌面內子視窗層級，展開群組排在前方。暫藏使用原生 API，不能只依賴 WPF 的顯示快取或「曾顯示」紀錄，否則檔案異動後可能一直隱藏到手動重新接管。原生測試 HWND 已驗證隱藏後恢復顯示及子視窗層級，Presenter 測試驗證保留群組與展開尺寸、核對完成前不提前顯示。
 
 分類區透明度透過 `SetLayeredWindowAttributes` 設定自有子視窗的整體 alpha；窄範圍的 `HwndSource` hook 防止 WPF 在 extended-style 更新時移除必要的 `WS_EX_LAYERED`，回到 100% 或結束附掛時移除 hook 與分層樣式。不設定滑鼠穿透。[Microsoft 原生透明度文件](https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-setlayeredwindowattributes)、[WPF HwndTarget 原始碼](https://github.com/dotnet/wpf/blob/main/src/Microsoft.DotNet.Wpf/src/PresentationCore/System/Windows/InterOp/HwndTarget.cs)。
 

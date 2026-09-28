@@ -1,0 +1,2 @@
+このパッケージは 64 ビット Windows（x64）用です。
+プレビューと PDF 出力には Microsoft Edge WebView2 Evergreen Runtime が必要です。

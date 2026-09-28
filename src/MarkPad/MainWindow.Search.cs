@@ -87,6 +87,7 @@ public partial class MainWindow
 
     private async void OnKeyDown(object sender, KeyEventArgs e)
     {
+        if (e.Key == Key.Escape && HandleEditorToolbarEscape()) { e.Handled = true; return; }
         var modifiers = Keyboard.Modifiers;
         var ctrl = modifiers.HasFlag(ModifierKeys.Control);
         var shift = modifiers.HasFlag(ModifierKeys.Shift);
@@ -125,7 +126,7 @@ public partial class MainWindow
                 break;
             case "F11": ToggleFullScreen(); break;
             case "Escape":
-                if ((_previewOverlay || _current?.IsPreviewMode == true) && await _preview.CloseOverlayAsync()) { _previewOverlay = false; }
+                if (_currentView is not null && await _preview.CloseOverlayAsync()) { _previewOverlay = false; }
                 else if (ReplacePanel.IsVisible) ReplacePanel.Visibility = Visibility.Collapsed;
                 else if (SearchPanel.IsVisible) await CloseSearchAsync();
                 else if (_flyout?.IsOpen == true) _flyout.IsOpen = false;

@@ -84,11 +84,7 @@ public sealed class DesktopGroupPresenter : IDisposable
     public void SuspendVisibility()
     {
         _dispatcher.VerifyAccess();
-        foreach (var entry in _groups.Values)
-        {
-            entry.Host.Hide();
-            entry.Shown = false;
-        }
+        foreach (var entry in _groups.Values) entry.Host.Hide();
     }
 
     public bool TryUpdate(CabiDockConfiguration config, CabiDockState state,
@@ -183,10 +179,11 @@ public sealed class DesktopGroupPresenter : IDisposable
         _dispatcher.VerifyAccess();
         reason = "";
         if (_disposed) { reason = "桌面群組已關閉。"; return false; }
-        foreach (var entry in _groups.Values.Where(entry => !entry.Shown))
+        // Explorer can hide or reorder child windows without changing their handles or bounds.
+        // Reconfirm presentation after every verified snapshot; keep expanded groups in front.
+        foreach (var entry in _groups.Values.OrderBy(entry => entry.Model.IsExpanded))
         {
             if (!entry.Host.TryShow(BoundsFor(entry), out reason)) return false;
-            entry.Shown = true;
         }
         return true;
     }
@@ -421,7 +418,6 @@ public sealed class DesktopGroupPresenter : IDisposable
         public GroupLayout Layout { get; set; } = new();
         public List<Action> Unsubscribe { get; } = [];
         public Rect? LastBounds { get; set; }
-        public bool Shown { get; set; }
 
         public void Dispose()
         {

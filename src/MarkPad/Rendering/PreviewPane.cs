@@ -5,12 +5,15 @@ using System.Text.Json;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
+using MarkPad.Models;
 using Microsoft.Web.WebView2.Core;
 using Microsoft.Web.WebView2.Wpf;
+using ToolKeeper.UI;
 
 namespace MarkPad.Rendering;
 
-public sealed record PreviewMessage(string Type, string? Text = null, int Line = 0, int Count = 0, int Index = 0, bool Flag = false);
+public sealed record PreviewMessage(string Type, string? Text = null, int Line = 0, int Count = 0, int Index = 0,
+    bool Flag = false, double SourcePosition = 0, double ScrollProgress = 0);
 
 /// <summary>Owns one sandboxed offline preview. Messages always originate from the current rendered document.</summary>
 public sealed partial class PreviewPane : UserControl, IDisposable
@@ -21,6 +24,8 @@ public sealed partial class PreviewPane : UserControl, IDisposable
     private readonly MarkdownRenderer _renderer = new();
     private Task<bool>? _initializeTask;
     private RenderedPreview? _current;
+    private (string Markdown, string? Path)? _currentInput;
+    private long _currentRequest;
     private TaskCompletionSource<bool>? _ready;
     private long _request;
     private ulong _navigationId;
@@ -39,6 +44,16 @@ public sealed partial class PreviewPane : UserControl, IDisposable
         && _ready?.Task.IsCompletedSuccessfully == true && _ready.Task.Result;
 
     public event EventHandler<PreviewMessage>? MessageReceived;
+    public event EventHandler? HeadingsChanged;
+    public IReadOnlyList<PreviewHeading> Headings { get; private set; } = Array.Empty<PreviewHeading>();
+
+    /// <summary>Whether the ready browser page represents this exact source snapshot.</summary>
+    public bool IsShowing(string markdown, string? filePath) => HasReadyDocument
+        && _currentInput is { } input && input.Markdown == markdown && input.Path == filePath;
+
+    /// <summary>Force the next ShowAsync to restore interactive DOM state, even if Undo
+    /// has already returned the source to the same Markdown as the cached page.</summary>
+    public void InvalidateDisplay() => _displayInput = null;
 
     public PreviewPane(string? browserDataFolder = null)
     {
@@ -72,8 +87,9 @@ public sealed partial class PreviewPane : UserControl, IDisposable
     {
         if (_disposed) return;
         var version = ++_request;
+        PublishHeadings(Array.Empty<PreviewHeading>());
         _language = options.Language;
-        ApplyThemeColors(options.Dark);
+        ApplyThemeColors(options.Dark, options.Ink);
         try
         {
             // Parsing and sanitizing larger documents must not block typing or tab switching.
@@ -82,10 +98,19 @@ public sealed partial class PreviewPane : UserControl, IDisposable
             var rendered = await build;
             if (_disposed || version != _request) return;
             if (!initialized) return;
+            // Read the browser's current position after a potentially lengthy render rather
+            // than restoring the stale scroll snapshot captured before typing or scrolling.
+            if (sourceLine is null && HasReadyDocument)
+            {
+                scroll = await GetScrollAsync();
+                if (_disposed || version != _request) return;
+            }
             // Cached HTML is reusable, but each navigation needs a fresh message identity so two
             // identical untitled tabs cannot accept one another's queued messages.
             rendered = ForNavigation(rendered);
             _current = rendered;
+            _currentInput = (markdown, filePath);
+            _currentRequest = version;
             _documentPath = filePath;
             _restoreScroll = double.IsFinite(scroll) ? Math.Max(0, scroll) : 0;
             _restoreLine = sourceLine;
@@ -93,7 +118,8 @@ public sealed partial class PreviewPane : UserControl, IDisposable
             var ready = _ready = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
             _notice.Visibility = Visibility.Collapsed;
             _browser.Visibility = Visibility.Visible;
-            ApplyThemeColors(_displayInput?.Options.Dark ?? options.Dark);
+            var currentOptions = _displayInput?.Options ?? options;
+            ApplyThemeColors(currentOptions.Dark, currentOptions.Ink);
             // Ignore a superseded navigation's completion before the new NavigationStarting event.
             _navigationId = 0;
             _browser.CoreWebView2.Navigate(DocumentUrl(rendered));
@@ -111,20 +137,25 @@ public sealed partial class PreviewPane : UserControl, IDisposable
     }
 
     /// <summary>Synchronize retained pages and their native canvas without navigating again.</summary>
-    public async Task SetThemeAsync(bool dark)
+    public async Task SetThemeAsync(bool dark, bool ink = false)
     {
         if (_disposed) return;
-        ApplyThemeColors(dark);
+        ApplyThemeColors(dark, ink);
         if (_displayInput is { } input)
-            _displayInput = (input.Markdown, input.Path, input.Options with { Dark = dark });
-        await ExecuteAsync($"window.markpad?.theme({JsonSerializer.Serialize(dark)})");
+            _displayInput = (input.Markdown, input.Path, input.Options with { Dark = dark, Ink = ink });
+        await ExecuteAsync(ThemeScript(dark, ink));
     }
 
-    private void ApplyThemeColors(bool dark)
+    private static string ThemeScript(bool dark, bool ink) =>
+        $"window.markpad?.theme({JsonSerializer.Serialize(dark)},{JsonSerializer.Serialize(ink)})";
+
+    private void ApplyThemeColors(bool dark, bool ink)
     {
-        var color = dark ? Color.FromRgb(13, 17, 23) : Color.FromRgb(232, 235, 239);
+        var palette = UiTheme.Palette(dark, ink);
+        var color = palette.Surface;
         Background = _layout.Background = new SolidColorBrush(color);
-        _notice.Foreground = new SolidColorBrush(dark ? Color.FromRgb(230, 237, 243) : Color.FromRgb(36, 41, 47));
+        // The reading surface keeps its original slightly softer light text color.
+        _notice.Foreground = new SolidColorBrush(!dark && !ink ? Color.FromRgb(36, 41, 47) : palette.Text);
         _browser.DefaultBackgroundColor = System.Drawing.Color.FromArgb(color.R, color.G, color.B);
     }
 
@@ -155,8 +186,22 @@ public sealed partial class PreviewPane : UserControl, IDisposable
 
     public async Task<bool> CloseOverlayAsync() => await ExecuteAsync("window.markpad?.closeOverlay() ?? false") == "true";
 
-    public async Task GoToAnchorAsync(string anchor) =>
-        await ExecuteAsync($"window.markpad?.anchor({JsonSerializer.Serialize(anchor.StartsWith('#') ? anchor : "#" + anchor)})");
+    public async Task GoToAnchorAsync(string anchor)
+    {
+        var version = _request;
+        if (_displayTask is { } display) await display;
+        if (_disposed || version != _request || !HasReadyDocument) return;
+        // Outline IDs are raw DOM IDs; existing callers can still pass encoded URL fragments.
+        var rawId = Headings.Any(heading => heading.Id == anchor);
+        var fragment = rawId || !anchor.StartsWith('#') ? "#" + Uri.EscapeDataString(anchor) : anchor;
+        await ExecuteAsync($"window.markpad?.anchor({JsonSerializer.Serialize(fragment)})");
+    }
+
+    public async Task ScrollToPositionAsync(ScrollPosition position)
+    {
+        if (!HasReadyDocument || !double.IsFinite(position.Line) || !double.IsFinite(position.Progress)) return;
+        await ExecuteAsync($"window.markpad?.syncScroll({Math.Max(1, position.Line).ToString(CultureInfo.InvariantCulture)},{Math.Clamp(position.Progress, 0, 1).ToString(CultureInfo.InvariantCulture)})");
+    }
 
     /// <summary>Warm the HTML cache after the editor debounce without creating or navigating WebView2.</summary>
     public async Task PrepareAsync(string markdown, string? filePath, PreviewOptions options)
@@ -230,9 +275,9 @@ public sealed partial class PreviewPane : UserControl, IDisposable
             if (!_disposed)
             {
                 ShowNotice(MarkdownRenderer.Translate(_language,
-                    "Preview needs the Microsoft Edge WebView2 Runtime. Install or repair it, then restart MarkPad. Edit mode remains available.\n",
-                    "預覽需要 Microsoft Edge WebView2 Runtime。安裝或修復後請重新啟動 MarkPad；您仍可使用編輯模式。\n",
-                    "プレビューには Microsoft Edge WebView2 Runtime が必要です。インストールまたは修復後、MarkPad を再起動してください。編集モードは使用できます。\n") + ex.Message);
+                    "Preview needs the Microsoft Edge WebView2 Runtime. Install or repair it, then restart 汗青. Edit mode remains available.\n",
+                    "預覽需要 Microsoft Edge WebView2 Runtime。安裝或修復後請重新啟動汗青；您仍可使用編輯模式。\n",
+                    "プレビューには Microsoft Edge WebView2 Runtime が必要です。インストールまたは修復後、汗青を再起動してください。編集モードは使用できます。\n") + ex.Message);
                 MessageReceived?.Invoke(this, new PreviewMessage("error", ex.Message));
             }
             return false;
@@ -290,14 +335,29 @@ public sealed partial class PreviewPane : UserControl, IDisposable
             if (type is not ("ready" or "copy" or "copy-markdown" or "copy-link" or "link" or "edit" or "task" or "search" or "scroll" or "shortcut" or "overlay")) return;
             string? text = root.TryGetProperty("text", out var t) ? t.GetString() : null;
             int Number(string name) => root.TryGetProperty(name, out var value) && value.TryGetInt32(out var number) ? Math.Max(0, number) : 0;
-            var message = new PreviewMessage(type, text, Number("line"), Number("count"), Number("index"), root.TryGetProperty("flag", out var flag) && flag.ValueKind == JsonValueKind.True);
+            double Decimal(string name) => root.TryGetProperty(name, out var value) && value.TryGetDouble(out var number) && double.IsFinite(number) ? Math.Max(0, number) : 0;
+            var message = new PreviewMessage(type, text, Number("line"), Number("count"), Number("index"),
+                root.TryGetProperty("flag", out var flag) && flag.ValueKind == JsonValueKind.True,
+                Decimal("sourcePosition"), Math.Clamp(Decimal("scrollProgress"), 0, 1));
             if (type == "ready")
             {
+                if (_currentRequest != _request) return;
                 var ready = _ready;
                 var token = _current.Token;
+                var version = _request;
                 await ExecuteAsync($"window.markpad?.restore({_restoreScroll.ToString(CultureInfo.InvariantCulture)},{(_restoreLine?.ToString(CultureInfo.InvariantCulture) ?? "null")})");
-                if (_disposed || token != _current?.Token) return;
-                ready?.TrySetResult(true);
+                if (_disposed || version != _request || token != _current?.Token) return;
+                // The theme may change while HTML is being built or the browser initializes.
+                // Apply the current preference after navigation, even when its earlier script
+                // ran against the previous page or before window.markpad existed.
+                if (_displayInput is { } input)
+                {
+                    ApplyThemeColors(input.Options.Dark, input.Options.Ink);
+                    await ExecuteAsync(ThemeScript(input.Options.Dark, input.Options.Ink));
+                    if (_disposed || version != _request || token != _current?.Token) return;
+                }
+                if (ready?.TrySetResult(true) == true) PublishHeadings(_current.Headings);
+                if (!HasReadyDocument) return;
             }
             if (type == "link" && (text is null || !MarkdownRenderer.IsSafeLink(text))) return;
             MessageReceived?.Invoke(this, message);
@@ -312,7 +372,23 @@ public sealed partial class PreviewPane : UserControl, IDisposable
         catch (Exception ex) when (ex is InvalidOperationException or System.Runtime.InteropServices.COMException) { return "null"; }
     }
 
-    private void ShowNotice(string text) { _notice.Text = text; _notice.Visibility = Visibility.Visible; _browser.Visibility = Visibility.Hidden; }
+    private void PublishHeadings(IReadOnlyList<PreviewHeading> headings)
+    {
+        if (Headings.SequenceEqual(headings)) return;
+        Headings = headings;
+        HeadingsChanged?.Invoke(this, EventArgs.Empty);
+    }
+
+    private void ShowNotice(string text)
+    {
+        _current = null;
+        _currentInput = null;
+        _ready?.TrySetResult(false);
+        PublishHeadings(Array.Empty<PreviewHeading>());
+        _notice.Text = text;
+        _notice.Visibility = Visibility.Visible;
+        _browser.Visibility = Visibility.Hidden;
+    }
     private static string DocumentUrl(RenderedPreview preview) => $"{MarkdownRenderer.Origin}/{preview.Token}/document";
     private static RenderedPreview ForNavigation(RenderedPreview preview)
     {
@@ -322,7 +398,7 @@ public sealed partial class PreviewPane : UserControl, IDisposable
         return new RenderedPreview(preview.Html
             .Replace($"\"token\":\"{preview.Token}\"", $"\"token\":\"{token}\"", StringComparison.Ordinal)
             .Replace(oldImages, newImages, StringComparison.Ordinal), token,
-            preview.Images.ToDictionary(pair => pair.Key.Replace(oldImages, newImages, StringComparison.Ordinal), pair => pair.Value));
+            preview.Images.ToDictionary(pair => pair.Key.Replace(oldImages, newImages, StringComparison.Ordinal), pair => pair.Value), preview.Headings);
     }
     private static string ImageMime(string path) => Path.GetExtension(path).ToLowerInvariant() switch
     { ".png" => "image/png", ".jpg" or ".jpeg" => "image/jpeg", ".gif" => "image/gif", ".webp" => "image/webp", ".bmp" => "image/bmp", ".ico" => "image/x-icon", ".avif" => "image/avif", ".svg" => "image/svg+xml", _ => "application/octet-stream" };
@@ -333,10 +409,13 @@ public sealed partial class PreviewPane : UserControl, IDisposable
         _disposed = true;
         ++_request;
         _current = null;
+        _currentInput = null;
         _documentPath = null;
         _ready?.TrySetResult(false);
         _ready = null;
         MessageReceived = null;
+        Headings = Array.Empty<PreviewHeading>();
+        HeadingsChanged = null;
         _buildTask = null;
         _buildInput = null;
         _displayTask = null;

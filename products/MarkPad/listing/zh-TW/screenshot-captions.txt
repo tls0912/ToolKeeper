@@ -1,0 +1,5 @@
+﻿01-preview-bamboo-light.png	竹子亮色介面搭配宣紙底色，章節列表自動整理 H1–H6 標題，點選即可跳轉。
+02-preview-bamboo-dark.png	竹子深色預覽保留宣紙紋理與章節導覽，依閱讀習慣選擇深色介面。
+03-preview-light.png	一般亮色預覽以清晰的淺色版面呈現 Markdown，支援章節跳轉、表格與待辦清單。
+04-preview-dark.png	一般深色預覽以深色底搭配明亮文字，閱讀 Markdown 時同樣可使用章節導覽。
+05-edit-bamboo-light.png	竹子亮色編輯模式：左側編輯 Markdown，右側即時預覽；上方工具列可調整字型、字級與文字格式。

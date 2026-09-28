@@ -71,6 +71,7 @@ public partial class MainWindow : Window
         Loaded += (_, _) => { ApplyPreferences(); BuildTabs(); _maintenance.Start(); };
         Activated += async (_, _) => await MaintainAsync();
         SizeChanged += (_, _) => BuildTabs();
+        TabsArea.SizeChanged += (_, _) => BuildTabs();
         // A larger UI font widens the sidebar; keep every search control inside the document area.
         ContentFrame.SizeChanged += (_, _) => SearchPanel.MaxWidth = Math.Max(0,
             ContentFrame.ActualWidth - ContentFrame.BorderThickness.Left - ContentFrame.BorderThickness.Right
@@ -80,12 +81,12 @@ public partial class MainWindow : Window
         WindowCloseButton.Click += (_, _) => Close();
         EmptyOpenButton.Click += async (_, _) => await GuardAsync(OpenDialogAsync);
         OverflowButton.Click += (_, _) => ShowTabList();
-        SetupSearch(); SetupRail(); SetupFullScreen();
+        SetupSearch(); SetupRail(); SetupFullScreen(); SetupEditorToolbar();
         SystemEvents.UserPreferenceChanged += SystemPreferenceChanged;
         ApplyPreferences();
     }
 
-    public string T(string english, string chinese, string japanese) => UiLanguage switch { "zh-TW" => chinese, "ja" => japanese, _ => english };
+    public string T(string english, string chinese, string japanese) => ToolKeeper.UI.UiLanguage.Text(UiLanguage, english, chinese, japanese);
     private Brush B(string key) => (Brush)FindResource(key);
     private static string Canonical(string path) => Path.GetFullPath(path);
 
@@ -124,7 +125,7 @@ public partial class MainWindow : Window
                 }
                 AddDocument(tab);
                 App.Preferences.AddRecent(path);
-                if (tab.IsLargeFile) Toast(T("Large file mode — preview renders on request", "大型檔案模式：切換預覽時才轉譯", "大きなファイル：プレビューは切替時に描画"));
+                if (tab.IsLargeFile) Toast(T("Large file mode — preview updates after typing pauses", "大型檔案模式：停止輸入後更新預覽", "大きなファイル：入力が落ち着いてからプレビューを更新"));
             }
             catch (Exception ex) { Report(ex); }
             finally { if (ownsOpenRequest && path is not null) _opening.Remove(path); }
@@ -154,8 +155,12 @@ public partial class MainWindow : Window
     {
         _modified[tab.Id] = DateTime.UtcNow;
         ScheduleAutoSave();
-        if (ReferenceEquals(tab, _current) && (tab.IsPreviewMode || !tab.IsLargeFile))
-        { _renderTimer.Stop(); _renderTimer.Start(); }
+        if (ReferenceEquals(tab, _current))
+        {
+            _renderTimer.Stop();
+            _renderTimer.Interval = TimeSpan.FromMilliseconds(tab.IsLargeFile ? 750 : 300);
+            _renderTimer.Start();
+        }
     }
 
     private void SelectDocument(DocumentTab? tab, int? sourceLine = null)
@@ -175,8 +180,8 @@ public partial class MainWindow : Window
         if (tab?.IsPreviewMode != false) ReplacePanel.Visibility = Visibility.Collapsed;
         ExpandReplaceButton.Visibility = tab?.IsPreviewMode == false ? Visibility.Visible : Visibility.Collapsed;
         BuildTabs(); BuildActions(); UpdateStatus();
-        if (tab?.IsPreviewMode == true) _ = GuardAsync(() => RenderAsync(sourceLine));
-        else if (tab is not null) { _editor.FocusEditor(); if (SearchPanel.IsVisible) _editor.Find(SearchBox.Text, Settings.MatchCase, restart: true); }
+        if (tab is not null) _ = GuardAsync(() => RenderAsync(sourceLine));
+        if (tab?.IsPreviewMode == false) { _editor.FocusEditor(); if (SearchPanel.IsVisible) _editor.Find(SearchBox.Text, Settings.MatchCase, restart: true); }
     }
 
     private async void OnPreviewMessageReceived(object? sender, PreviewMessage message)
@@ -190,7 +195,7 @@ public partial class MainWindow : Window
             {
                 case "ready":
                     // Loading may finish after a theme change, even while this tab is hidden.
-                    await view.Preview.SetThemeAsync(_dark);
+                    await view.Preview.SetThemeAsync(_dark, IsInkTheme);
                     await view.Preview.SetFontSizeAsync(Settings.PreviewFontSize);
                     return;
                 case "scroll":
@@ -207,7 +212,7 @@ public partial class MainWindow : Window
                     if (message.Text is not null) LocalLog.Write(new InvalidOperationException(message.Text));
                     return;
             }
-            if (ReferenceEquals(view, _currentView) && view.Document.IsPreviewMode)
+            if (ReferenceEquals(view, _currentView))
                 await HandlePreviewAsync(message);
         });
     }
@@ -216,17 +221,12 @@ public partial class MainWindow : Window
     {
         var tab = _current;
         var view = _currentView;
-        if (tab is null || view is null || _disposed || !tab.IsPreviewMode && tab.IsLargeFile) return;
+        if (tab is null || view is null || _disposed) return;
         var options = new PreviewOptions(_dark, PreviewFontName, Settings.PreviewFontSize,
-            Settings.CodeLineNumbers, Settings.EmojiShortcodes, UiLanguage, tab.IsReadOnly);
-        if (!tab.IsPreviewMode)
-        {
-            await view.Preview.PrepareAsync(tab.Content, tab.FilePath, options);
-            return;
-        }
+            Settings.CodeLineNumbers, Settings.EmojiShortcodes, UiLanguage, tab.IsReadOnly, Ink: IsInkTheme);
         await view.Preview.ShowAsync(tab.Content, tab.FilePath, options, tab.PreviewScroll, line);
-        if (ReferenceEquals(view, _currentView) && ReferenceEquals(tab, _current) && tab.IsPreviewMode)
-            await view.Preview.FindAsync(SearchPanel.IsVisible ? SearchBox.Text : "", Settings.MatchCase, restart: true);
+        if (ReferenceEquals(view, _currentView) && ReferenceEquals(tab, _current))
+            await view.Preview.FindAsync(tab.IsPreviewMode && SearchPanel.IsVisible ? SearchBox.Text : "", Settings.MatchCase, restart: true);
     }
 
     private async Task ToggleModeAsync(int? sourceLine = null)
@@ -293,7 +293,7 @@ public partial class MainWindow : Window
                 return false;
             }
             if (automatic) return false;
-            var choice = Choose(T("The file changed outside MarkPad.", "檔案已被其他程式修改。", "ファイルが外部で変更されました。"),
+            var choice = Choose(T("The file changed outside 汗青.", "檔案已被其他程式修改。", "ファイルが外部で変更されました。"),
                 ("reload", T("Reload", "重新載入", "再読み込み")), ("keep", T("Keep current", "保留目前內容", "現在の内容を保持")), ("cancel", T("Cancel", "取消", "キャンセル")));
             if (choice == "reload") await ReloadAsync(tab, whileClosing: true);
             else if (choice == "keep") { App.Files.AcceptExternalChanges(tab); Toast(T("Current content kept. Save again to overwrite.", "已保留目前內容，再次儲存即可寫入。", "現在の内容を保持しました。再度保存すると書き込みます。")); }
@@ -415,7 +415,7 @@ public partial class MainWindow : Window
                         if (!tab.IsDirty) await ReloadAsync(tab);
                         else
                         {
-                            var choice = Choose(tab.DisplayName + "\n" + T("Changed outside MarkPad.", "已被其他程式修改。", "外部で変更されました。"),
+                            var choice = Choose(tab.DisplayName + "\n" + T("Changed outside 汗青.", "已被其他程式修改。", "外部で変更されました。"),
                                 ("reload", T("Reload", "重新載入", "再読み込み")), ("keep", T("Keep current", "保留目前內容", "現在の内容を保持")));
                             if (choice == "reload") await ReloadAsync(tab);
                             else if (choice == "keep") App.Files.AcceptExternalChanges(tab);
@@ -489,20 +489,35 @@ public partial class MainWindow : Window
         switch (message.Type)
         {
             case "link": if (message.Text is not null) await OpenLinkAsync(message.Text); break;
-            case "edit": await ToggleModeAsync(message.Line); break;
+            case "edit":
+                if (_current?.IsReadOnly != false) break;
+                if (_current.IsPreviewMode) await ToggleModeAsync(message.Line);
+                else { _editor.GoToLine(message.Line); _editor.FocusEditor(); }
+                break;
             case "copy": case "copy-markdown": if (message.Text is not null) Clipboard.SetText(message.Text); break;
             case "copy-link":
                 if (message.Text is { } href)
                     Clipboard.SetText(href.StartsWith('#') && _current?.FilePath is { } file ? new Uri(file).AbsoluteUri + href : href);
                 break;
             case "task":
-                if (_current is not { IsReadOnly: false } tab || message.Line < 1 || message.Line > tab.Document.LineCount) break;
-                var line = tab.Document.GetLineByNumber(message.Line);
-                var text = tab.Document.GetText(line);
-                var match = Regex.Match(text, @"^(\s*(?:>\s*)*(?:[-+*]|\d+[.)])\s+)\[[ xX]\]");
-                if (match.Success) tab.Document.Replace(line.Offset + match.Length - 2, 1, message.Flag ? "x" : " ");
+                if (_current is not { } tab) break;
+                var matchesSource = _preview.IsShowing(tab.Content, tab.FilePath);
+                // The click already changed the checkbox DOM. Invalidate even rejected
+                // clicks, so undoing back to the cached Markdown still restores the widget.
+                _preview.InvalidateDisplay();
+                if (!tab.IsReadOnly && matchesSource && message.Line >= 1 && message.Line <= tab.Document.LineCount)
+                {
+                    var line = tab.Document.GetLineByNumber(message.Line);
+                    var text = tab.Document.GetText(line);
+                    var match = Regex.Match(text, @"^(\s*(?:>\s*)*(?:[-+*]|\d+[.)])\s+)\[[ xX]\]");
+                    if (match.Success) tab.Document.Replace(line.Offset + match.Length - 2, 1, message.Flag ? "x" : " ");
+                }
+                _renderTimer.Stop();
+                await RenderAsync();
                 break;
-            case "search": ShowSearchResult(message.Index, message.Count, message.Flag); break;
+            case "search":
+                if (_current?.IsPreviewMode == true) ShowSearchResult(message.Index, message.Count, message.Flag);
+                break;
             case "shortcut": if (message.Text is not null) await ShortcutAsync(message.Text); break;
         }
     }
@@ -527,7 +542,7 @@ public partial class MainWindow : Window
         {
             var target = Application.Current.Windows.OfType<MainWindow>()
                 .FirstOrDefault(window => string.Equals(window._current?.FilePath, Canonical(local), StringComparison.OrdinalIgnoreCase));
-            if (target?._current is { IsPreviewMode: true } destination)
+            if (target?._current is { } destination)
             {
                 await target.RenderAsync();
                 if (ReferenceEquals(target._current, destination)) await target._preview.GoToAnchorAsync(url[hash..]);
@@ -593,7 +608,8 @@ public partial class MainWindow : Window
         if (_current?.IsMissing == true) EncodingLabel.Text += "\n" + T("File missing", "檔案消失", "ファイルなし");
         if (_current?.IsLargeFile == true) EncodingLabel.Text += "\n" + T("Large file", "大型檔案", "大容量");
         CaretLabel.Text = _current?.IsPreviewMode == false ? $"Ln {_editor.Editor.TextArea.Caret.Line}\nCol {_editor.Editor.TextArea.Caret.Column}" : "";
-        // Keep the Windows taskbar title as MarkPad; filenames and dirty state belong to tabs.
+        UpdateEditorToolbarSelection();
+        // Keep the product title and subtitle in the taskbar; filenames and dirty state belong to tabs.
     }
 
     private void Toast(string message) { StatusLabel.Text = message; StatusToast.Visibility = Visibility.Visible; _toastTimer.Stop(); _toastTimer.Start(); }

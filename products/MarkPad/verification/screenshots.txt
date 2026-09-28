@@ -1,0 +1,107 @@
+PASS zh-TW real WebView2 initialized
+PASS zh-TW isolated browser profile
+PASS zh-TW document has an actual chapter list
+PASS live preview theme ink
+PASS real preview frame contains rendered content
+PASS zh-TW Ink preview has chapter navigation
+PASS zh-TW/01-preview-bamboo-light meets desktop minimum size
+PASS zh-TW/01-preview-bamboo-light PNG below 50 MB
+PNG screenshots/zh-TW/01-preview-bamboo-light.png 1600x1000
+PASS live preview theme ink-dark
+PASS real preview frame contains rendered content
+PASS zh-TW InkDark preview has chapter navigation
+PASS zh-TW/02-preview-bamboo-dark meets desktop minimum size
+PASS zh-TW/02-preview-bamboo-dark PNG below 50 MB
+PNG screenshots/zh-TW/02-preview-bamboo-dark.png 1600x1000
+PASS live preview theme light
+PASS real preview frame contains rendered content
+PASS zh-TW Light preview has chapter navigation
+PASS zh-TW/03-preview-light meets desktop minimum size
+PASS zh-TW/03-preview-light PNG below 50 MB
+PNG screenshots/zh-TW/03-preview-light.png 1600x1000
+PASS live preview theme dark
+PASS real preview frame contains rendered content
+PASS zh-TW Dark preview has chapter navigation
+PASS zh-TW/04-preview-dark meets desktop minimum size
+PASS zh-TW/04-preview-dark PNG below 50 MB
+PNG screenshots/zh-TW/04-preview-dark.png 1600x1000
+PASS live preview theme ink
+PASS real preview frame contains rendered content
+PASS zh-TW actual editor toolbar visible in split mode
+PASS zh-TW editor has no chapter sidebar
+PASS zh-TW/05-edit-bamboo-light meets desktop minimum size
+PASS zh-TW/05-edit-bamboo-light PNG below 50 MB
+PNG screenshots/zh-TW/05-edit-bamboo-light.png 1600x1000
+PASS zh-TW original demo document was not edited
+PASS en-US real WebView2 initialized
+PASS en-US isolated browser profile
+PASS en-US document has an actual chapter list
+PASS live preview theme ink
+PASS real preview frame contains rendered content
+PASS en-US Ink preview has chapter navigation
+PASS en-US/01-preview-bamboo-light meets desktop minimum size
+PASS en-US/01-preview-bamboo-light PNG below 50 MB
+PNG screenshots/en-US/01-preview-bamboo-light.png 1600x1000
+PASS live preview theme ink-dark
+PASS real preview frame contains rendered content
+PASS en-US InkDark preview has chapter navigation
+PASS en-US/02-preview-bamboo-dark meets desktop minimum size
+PASS en-US/02-preview-bamboo-dark PNG below 50 MB
+PNG screenshots/en-US/02-preview-bamboo-dark.png 1600x1000
+PASS live preview theme light
+PASS real preview frame contains rendered content
+PASS en-US Light preview has chapter navigation
+PASS en-US/03-preview-light meets desktop minimum size
+PASS en-US/03-preview-light PNG below 50 MB
+PNG screenshots/en-US/03-preview-light.png 1600x1000
+PASS live preview theme dark
+PASS real preview frame contains rendered content
+PASS en-US Dark preview has chapter navigation
+PASS en-US/04-preview-dark meets desktop minimum size
+PASS en-US/04-preview-dark PNG below 50 MB
+PNG screenshots/en-US/04-preview-dark.png 1600x1000
+PASS live preview theme ink
+PASS real preview frame contains rendered content
+PASS en-US actual editor toolbar visible in split mode
+PASS en-US editor has no chapter sidebar
+PASS en-US/05-edit-bamboo-light meets desktop minimum size
+PASS en-US/05-edit-bamboo-light PNG below 50 MB
+PNG screenshots/en-US/05-edit-bamboo-light.png 1600x1000
+PASS en-US original demo document was not edited
+PASS ja-JP real WebView2 initialized
+PASS ja-JP isolated browser profile
+PASS ja-JP document has an actual chapter list
+PASS live preview theme ink
+PASS real preview frame contains rendered content
+PASS ja-JP Ink preview has chapter navigation
+PASS ja-JP/01-preview-bamboo-light meets desktop minimum size
+PASS ja-JP/01-preview-bamboo-light PNG below 50 MB
+PNG screenshots/ja-JP/01-preview-bamboo-light.png 1600x1000
+PASS live preview theme ink-dark
+PASS real preview frame contains rendered content
+PASS ja-JP InkDark preview has chapter navigation
+PASS ja-JP/02-preview-bamboo-dark meets desktop minimum size
+PASS ja-JP/02-preview-bamboo-dark PNG below 50 MB
+PNG screenshots/ja-JP/02-preview-bamboo-dark.png 1600x1000
+PASS live preview theme light
+PASS real preview frame contains rendered content
+PASS ja-JP Light preview has chapter navigation
+PASS ja-JP/03-preview-light meets desktop minimum size
+PASS ja-JP/03-preview-light PNG below 50 MB
+PNG screenshots/ja-JP/03-preview-light.png 1600x1000
+PASS live preview theme dark
+PASS real preview frame contains rendered content
+PASS ja-JP Dark preview has chapter navigation
+PASS ja-JP/04-preview-dark meets desktop minimum size
+PASS ja-JP/04-preview-dark PNG below 50 MB
+PNG screenshots/ja-JP/04-preview-dark.png 1600x1000
+PASS live preview theme ink
+PASS real preview frame contains rendered content
+PASS ja-JP actual editor toolbar visible in split mode
+PASS ja-JP editor has no chapter sidebar
+PASS ja-JP/05-edit-bamboo-light meets desktop minimum size
+PASS ja-JP/05-edit-bamboo-light PNG below 50 MB
+PNG screenshots/ja-JP/05-edit-bamboo-light.png 1600x1000
+PASS ja-JP original demo document was not edited
+15 PNGs, captured from real MainWindow/AvalonEdit/WebView2 using original sample documents; four preview themes and Bamboo Light editing per language.
+No Store authentication or purchase performed. No user settings or documents were used.

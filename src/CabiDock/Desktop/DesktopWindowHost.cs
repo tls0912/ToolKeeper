@@ -121,12 +121,17 @@ public sealed class DesktopWindowHost : IDisposable, IDesktopGroupHost
     public bool TryShow(Rect physicalScreenPixels, out string reason)
     {
         _window.Dispatcher.VerifyAccess();
-        if (!TrySetBounds(physicalScreenPixels, out reason)) return false;
         try
         {
-            _window.Show();
-            // WPF's first Show can apply its initial placement. Reapply screen-to-parent bounds.
-            return TrySetBounds(physicalScreenPixels, out reason);
+            if (!_window.IsVisible)
+            {
+                if (!TrySetBounds(physicalScreenPixels, out reason)) return false;
+                _window.Show();
+            }
+            // Native suspension does not update WPF's visibility cache. Always restore the
+            // HWND's visible style and sibling order after the icon geometry is verified.
+            // This also reapplies placement after WPF's first Show.
+            return TrySetBounds(physicalScreenPixels, show: true, out reason);
         }
         catch (Exception error) when (error is not OutOfMemoryException)
         {
@@ -143,7 +148,10 @@ public sealed class DesktopWindowHost : IDisposable, IDesktopGroupHost
     }
 
     /// <summary>Physical screen pixels, not WPF DIPs. Caller clamps to primary monitor work area.</summary>
-    public bool TrySetBounds(Rect physicalScreenPixels, out string reason)
+    public bool TrySetBounds(Rect physicalScreenPixels, out string reason) =>
+        TrySetBounds(physicalScreenPixels, show: false, out reason);
+
+    private bool TrySetBounds(Rect physicalScreenPixels, bool show, out string reason)
     {
         _window.Dispatcher.VerifyAccess();
         reason = "";
@@ -165,7 +173,7 @@ public sealed class DesktopWindowHost : IDisposable, IDesktopGroupHost
         if (!NativeDesktop.ScreenToClient(_view, ref point)
             || !NativeDesktop.SetWindowPos(_handle, 0, point.X, point.Y,
                 (int)Math.Round(physicalScreenPixels.Width), (int)Math.Round(physicalScreenPixels.Height),
-                0x10 | 0x20)) // NOACTIVATE | FRAMECHANGED; HWND_TOP only within this parent
+                0x10u | 0x20u | (show ? 0x40u : 0u))) // NOACTIVATE | FRAMECHANGED | optional SHOWWINDOW; HWND_TOP within this parent
         {
             HideOwnWindow();
             reason = "無法更新桌面群組位置；已隱藏桌面群組。";

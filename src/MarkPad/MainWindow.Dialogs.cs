@@ -25,7 +25,7 @@ public partial class MainWindow
         string? selected = null;
         var buttons = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right };
         var text = new TextBlock { Text = message, TextWrapping = TextWrapping.Wrap };
-        var dialog = Dialog("MarkPad", text, buttons);
+        var dialog = Dialog("汗青", text, buttons);
         foreach (var (id, label) in choices)
         {
             var button = new Button { Content = label, Margin = new Thickness(5, 0, 0, 0), Padding = new Thickness(10, 7, 10, 7), MinWidth = 60, IsCancel = id == "cancel", IsDefault = id == choices[0].Id };
@@ -50,7 +50,7 @@ public partial class MainWindow
         }
         body.Children.Add(new ScrollViewer { Content = list, MaxHeight = 280, VerticalScrollBarVisibility = ScrollBarVisibility.Auto });
         var buttons = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right };
-        var dialog = Dialog("MarkPad", body, buttons);
+        var dialog = Dialog("汗青", body, buttons);
         void Add(string label, Action action, bool cancel = false)
         {
             var button = new Button { Content = label, Margin = new Thickness(5, 0, 0, 0), Padding = new Thickness(10, 7, 10, 7), IsCancel = cancel };

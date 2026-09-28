@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <Version>0.1.0</Version>
+    <Description>ToolKeeper — 免費 Hash Checker 與圖片轉 ICO</Description>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../ToolKeeper.UI/ToolKeeper.UI.csproj" />
+  </ItemGroup>
+</Project>

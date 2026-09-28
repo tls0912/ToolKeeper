@@ -18,6 +18,7 @@ TestResults/
 AppPackages/
 BundleArtifacts/
 Package.StoreAssociation.xml
+packaging/MarkPad/StoreIdentity.json
 
 # Logs / local state
 *.log

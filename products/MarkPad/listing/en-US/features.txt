@@ -1,0 +1,13 @@
+Read and edit local Markdown files in multiple tabs
+Jump to H1–H6 sections from the reading mode chapter list
+Write beside a live preview with adjustable column widths
+Use the editing toolbar for fonts, text sizes, and Markdown formatting
+Bamboo Light and Dark themes, xuan paper backgrounds, and traditional lettering
+Set fonts and sizes separately for the interface, preview, and editor
+Tables, task lists, code blocks, footnotes, and local images
+Search, replace, undo, and redo
+Autosave, external change notifications, and draft recovery after a crash
+Save Markdown, then export a timestamped PDF beside the source file
+Traditional Chinese, English, and Japanese interface
+7-day free trial; full version available as a one-time purchase
+

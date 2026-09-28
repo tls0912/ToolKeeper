@@ -83,7 +83,7 @@ public sealed class GroupWindow : Window
         grid.RowDefinitions.Add(new() { Height = new GridLength(1, GridUnitType.Star) });
         grid.RowDefinitions.Add(new() { Height = new GridLength(26) });
         _card.Child = grid;
-        var header = new Primitives.Thumb { Cursor = Cursors.SizeAll, ToolTip = "拖曳分類名稱以移動群組；按一下展開" };
+        var header = new Primitives.Thumb { Cursor = Cursors.SizeAll, ToolTip = "拖曳分類名稱以移動群組；按一下展開或收合" };
         var headerBorder = new FrameworkElementFactory(typeof(Controls.Border));
         headerBorder.SetValue(Controls.Border.BackgroundProperty, ViewTheme.Brush("#EAF2F1"));
         headerBorder.SetValue(Controls.Border.PaddingProperty, new Thickness(12, 0, 12, 0));
@@ -103,10 +103,13 @@ public sealed class GroupWindow : Window
             Top += e.VerticalChange;
             ClampPosition();
         };
-        header.DragCompleted += (_, _) =>
+        header.DragCompleted += (_, e) =>
         {
-            if (!_headerMoved) Expand(); else PublishLayout();
+            if (_headerMoved) PublishLayout();
+            // Release the header interaction before Collapse checks for active operations.
             EndOperation();
+            if (e.Canceled || _headerMoved) return;
+            if (IsExpanded) Collapse(); else Expand();
         };
         grid.Children.Add(header);
         _body = new Controls.Grid { Margin = new Thickness(8, 7, 8, 0) };

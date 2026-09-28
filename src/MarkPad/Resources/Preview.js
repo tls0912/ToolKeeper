@@ -138,7 +138,7 @@
     const fold = document.createElement('button'); fold.type = 'button'; fold.className = 'heading-fold'; fold.textContent = '▾'; fold.title = labels.fold; fold.setAttribute('aria-expanded','true');
     fold.addEventListener('click', () => {
       if (folded.has(heading)) folded.delete(heading); else folded.add(heading);
-      fold.textContent = folded.has(heading) ? '▸' : '▾'; fold.setAttribute('aria-expanded', String(!folded.has(heading))); applyFolds();
+      fold.textContent = folded.has(heading) ? '▸' : '▾'; fold.setAttribute('aria-expanded', String(!folded.has(heading))); applyFolds(); scheduleScrollReport();
     });
     heading.prepend(fold); heading.append(anchor);
   });
@@ -176,13 +176,50 @@
     picture.addEventListener('pointercancel', () => drag = null);
   }
 
+  // A short final chapter may be unable to reach the viewport top. Keep the chosen
+  // chapter active through the anchor animation and its stationary final position.
+  // The next user scroll or a separate programmatic scroll releases that choice.
+  let anchorTarget=null, anchorScrolling=false, anchorSettleTimer=0;
+  function clearAnchorTarget() {
+    anchorTarget=null;anchorScrolling=false;clearTimeout(anchorSettleTimer);
+  }
+  function settleAnchorScroll() {
+    anchorScrolling=false;clearTimeout(anchorSettleTimer);
+  }
+  function awaitAnchorScroll() {
+    clearTimeout(anchorSettleTimer);
+    anchorSettleTimer=setTimeout(settleAnchorScroll,150);
+  }
+  window.addEventListener('scrollend',settleAnchorScroll,{passive:true});
+  window.addEventListener('wheel',clearAnchorTarget,{passive:true});
+  window.addEventListener('pointerdown',clearAnchorTarget,{passive:true});
+  window.addEventListener('keydown',event=>{
+    if(['ArrowUp','ArrowDown','PageUp','PageDown','Home','End',' '].includes(event.key))clearAnchorTarget();
+  });
+
   function openLink(href) {
     if (href.startsWith('#')) {
       let id; try { id = decodeURIComponent(href.slice(1)); } catch { return; }
       const target = document.getElementById(id);
-      if (target) {
-        if (target.closest('.fold-hidden')) { folded.clear(); applyFolds(); headings.forEach(h => { const b=h.querySelector('.heading-fold'); if(b){b.textContent='▾';b.setAttribute('aria-expanded','true');} }); }
+      if (target && article.contains(target)) {
+        releaseScrollSync();
+        // Reveal only sections containing the target, preserving unrelated folded sections.
+        for (const heading of [...folded]) {
+          let next = heading.nextElementSibling;
+          while (next && (!/^H[1-6]$/.test(next.tagName) || Number(next.tagName[1]) > Number(heading.tagName[1]))) {
+            if (next === target || next.contains(target)) { folded.delete(heading); break; }
+            next = next.nextElementSibling;
+          }
+        }
+        applyFolds();
+        headings.forEach(heading => { const button=heading.querySelector('.heading-fold');if(button){button.textContent=folded.has(heading)?'▸':'▾';button.setAttribute('aria-expanded',String(!folded.has(heading)));} });
+        for (let ancestor=target.parentElement;ancestor&&ancestor!==article;ancestor=ancestor.parentElement)
+          if (ancestor.tagName === 'DETAILS') ancestor.open = true;
+        anchorTarget=target;anchorScrolling=true;awaitAnchorScroll();
         target.scrollIntoView({ behavior:'smooth', block:'start' });
+        // Even an anchor already in view (or at the document bottom) needs to notify the
+        // native outline; the anchor remains selected if scrolling is bottom-clamped.
+        reportScroll(target);
       }
     } else send('link', { text:href });
   }
@@ -251,6 +288,7 @@
     return {nodes,full};
   }
   function find(text, matchCase, backwards=false, restart=false) {
+    clearAnchorTarget();
     let wrapped=false;
     if (text !== searchQuery || matchCase !== searchCase || restart) {
       clearSearch();searchQuery=text;searchCase=matchCase;
@@ -282,17 +320,102 @@
       const next=searchIndex+(backwards?-1:1);wrapped=next<0||next>=searchGroups.length;searchIndex=(next+searchGroups.length)%searchGroups.length;
     }
     article.querySelectorAll('mark.mp-search.active').forEach(mark=>mark.classList.remove('active'));
-    if(searchIndex>=0) {searchGroups[searchIndex].forEach(mark=>mark.classList.add('active'));searchGroups[searchIndex][0]?.scrollIntoView({block:'center',behavior:'instant'});}
+    if(searchIndex>=0) {releaseScrollSync();searchGroups[searchIndex].forEach(mark=>mark.classList.add('active'));searchGroups[searchIndex][0]?.scrollIntoView({block:'center',behavior:'instant'});}
     send('search',{count:searchGroups.length,index:searchIndex+1,flag:wrapped});
   }
+  // Source positions are fractional lines so long paragraphs/code blocks can move
+  // continuously between their rendered block boundaries. Count source lines once.
+  const sourceLineCount=config.markdown.split(/\r\n|\r|\n/).length;
+  const sourceBlocks=[...article.querySelectorAll('[data-source-line]')];
+  const clamp=(value,min,max)=>Math.max(min,Math.min(max,value));
+  const scrollLimit=()=>Math.max(0,document.documentElement.scrollHeight-innerHeight);
+  function sourceGeometry() {
+    const blocks=sourceBlocks.filter(element=>element.getClientRects().length&&!element.closest('.fold-hidden'))
+      .map(element=>({element,line:clamp(Number(element.dataset.sourceLine)||1,1,sourceLineCount),bounds:element.getBoundingClientRect()}));
+    const points=[];
+    for(const block of blocks) {
+      const point={line:block.line,top:block.bounds.top+window.scrollY,element:block.element};
+      const previous=points.at(-1);
+      // A list item/paragraph may share its parent's source line. Prefer the
+      // deepest block, but ignore unrelated duplicate lines (notably raw HTML).
+      if(previous&&point.line===previous.line) {
+        if(previous.element.contains(point.element)&&point.top>=previous.top)points[points.length-1]=point;
+      } else if(!previous||point.line>previous.line&&point.top>previous.top)points.push(point);
+    }
+    if(points.length&&points[0].line>1)points.unshift({line:1,top:0});
+    if(points.length) {
+      const bottom=Math.max(points.at(-1).top,article.getBoundingClientRect().bottom+window.scrollY);
+      points.push({line:sourceLineCount+1,top:bottom});
+    }
+    return {blocks,points};
+  }
+  function interpolate(points,value,from,to) {
+    if(value<=points[0][from])return points[0][to];
+    for(let index=1;index<points.length;index++) {
+      const start=points[index-1],end=points[index];
+      if(value<=end[from]) {
+        const distance=end[from]-start[from];
+        return distance>0?start[to]+(end[to]-start[to])*(value-start[from])/distance:end[to];
+      }
+    }
+    return points.at(-1)[to];
+  }
+  // Instant scrolling updates scrollY synchronously; Chromium may report the event
+  // later. Keep that stationary echo suppressed until the viewport actually moves,
+  // including native scrollbar movement that does not produce DOM pointer events.
+  let synchronizedScrollY=null;
+  function releaseScrollSync() {synchronizedScrollY=null;}
+  function updateScrollOwner() {
+    if(synchronizedScrollY!==null&&Math.abs(window.scrollY-synchronizedScrollY)>.5)releaseScrollSync();
+  }
+  function synchronizedScroll(action) {
+    clearAnchorTarget();
+    synchronizedScrollY=window.scrollY;
+    action();
+    synchronizedScrollY=window.scrollY;
+    reportScroll();
+  }
+  function syncScroll(line,progress) {
+    const maximum=scrollLimit();
+    const fraction=Number.isFinite(progress)?clamp(progress,0,1):null;
+    let top;
+    if(fraction===0||fraction===1)top=maximum*fraction;
+    else {
+      const {points}=sourceGeometry();
+      top=points.length&&Number.isFinite(line)?interpolate(points,clamp(line,1,sourceLineCount+1),'line','top'):maximum*(fraction||0);
+    }
+    synchronizedScroll(()=>window.scrollTo({top:clamp(top,0,maximum),behavior:'instant'}));
+  }
   let scrollScheduled=false;
+  function reportScroll(preferredTarget=null) {
+    updateScrollOwner();
+    const {blocks,points}=sourceGeometry();
+    let visible=preferredTarget||(anchorTarget?.getClientRects().length?anchorTarget:null);
+    if (!visible) {
+      // Prefer the deepest visible source block, not a list/table container spanning pages.
+      const crossing=blocks.filter(block=>block.bounds.top<=32&&block.bounds.bottom>8);
+      visible=(crossing.at(-1)||blocks.find(block=>block.bounds.bottom>=8)||blocks.at(-1))?.element;
+      if (window.scrollY>0&&window.scrollY+innerHeight>=document.documentElement.scrollHeight-2)
+        visible=[...headings].reverse().find(heading=>heading.getClientRects().length&&!heading.closest('.fold-hidden'))||visible;
+    }
+    const maximum=scrollLimit();
+    // Chromium can stop at fractional CSS pixels while scrollHeight is rounded.
+    const progress=maximum>0&&window.scrollY>0?(maximum-window.scrollY<=1?1:clamp(window.scrollY/maximum,0,1)):0;
+    const position=points.length?interpolate(points,window.scrollY,'top','line'):1+progress*sourceLineCount;
+    send('scroll',{text:String(window.scrollY),line:sourceLine(visible),sourcePosition:clamp(position,1,sourceLineCount+.999999),scrollProgress:progress,flag:synchronizedScrollY!==null});
+  }
+  function scheduleScrollReport() {
+    if(scrollScheduled)return;scrollScheduled=true;
+    requestAnimationFrame(()=>{scrollScheduled=false;reportScroll();});
+  }
   window.addEventListener('scroll',()=>{
-    closeMenu();if(scrollScheduled)return;scrollScheduled=true;
-    requestAnimationFrame(()=>{scrollScheduled=false;const visible=[...article.querySelectorAll('[data-source-line]')].find(el=>el.getBoundingClientRect().bottom>=8);send('scroll',{text:String(window.scrollY),line:sourceLine(visible)});});
+    closeMenu();
+    if(anchorTarget){if(anchorScrolling)awaitAnchorScroll();else clearAnchorTarget();}
+    scheduleScrollReport();
   },{passive:true});
-  window.markpad={find,selection:selectedText,scroll:()=>window.scrollY,closeOverlay:()=>{if(menu){closeMenu();return true;}return closeOverlay();},
-    restore:(scroll,line)=>{const blocks=[...article.querySelectorAll('[data-source-line]')];const target=line?blocks.reduce((best,el)=>Number(el.dataset.sourceLine)<=line?el:best,null):null;if(target)target.scrollIntoView({block:'start',behavior:'instant'});else window.scrollTo({top:Math.max(0,scroll||0),behavior:'instant'});},
-    theme:dark=>{document.documentElement.classList.toggle('dark',dark);document.documentElement.classList.toggle('light',!dark);},
+  window.markpad={find,syncScroll,selection:selectedText,scroll:()=>window.scrollY,closeOverlay:()=>{if(menu){closeMenu();return true;}return closeOverlay();},
+    restore:(scroll,line)=>synchronizedScroll(()=>{const target=line?sourceBlocks.reduce((best,el)=>Number(el.dataset.sourceLine)<=line?el:best,null):null;if(target)target.scrollIntoView({block:'start',behavior:'instant'});else window.scrollTo({top:Math.max(0,scroll||0),behavior:'instant'});}),
+    theme:(dark,ink=false)=>{const root=document.documentElement;root.classList.toggle('dark',dark);root.classList.toggle('light',!dark);root.classList.toggle('ink',ink);root.dataset.theme=ink?(dark?'ink-dark':'ink'):dark?'dark':'light';},
     anchor:openLink};
   send('ready');
 })();

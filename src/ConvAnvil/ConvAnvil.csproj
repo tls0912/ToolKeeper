@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <Version>0.1.0</Version>
+    <Description>Text, Encoding &amp; Byte Converter</Description>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="UTF.Unknown" Version="2.7.0" />
+    <None Update="THIRD-PARTY-NOTICES.md" CopyToOutputDirectory="PreserveNewest" />
+    <None Update="Licenses/UTF.Unknown-MPL-1.1.txt" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="../ToolKeeper.UI/ToolKeeper.UI.csproj" />
+  </ItemGroup>
+</Project>

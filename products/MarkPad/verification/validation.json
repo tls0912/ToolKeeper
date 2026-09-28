@@ -1,0 +1,1018 @@
+﻿{
+    "generatedUtc":  "2026-09-28T07:50:03.3385797Z",
+    "passed":  true,
+    "checks":  [
+                   {
+                       "check":  "zh-TW description nonempty and \u003c=10000 characters",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "zh-TW description has no URLs or HTML",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "zh-TW short description below 270 characters",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "zh-TW privacy policy text present",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "zh-TW features satisfy count/length/no-bullet rules",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "zh-TW keywords satisfy 7 phrases/40 chars/21 words limits",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "zh-TW update-only notes below 1500 characters",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "zh-TW system requirements satisfy listing limits",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "zh-TW has five screenshot captions",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "zh-TW/01-preview-bamboo-light.png caption \u003c=200 characters",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "zh-TW/02-preview-bamboo-dark.png caption \u003c=200 characters",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "zh-TW/03-preview-light.png caption \u003c=200 characters",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "zh-TW/04-preview-dark.png caption \u003c=200 characters",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "zh-TW/05-edit-bamboo-light.png caption \u003c=200 characters",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "en-US description nonempty and \u003c=10000 characters",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "en-US description has no URLs or HTML",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "en-US short description below 270 characters",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "en-US privacy policy text present",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "en-US features satisfy count/length/no-bullet rules",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "en-US keywords satisfy 7 phrases/40 chars/21 words limits",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "en-US update-only notes below 1500 characters",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "en-US system requirements satisfy listing limits",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "en-US has five screenshot captions",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "en-US/01-preview-bamboo-light.png caption \u003c=200 characters",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "en-US/02-preview-bamboo-dark.png caption \u003c=200 characters",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "en-US/03-preview-light.png caption \u003c=200 characters",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "en-US/04-preview-dark.png caption \u003c=200 characters",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "en-US/05-edit-bamboo-light.png caption \u003c=200 characters",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "ja-JP description nonempty and \u003c=10000 characters",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "ja-JP description has no URLs or HTML",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "ja-JP short description below 270 characters",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "ja-JP privacy policy text present",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "ja-JP features satisfy count/length/no-bullet rules",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "ja-JP keywords satisfy 7 phrases/40 chars/21 words limits",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "ja-JP update-only notes below 1500 characters",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "ja-JP system requirements satisfy listing limits",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "ja-JP has five screenshot captions",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "ja-JP/01-preview-bamboo-light.png caption \u003c=200 characters",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "ja-JP/02-preview-bamboo-dark.png caption \u003c=200 characters",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "ja-JP/03-preview-light.png caption \u003c=200 characters",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "ja-JP/04-preview-dark.png caption \u003c=200 characters",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "ja-JP/05-edit-bamboo-light.png caption \u003c=200 characters",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "assets/app-icon-300.png below 50 MB",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "assets/bamboo-icon-preview.png below 50 MB",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "assets/msix-package/Square150x150Logo.png below 50 MB",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "assets/msix-package/Square150x150Logo.scale-100.png below 50 MB",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "assets/msix-package/Square150x150Logo.scale-125.png below 50 MB",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "assets/msix-package/Square150x150Logo.scale-150.png below 50 MB",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "assets/msix-package/Square150x150Logo.scale-200.png below 50 MB",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "assets/msix-package/Square150x150Logo.scale-400.png below 50 MB",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "assets/msix-package/Square44x44Logo.png below 50 MB",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "assets/msix-package/Square44x44Logo.scale-100.png below 50 MB",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "assets/msix-package/Square44x44Logo.scale-125.png below 50 MB",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "assets/msix-package/Square44x44Logo.scale-150.png below 50 MB",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "assets/msix-package/Square44x44Logo.scale-200.png below 50 MB",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "assets/msix-package/Square44x44Logo.scale-400.png below 50 MB",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "assets/msix-package/Square44x44Logo.targetsize-16_altform-unplated.png below 50 MB",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "assets/msix-package/Square44x44Logo.targetsize-24_altform-unplated.png below 50 MB",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "assets/msix-package/Square44x44Logo.targetsize-256_altform-unplated.png below 50 MB",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "assets/msix-package/Square44x44Logo.targetsize-32_altform-unplated.png below 50 MB",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "assets/msix-package/Square44x44Logo.targetsize-48_altform-unplated.png below 50 MB",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "assets/msix-package/StoreLogo.png below 50 MB",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "assets/msix-package/StoreLogo.scale-100.png below 50 MB",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "assets/msix-package/StoreLogo.scale-125.png below 50 MB",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "assets/msix-package/StoreLogo.scale-150.png below 50 MB",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "assets/msix-package/StoreLogo.scale-200.png below 50 MB",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "assets/msix-package/StoreLogo.scale-400.png below 50 MB",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "assets/optional-art/box-art-1080.png below 50 MB",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "assets/optional-art/hero-art-1920x1080.png below 50 MB",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "assets/optional-art/poster-art-720x1080.png below 50 MB",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "screenshots/en-US/01-preview-bamboo-light.png below 50 MB",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "screenshots/en-US/01-preview-bamboo-light.png is 1600x1000",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "screenshots/en-US/02-preview-bamboo-dark.png below 50 MB",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "screenshots/en-US/02-preview-bamboo-dark.png is 1600x1000",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "screenshots/en-US/03-preview-light.png below 50 MB",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "screenshots/en-US/03-preview-light.png is 1600x1000",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "screenshots/en-US/04-preview-dark.png below 50 MB",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "screenshots/en-US/04-preview-dark.png is 1600x1000",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "screenshots/en-US/05-edit-bamboo-light.png below 50 MB",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "screenshots/en-US/05-edit-bamboo-light.png is 1600x1000",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "screenshots/ja-JP/01-preview-bamboo-light.png below 50 MB",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "screenshots/ja-JP/01-preview-bamboo-light.png is 1600x1000",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "screenshots/ja-JP/02-preview-bamboo-dark.png below 50 MB",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "screenshots/ja-JP/02-preview-bamboo-dark.png is 1600x1000",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "screenshots/ja-JP/03-preview-light.png below 50 MB",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "screenshots/ja-JP/03-preview-light.png is 1600x1000",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "screenshots/ja-JP/04-preview-dark.png below 50 MB",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "screenshots/ja-JP/04-preview-dark.png is 1600x1000",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "screenshots/ja-JP/05-edit-bamboo-light.png below 50 MB",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "screenshots/ja-JP/05-edit-bamboo-light.png is 1600x1000",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "screenshots/zh-TW/01-preview-bamboo-light.png below 50 MB",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "screenshots/zh-TW/01-preview-bamboo-light.png is 1600x1000",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "screenshots/zh-TW/02-preview-bamboo-dark.png below 50 MB",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "screenshots/zh-TW/02-preview-bamboo-dark.png is 1600x1000",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "screenshots/zh-TW/03-preview-light.png below 50 MB",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "screenshots/zh-TW/03-preview-light.png is 1600x1000",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "screenshots/zh-TW/04-preview-dark.png below 50 MB",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "screenshots/zh-TW/04-preview-dark.png is 1600x1000",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "screenshots/zh-TW/05-edit-bamboo-light.png below 50 MB",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "screenshots/zh-TW/05-edit-bamboo-light.png is 1600x1000",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "assets/app-icon-300.png correct Store dimensions",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "assets/optional-art/hero-art-1920x1080.png correct Store dimensions",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "assets/optional-art/box-art-1080.png correct Store dimensions",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "assets/optional-art/poster-art-720x1080.png correct Store dimensions",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "15 localized screenshots present",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "23 MSIX package logos present",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "zh-TW five screenshots present",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "en-US five screenshots present",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "ja-JP five screenshots present",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: assets/app-icon-300.png",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: README.md",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: submission-notes.md",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: listing/zh-TW/description.txt",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: listing/zh-TW/short-description.txt",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: listing/zh-TW/features.txt",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: listing/zh-TW/keywords.txt",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: listing/zh-TW/system-requirements.txt",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: listing/zh-TW/privacy-policy.txt",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: listing/zh-TW/release-notes-update-only.txt",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: screenshots/zh-TW/01-preview-bamboo-light.png",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: screenshots/zh-TW/01-preview-bamboo-light.png",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: screenshots/zh-TW/01-preview-bamboo-light.png",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: screenshots/zh-TW/02-preview-bamboo-dark.png",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: screenshots/zh-TW/02-preview-bamboo-dark.png",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: screenshots/zh-TW/02-preview-bamboo-dark.png",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: screenshots/zh-TW/03-preview-light.png",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: screenshots/zh-TW/03-preview-light.png",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: screenshots/zh-TW/03-preview-light.png",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: screenshots/zh-TW/04-preview-dark.png",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: screenshots/zh-TW/04-preview-dark.png",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: screenshots/zh-TW/04-preview-dark.png",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: screenshots/zh-TW/05-edit-bamboo-light.png",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: screenshots/zh-TW/05-edit-bamboo-light.png",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: screenshots/zh-TW/05-edit-bamboo-light.png",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: listing/en-US/description.txt",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: listing/en-US/short-description.txt",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: listing/en-US/features.txt",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: listing/en-US/keywords.txt",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: listing/en-US/system-requirements.txt",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: listing/en-US/privacy-policy.txt",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: listing/en-US/release-notes-update-only.txt",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: screenshots/en-US/01-preview-bamboo-light.png",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: screenshots/en-US/01-preview-bamboo-light.png",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: screenshots/en-US/01-preview-bamboo-light.png",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: screenshots/en-US/02-preview-bamboo-dark.png",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: screenshots/en-US/02-preview-bamboo-dark.png",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: screenshots/en-US/02-preview-bamboo-dark.png",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: screenshots/en-US/03-preview-light.png",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: screenshots/en-US/03-preview-light.png",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: screenshots/en-US/03-preview-light.png",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: screenshots/en-US/04-preview-dark.png",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: screenshots/en-US/04-preview-dark.png",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: screenshots/en-US/04-preview-dark.png",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: screenshots/en-US/05-edit-bamboo-light.png",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: screenshots/en-US/05-edit-bamboo-light.png",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: screenshots/en-US/05-edit-bamboo-light.png",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: listing/ja-JP/description.txt",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: listing/ja-JP/short-description.txt",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: listing/ja-JP/features.txt",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: listing/ja-JP/keywords.txt",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: listing/ja-JP/system-requirements.txt",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: listing/ja-JP/privacy-policy.txt",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: listing/ja-JP/release-notes-update-only.txt",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: screenshots/ja-JP/01-preview-bamboo-light.png",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: screenshots/ja-JP/01-preview-bamboo-light.png",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: screenshots/ja-JP/01-preview-bamboo-light.png",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: screenshots/ja-JP/02-preview-bamboo-dark.png",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: screenshots/ja-JP/02-preview-bamboo-dark.png",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: screenshots/ja-JP/02-preview-bamboo-dark.png",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: screenshots/ja-JP/03-preview-light.png",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: screenshots/ja-JP/03-preview-light.png",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: screenshots/ja-JP/03-preview-light.png",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: screenshots/ja-JP/04-preview-dark.png",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: screenshots/ja-JP/04-preview-dark.png",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: screenshots/ja-JP/04-preview-dark.png",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: screenshots/ja-JP/05-edit-bamboo-light.png",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: screenshots/ja-JP/05-edit-bamboo-light.png",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: screenshots/ja-JP/05-edit-bamboo-light.png",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: assets/app-icon-300.png",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: assets/app-icon-300.png",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: assets/optional-art/hero-art-1920x1080.png",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: assets/optional-art/hero-art-1920x1080.png",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: assets/optional-art/box-art-1080.png",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: assets/optional-art/box-art-1080.png",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: assets/optional-art/poster-art-720x1080.png",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: assets/optional-art/poster-art-720x1080.png",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: privacy-submission.md",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "no runtime profiles, binaries or private signing material in the listing kit",
+                       "passed":  true
+                   }
+               ],
+    "images":  [
+                   {
+                       "file":  "assets/app-icon-300.png",
+                       "width":  300,
+                       "height":  300,
+                       "bytes":  30761
+                   },
+                   {
+                       "file":  "assets/bamboo-icon-preview.png",
+                       "width":  512,
+                       "height":  512,
+                       "bytes":  58847
+                   },
+                   {
+                       "file":  "assets/msix-package/Square150x150Logo.png",
+                       "width":  150,
+                       "height":  150,
+                       "bytes":  12150
+                   },
+                   {
+                       "file":  "assets/msix-package/Square150x150Logo.scale-100.png",
+                       "width":  150,
+                       "height":  150,
+                       "bytes":  12150
+                   },
+                   {
+                       "file":  "assets/msix-package/Square150x150Logo.scale-125.png",
+                       "width":  188,
+                       "height":  188,
+                       "bytes":  16214
+                   },
+                   {
+                       "file":  "assets/msix-package/Square150x150Logo.scale-150.png",
+                       "width":  225,
+                       "height":  225,
+                       "bytes":  20457
+                   },
+                   {
+                       "file":  "assets/msix-package/Square150x150Logo.scale-200.png",
+                       "width":  300,
+                       "height":  300,
+                       "bytes":  30761
+                   },
+                   {
+                       "file":  "assets/msix-package/Square150x150Logo.scale-400.png",
+                       "width":  600,
+                       "height":  600,
+                       "bytes":  77194
+                   },
+                   {
+                       "file":  "assets/msix-package/Square44x44Logo.png",
+                       "width":  44,
+                       "height":  44,
+                       "bytes":  3078
+                   },
+                   {
+                       "file":  "assets/msix-package/Square44x44Logo.scale-100.png",
+                       "width":  44,
+                       "height":  44,
+                       "bytes":  3078
+                   },
+                   {
+                       "file":  "assets/msix-package/Square44x44Logo.scale-125.png",
+                       "width":  55,
+                       "height":  55,
+                       "bytes":  3882
+                   },
+                   {
+                       "file":  "assets/msix-package/Square44x44Logo.scale-150.png",
+                       "width":  66,
+                       "height":  66,
+                       "bytes":  4769
+                   },
+                   {
+                       "file":  "assets/msix-package/Square44x44Logo.scale-200.png",
+                       "width":  88,
+                       "height":  88,
+                       "bytes":  6449
+                   },
+                   {
+                       "file":  "assets/msix-package/Square44x44Logo.scale-400.png",
+                       "width":  176,
+                       "height":  176,
+                       "bytes":  15140
+                   },
+                   {
+                       "file":  "assets/msix-package/Square44x44Logo.targetsize-16_altform-unplated.png",
+                       "width":  16,
+                       "height":  16,
+                       "bytes":  895
+                   },
+                   {
+                       "file":  "assets/msix-package/Square44x44Logo.targetsize-24_altform-unplated.png",
+                       "width":  24,
+                       "height":  24,
+                       "bytes":  1520
+                   },
+                   {
+                       "file":  "assets/msix-package/Square44x44Logo.targetsize-256_altform-unplated.png",
+                       "width":  256,
+                       "height":  256,
+                       "bytes":  22098
+                   },
+                   {
+                       "file":  "assets/msix-package/Square44x44Logo.targetsize-32_altform-unplated.png",
+                       "width":  32,
+                       "height":  32,
+                       "bytes":  2053
+                   },
+                   {
+                       "file":  "assets/msix-package/Square44x44Logo.targetsize-48_altform-unplated.png",
+                       "width":  48,
+                       "height":  48,
+                       "bytes":  3386
+                   },
+                   {
+                       "file":  "assets/msix-package/StoreLogo.png",
+                       "width":  50,
+                       "height":  50,
+                       "bytes":  3498
+                   },
+                   {
+                       "file":  "assets/msix-package/StoreLogo.scale-100.png",
+                       "width":  50,
+                       "height":  50,
+                       "bytes":  3498
+                   },
+                   {
+                       "file":  "assets/msix-package/StoreLogo.scale-125.png",
+                       "width":  63,
+                       "height":  63,
+                       "bytes":  4506
+                   },
+                   {
+                       "file":  "assets/msix-package/StoreLogo.scale-150.png",
+                       "width":  75,
+                       "height":  75,
+                       "bytes":  5560
+                   },
+                   {
+                       "file":  "assets/msix-package/StoreLogo.scale-200.png",
+                       "width":  100,
+                       "height":  100,
+                       "bytes":  7554
+                   },
+                   {
+                       "file":  "assets/msix-package/StoreLogo.scale-400.png",
+                       "width":  200,
+                       "height":  200,
+                       "bytes":  17705
+                   },
+                   {
+                       "file":  "assets/optional-art/box-art-1080.png",
+                       "width":  1080,
+                       "height":  1080,
+                       "bytes":  249880
+                   },
+                   {
+                       "file":  "assets/optional-art/hero-art-1920x1080.png",
+                       "width":  1920,
+                       "height":  1080,
+                       "bytes":  412745
+                   },
+                   {
+                       "file":  "assets/optional-art/poster-art-720x1080.png",
+                       "width":  720,
+                       "height":  1080,
+                       "bytes":  182467
+                   },
+                   {
+                       "file":  "screenshots/en-US/01-preview-bamboo-light.png",
+                       "width":  1600,
+                       "height":  1000,
+                       "bytes":  499926
+                   },
+                   {
+                       "file":  "screenshots/en-US/02-preview-bamboo-dark.png",
+                       "width":  1600,
+                       "height":  1000,
+                       "bytes":  489137
+                   },
+                   {
+                       "file":  "screenshots/en-US/03-preview-light.png",
+                       "width":  1600,
+                       "height":  1000,
+                       "bytes":  316890
+                   },
+                   {
+                       "file":  "screenshots/en-US/04-preview-dark.png",
+                       "width":  1600,
+                       "height":  1000,
+                       "bytes":  323493
+                   },
+                   {
+                       "file":  "screenshots/en-US/05-edit-bamboo-light.png",
+                       "width":  1600,
+                       "height":  1000,
+                       "bytes":  610903
+                   },
+                   {
+                       "file":  "screenshots/ja-JP/01-preview-bamboo-light.png",
+                       "width":  1600,
+                       "height":  1000,
+                       "bytes":  447891
+                   },
+                   {
+                       "file":  "screenshots/ja-JP/02-preview-bamboo-dark.png",
+                       "width":  1600,
+                       "height":  1000,
+                       "bytes":  441264
+                   },
+                   {
+                       "file":  "screenshots/ja-JP/03-preview-light.png",
+                       "width":  1600,
+                       "height":  1000,
+                       "bytes":  324199
+                   },
+                   {
+                       "file":  "screenshots/ja-JP/04-preview-dark.png",
+                       "width":  1600,
+                       "height":  1000,
+                       "bytes":  334761
+                   },
+                   {
+                       "file":  "screenshots/ja-JP/05-edit-bamboo-light.png",
+                       "width":  1600,
+                       "height":  1000,
+                       "bytes":  511204
+                   },
+                   {
+                       "file":  "screenshots/zh-TW/01-preview-bamboo-light.png",
+                       "width":  1600,
+                       "height":  1000,
+                       "bytes":  456868
+                   },
+                   {
+                       "file":  "screenshots/zh-TW/02-preview-bamboo-dark.png",
+                       "width":  1600,
+                       "height":  1000,
+                       "bytes":  450661
+                   },
+                   {
+                       "file":  "screenshots/zh-TW/03-preview-light.png",
+                       "width":  1600,
+                       "height":  1000,
+                       "bytes":  270447
+                   },
+                   {
+                       "file":  "screenshots/zh-TW/04-preview-dark.png",
+                       "width":  1600,
+                       "height":  1000,
+                       "bytes":  276492
+                   },
+                   {
+                       "file":  "screenshots/zh-TW/05-edit-bamboo-light.png",
+                       "width":  1600,
+                       "height":  1000,
+                       "bytes":  524694
+                   }
+               ]
+}

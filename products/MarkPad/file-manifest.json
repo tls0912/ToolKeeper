@@ -1,0 +1,472 @@
+﻿{
+    "product":  "汗青 - Markdown Writer",
+    "version":  "1.0.2.0",
+    "files":  [
+                  {
+                      "file":  "assets/app-icon-300.png",
+                      "bytes":  30761,
+                      "sha256":  "C21EB63DB3F7FDC097524F269D6F61B5E4E02B74623E3982DCE73FB5011D40A0"
+                  },
+                  {
+                      "file":  "assets/asset-manifest.json",
+                      "bytes":  14252,
+                      "sha256":  "445092499B14E906B41A58E2268BA0F4D62B7C18F6BF33A3A8107E3071CCA5DD"
+                  },
+                  {
+                      "file":  "assets/bamboo-icon-preview.png",
+                      "bytes":  58847,
+                      "sha256":  "D3BB49409B0ABB8C7A72873DD64D97D3E8DCC2F10A68F9E664E9B3407096AE78"
+                  },
+                  {
+                      "file":  "assets/msix-package/Square150x150Logo.png",
+                      "bytes":  12150,
+                      "sha256":  "9FA2DB86CEC0808D005B76E0D2DB68428AE889847391E6CD357783A4496D2779"
+                  },
+                  {
+                      "file":  "assets/msix-package/Square150x150Logo.scale-100.png",
+                      "bytes":  12150,
+                      "sha256":  "9FA2DB86CEC0808D005B76E0D2DB68428AE889847391E6CD357783A4496D2779"
+                  },
+                  {
+                      "file":  "assets/msix-package/Square150x150Logo.scale-125.png",
+                      "bytes":  16214,
+                      "sha256":  "1796D6911B11CFB1024B77ABBDCBF070C3C64AFCC0FA9FB35FDB6EFC2248FB1E"
+                  },
+                  {
+                      "file":  "assets/msix-package/Square150x150Logo.scale-150.png",
+                      "bytes":  20457,
+                      "sha256":  "5E6A1EA483FB8297CCD8AD12B49C3EE97DD8C93B04C2ADBFC5C2BE40DDA40F85"
+                  },
+                  {
+                      "file":  "assets/msix-package/Square150x150Logo.scale-200.png",
+                      "bytes":  30761,
+                      "sha256":  "C21EB63DB3F7FDC097524F269D6F61B5E4E02B74623E3982DCE73FB5011D40A0"
+                  },
+                  {
+                      "file":  "assets/msix-package/Square150x150Logo.scale-400.png",
+                      "bytes":  77194,
+                      "sha256":  "C7119BF8BBE0C08064C1E0953939F97B26B4D70E7CE3F4FC5C3FE5D23B58B358"
+                  },
+                  {
+                      "file":  "assets/msix-package/Square44x44Logo.png",
+                      "bytes":  3078,
+                      "sha256":  "52EDFB6AA0F3D0238671E586941BB15FF6B90DB87BC3B3FF914B3D40805C133A"
+                  },
+                  {
+                      "file":  "assets/msix-package/Square44x44Logo.scale-100.png",
+                      "bytes":  3078,
+                      "sha256":  "52EDFB6AA0F3D0238671E586941BB15FF6B90DB87BC3B3FF914B3D40805C133A"
+                  },
+                  {
+                      "file":  "assets/msix-package/Square44x44Logo.scale-125.png",
+                      "bytes":  3882,
+                      "sha256":  "4110DAF4A347243D4B452C9E1C668A12DB460ADC69624C2042FF9DBAD5C57576"
+                  },
+                  {
+                      "file":  "assets/msix-package/Square44x44Logo.scale-150.png",
+                      "bytes":  4769,
+                      "sha256":  "F0180DAD94E044DCC57796571BC65085C4E425B43DFC0006FF2A438B78765B70"
+                  },
+                  {
+                      "file":  "assets/msix-package/Square44x44Logo.scale-200.png",
+                      "bytes":  6449,
+                      "sha256":  "90223D6E038E7A9657331F9FA5DD3B3A3FE436D442F7FCBAF3F0522B81A3093A"
+                  },
+                  {
+                      "file":  "assets/msix-package/Square44x44Logo.scale-400.png",
+                      "bytes":  15140,
+                      "sha256":  "D68B742AC68645BDDCF4EC7449C02F28C5673A183F0DBB49AB02A38CFF892331"
+                  },
+                  {
+                      "file":  "assets/msix-package/Square44x44Logo.targetsize-16_altform-unplated.png",
+                      "bytes":  895,
+                      "sha256":  "BFB4A23A1E2AD890312F74554A35F713FA5FD24E79FB7E2224122085C9618FD7"
+                  },
+                  {
+                      "file":  "assets/msix-package/Square44x44Logo.targetsize-24_altform-unplated.png",
+                      "bytes":  1520,
+                      "sha256":  "F8FF80CD2A13D1B32ED410537B4FA3C24DE564F40ED9D9CD987E63F4F04F0C57"
+                  },
+                  {
+                      "file":  "assets/msix-package/Square44x44Logo.targetsize-256_altform-unplated.png",
+                      "bytes":  22098,
+                      "sha256":  "06316620FEEFB9A13CB2B8018D6D224506056AC6B4B2E7DFFED05A2142E19616"
+                  },
+                  {
+                      "file":  "assets/msix-package/Square44x44Logo.targetsize-32_altform-unplated.png",
+                      "bytes":  2053,
+                      "sha256":  "67C23DEDF39C55A0EC1A9C385F831735B0F7531E6D1477D460039838DB40D64B"
+                  },
+                  {
+                      "file":  "assets/msix-package/Square44x44Logo.targetsize-48_altform-unplated.png",
+                      "bytes":  3386,
+                      "sha256":  "6D506E6EB4746A011FBE1E311CFD9B3E355FB3A4FB57077F65796C0B84B6EF63"
+                  },
+                  {
+                      "file":  "assets/msix-package/StoreLogo.png",
+                      "bytes":  3498,
+                      "sha256":  "16D573E8607FAF08E3CA59C9AA776283D635A409FC35B1423AE2022ECE589EC5"
+                  },
+                  {
+                      "file":  "assets/msix-package/StoreLogo.scale-100.png",
+                      "bytes":  3498,
+                      "sha256":  "16D573E8607FAF08E3CA59C9AA776283D635A409FC35B1423AE2022ECE589EC5"
+                  },
+                  {
+                      "file":  "assets/msix-package/StoreLogo.scale-125.png",
+                      "bytes":  4506,
+                      "sha256":  "C634EB15FFCE062A0AF477BC3B8F1BBFE299D0FB0E53FAE67A62A3CA38568920"
+                  },
+                  {
+                      "file":  "assets/msix-package/StoreLogo.scale-150.png",
+                      "bytes":  5560,
+                      "sha256":  "C9E4772E2DCB4BDFC1080175828D798FA428AB21F4B584DBA453D002BD13F536"
+                  },
+                  {
+                      "file":  "assets/msix-package/StoreLogo.scale-200.png",
+                      "bytes":  7554,
+                      "sha256":  "914A1289210D2F0B0B8664DFF29263F5D095907CF3D26D975D64F15056136317"
+                  },
+                  {
+                      "file":  "assets/msix-package/StoreLogo.scale-400.png",
+                      "bytes":  17705,
+                      "sha256":  "C546946298AC6B67C4CF6A339354769802D9276692D356462F8F409952D89B3B"
+                  },
+                  {
+                      "file":  "assets/optional-art/box-art-1080.png",
+                      "bytes":  249880,
+                      "sha256":  "8EF21510E50C92DC28A369913FDDC7B74AE78FCCFB78B666A47BB5780DF44533"
+                  },
+                  {
+                      "file":  "assets/optional-art/hero-art-1920x1080.png",
+                      "bytes":  412745,
+                      "sha256":  "08FB80146321D9162F1E9926C9050C505F0AF81523863F9A02297157EBDFA09E"
+                  },
+                  {
+                      "file":  "assets/optional-art/poster-art-720x1080.png",
+                      "bytes":  182467,
+                      "sha256":  "B5B1D8C4F067928AFA57D121A684C2594EED7C630FE774D2F0791813E3FAF0EC"
+                  },
+                  {
+                      "file":  "assets/source-brand/MarkPad.ico",
+                      "bytes":  47676,
+                      "sha256":  "F1F5219211E28AD93EECFA3DF2DFD245EA7B3DC23E705A616259148F015F020A"
+                  },
+                  {
+                      "file":  "assets/source-brand/MarkPad.svg",
+                      "bytes":  19242,
+                      "sha256":  "9CA42710D47F1F672014074F6A9F0B79F83C1D0EB5A802A2B1C8196C73411A77"
+                  },
+                  {
+                      "file":  "index.html",
+                      "bytes":  41771,
+                      "sha256":  "7F734C3E6DB59FC290310E343440B444FD82E5DF0FFC40198EAFE17C67339AE6"
+                  },
+                  {
+                      "file":  "listing/en-US/description.txt",
+                      "bytes":  1455,
+                      "sha256":  "CA9FABB5EC9F6F190F79483805F67964586D3EC306A230072A6966DC1A36F353"
+                  },
+                  {
+                      "file":  "listing/en-US/features.txt",
+                      "bytes":  744,
+                      "sha256":  "6039BB22AEAC424D9AB2054162F04953819F45E3E177560969A9DAF5245341B0"
+                  },
+                  {
+                      "file":  "listing/en-US/keywords.txt",
+                      "bytes":  80,
+                      "sha256":  "1BB02DEF9417FADC51FB6738CAD9DE250198D623112D8BD4AE4DDB5250BB9077"
+                  },
+                  {
+                      "file":  "listing/en-US/privacy-policy.txt",
+                      "bytes":  3330,
+                      "sha256":  "4B018ADB8D63FEA2C9193A2E70F98C83FC3EAD5097A6F7FA05C624DBCC8444A8"
+                  },
+                  {
+                      "file":  "listing/en-US/release-notes-update-only.txt",
+                      "bytes":  441,
+                      "sha256":  "4622D4554C9925990448B2D6269C0F67BEA83D4F8FD0AAF7C39F3EB718F982F6"
+                  },
+                  {
+                      "file":  "listing/en-US/screenshot-captions.txt",
+                      "bytes":  718,
+                      "sha256":  "4BE45435CDB8D20E1E0F11B00B0C3EF14B90A294DF755D46BDD05C93B065E849"
+                  },
+                  {
+                      "file":  "listing/en-US/short-description.txt",
+                      "bytes":  229,
+                      "sha256":  "BEEBD8613B80B5BFA49249D11EF7C9683331611F94BB8C55DB706DBFDC6DC83F"
+                  },
+                  {
+                      "file":  "listing/en-US/system-requirements.txt",
+                      "bytes":  122,
+                      "sha256":  "0BC84ECFB7DEAE3ADA993C60BD52855F8CDA980FC6AFA2D419B19892B8DB7DF8"
+                  },
+                  {
+                      "file":  "listing/ja-JP/description.txt",
+                      "bytes":  1915,
+                      "sha256":  "4858F71BE769A975D20B3EBD07FB2FD5C7DD781F5D1A09EF18E70C381E77C973"
+                  },
+                  {
+                      "file":  "listing/ja-JP/features.txt",
+                      "bytes":  858,
+                      "sha256":  "68E8211E253FA5027F20E97DABF4EECB50957B07E92DB1168900FCD1C62E783B"
+                  },
+                  {
+                      "file":  "listing/ja-JP/keywords.txt",
+                      "bytes":  86,
+                      "sha256":  "DBFBA63AF901A27BEA7ED7CD8D8C50AEC75C4F225DFC55DE6BA96A71643E8FC9"
+                  },
+                  {
+                      "file":  "listing/ja-JP/privacy-policy.txt",
+                      "bytes":  4407,
+                      "sha256":  "808BCE37CB55C2B1F90D201C77491E4AA55E1070FE3FA76B996E22E78B649945"
+                  },
+                  {
+                      "file":  "listing/ja-JP/release-notes-update-only.txt",
+                      "bytes":  537,
+                      "sha256":  "6AF3C07D12494AC657E68C832E595033FD41593B76A3278B5D60F316FF2C9140"
+                  },
+                  {
+                      "file":  "listing/ja-JP/screenshot-captions.txt",
+                      "bytes":  914,
+                      "sha256":  "6B49CB5E34E97CCA85DC65F1B26B28B5F1416599E67ED223A871A0A208F3B9AC"
+                  },
+                  {
+                      "file":  "listing/ja-JP/short-description.txt",
+                      "bytes":  263,
+                      "sha256":  "ADE1BB9392F0A2FAAB6ED795300ACADD42BF7101AE250AFC1A76E75E53486044"
+                  },
+                  {
+                      "file":  "listing/ja-JP/system-requirements.txt",
+                      "bytes":  164,
+                      "sha256":  "E75F822F611823524B17E65225D1207B2D8A70F7B076F9BE6EE129CE74EBAA8D"
+                  },
+                  {
+                      "file":  "listing/zh-TW/description.txt",
+                      "bytes":  1322,
+                      "sha256":  "EB1D675A0A5C0435A204D2E04F7C547534F1C0A1FA67B378B64EE5B9A2A4F44C"
+                  },
+                  {
+                      "file":  "listing/zh-TW/features.txt",
+                      "bytes":  672,
+                      "sha256":  "34CA19CA46E7DFA3A3820D0FAD3C38BCDA09DCEEAA753DAF051B471CA60A364F"
+                  },
+                  {
+                      "file":  "listing/zh-TW/keywords.txt",
+                      "bytes":  74,
+                      "sha256":  "C073D8D53907024DFC1B3ED3197EF11E7EC97506BF76692C377196B497F899FD"
+                  },
+                  {
+                      "file":  "listing/zh-TW/privacy-policy.txt",
+                      "bytes":  2982,
+                      "sha256":  "7225B4CE2A00A8E8F848E4A40052EF442C12020115A8D346F64C9E759BB49488"
+                  },
+                  {
+                      "file":  "listing/zh-TW/release-notes-update-only.txt",
+                      "bytes":  347,
+                      "sha256":  "93D5F1469F007149DDBD825F977813779C5169D76B2F1BB0313C60DBB91D3E93"
+                  },
+                  {
+                      "file":  "listing/zh-TW/screenshot-captions.txt",
+                      "bytes":  660,
+                      "sha256":  "811DB6C13228EDD70587970234876A20002BB9FD8B909CACBA4B1821A775B8D3"
+                  },
+                  {
+                      "file":  "listing/zh-TW/short-description.txt",
+                      "bytes":  194,
+                      "sha256":  "D98A7CE48796CA88A7B78C6CEE2704EB8BCC2BD84D0AF77D7FD822E4B9157DE6"
+                  },
+                  {
+                      "file":  "listing/zh-TW/system-requirements.txt",
+                      "bytes":  124,
+                      "sha256":  "CBFE9BEFB8DB867DE61461FE3A86C10DB687EE10F13671029699C843C0DE4783"
+                  },
+                  {
+                      "file":  "privacy-submission.md",
+                      "bytes":  1964,
+                      "sha256":  "D834837EDCD1F6710D23B66D92B4A41CAA8E9D7E82ED16ABDE6C1ECBF355B920"
+                  },
+                  {
+                      "file":  "product-info.json",
+                      "bytes":  1759,
+                      "sha256":  "12B6AAD6A866745FC26BA3D59A1B4541FB956A1173BEEED2E576D361D40995AA"
+                  },
+                  {
+                      "file":  "README.md",
+                      "bytes":  6782,
+                      "sha256":  "C6F5262E22A815A2AB19DA111E94DA9A9A06DF9F1AC14F060C0BF3E831BCE81B"
+                  },
+                  {
+                      "file":  "samples/en-US/Quiet pages.md",
+                      "bytes":  1520,
+                      "sha256":  "8D0AED8E9D9D32F221C262A9BC07848AE5FE81A7397EBD5D6CF5D6F964400A9A"
+                  },
+                  {
+                      "file":  "samples/en-US/Reading list.md",
+                      "bytes":  42,
+                      "sha256":  "347FAC3299A8ABA674D620717DAEB82DC376B6853E7962ADA90281E38D8131A6"
+                  },
+                  {
+                      "file":  "samples/en-US/Weekend plans.md",
+                      "bytes":  43,
+                      "sha256":  "9C1A03C6DC9C6120609243B5B0E1B8303FAC3E63E6763C9626D35266062A5CB9"
+                  },
+                  {
+                      "file":  "samples/ja-JP/竹のそばのメモ.md",
+                      "bytes":  1713,
+                      "sha256":  "1D411D53FC57BAD3CFCE4A4BB1EE53D40CFBA3FCC18091CBD6A17677EB768043"
+                  },
+                  {
+                      "file":  "samples/ja-JP/週末の予定.md",
+                      "bytes":  53,
+                      "sha256":  "C7CC117123B5560AC2256BBDD621EF63D6A2D6CF74DD814308894F08486F4931"
+                  },
+                  {
+                      "file":  "samples/ja-JP/読書リスト.md",
+                      "bytes":  53,
+                      "sha256":  "4D3F1A6EAA64F38474908FA35EC6D73E70E6115AC1EBBE4BC0F2053C8577532B"
+                  },
+                  {
+                      "file":  "samples/zh-TW/竹間札記.md",
+                      "bytes":  1466,
+                      "sha256":  "E3644B41581B7867A758489DCB07F3C2780DF0E542CDBF18C8BDCA6B90E20F21"
+                  },
+                  {
+                      "file":  "samples/zh-TW/週末計畫.md",
+                      "bytes":  44,
+                      "sha256":  "F2CD2B1A9A863272CE7333C12D7946DFF2C8B51AF240BF680586F605579229EF"
+                  },
+                  {
+                      "file":  "samples/zh-TW/閱讀清單.md",
+                      "bytes":  44,
+                      "sha256":  "A51B012C5F7328DEBC0F92AB69D3CB52D38BF75D30CF841DAB819B034718F8FA"
+                  },
+                  {
+                      "file":  "screenshots/captions.json",
+                      "bytes":  2742,
+                      "sha256":  "E1E4B3C41967EA437F85EE5978293C39CA27DDD7376BF8BAF3C4CFF6DA6FCF93"
+                  },
+                  {
+                      "file":  "screenshots/en-US/01-preview-bamboo-light.png",
+                      "bytes":  499926,
+                      "sha256":  "8FAF4FF0BA5AEC830A8480DA736E1D3A23421AE1ED83786C498126517B95551C"
+                  },
+                  {
+                      "file":  "screenshots/en-US/02-preview-bamboo-dark.png",
+                      "bytes":  489137,
+                      "sha256":  "6A56E3A1523FF385C4D585303552D581F0B1213B020DAAD3A4902E3DFCB9BB5B"
+                  },
+                  {
+                      "file":  "screenshots/en-US/03-preview-light.png",
+                      "bytes":  316890,
+                      "sha256":  "BEF57A3977F2E457FEA68924C54507186DA623D18992BD615F58F69B9956862D"
+                  },
+                  {
+                      "file":  "screenshots/en-US/04-preview-dark.png",
+                      "bytes":  323493,
+                      "sha256":  "5D7BE2AE47093A8133B6FF12EB78104CD6CD42ED4A5069E9B0F520AC263417B0"
+                  },
+                  {
+                      "file":  "screenshots/en-US/05-edit-bamboo-light.png",
+                      "bytes":  610903,
+                      "sha256":  "AB1903C937AAC9892A7F05382A891D9B6914B6BD249A861024107F4D254E8139"
+                  },
+                  {
+                      "file":  "screenshots/ja-JP/01-preview-bamboo-light.png",
+                      "bytes":  447891,
+                      "sha256":  "604FDAE2EC0273F700ED17CAA678FB4A1D77A2914B3460E62C3E5A9DFC54D6AF"
+                  },
+                  {
+                      "file":  "screenshots/ja-JP/02-preview-bamboo-dark.png",
+                      "bytes":  441264,
+                      "sha256":  "B99246D1719EDA3E6D7CBC717EC960BA7E146ADECF4231EF16FD73A41DFE84F0"
+                  },
+                  {
+                      "file":  "screenshots/ja-JP/03-preview-light.png",
+                      "bytes":  324199,
+                      "sha256":  "6C4B1A726BCBE473CAB24C906B9D9E256CDFBF375BEEBACFC6A8F3086EBDF508"
+                  },
+                  {
+                      "file":  "screenshots/ja-JP/04-preview-dark.png",
+                      "bytes":  334761,
+                      "sha256":  "6487A8C6290B329CDE854042BCDB6C72AEB961E7D0FADE2134126266C09B3A14"
+                  },
+                  {
+                      "file":  "screenshots/ja-JP/05-edit-bamboo-light.png",
+                      "bytes":  511204,
+                      "sha256":  "77F35CD4B1E88178110CC91CE47C0459FA841973AB85A3B1CF248ABB4E975FF9"
+                  },
+                  {
+                      "file":  "screenshots/zh-TW/01-preview-bamboo-light.png",
+                      "bytes":  456868,
+                      "sha256":  "CC4FE7F2842B7FECE4CB5A91C1C2A385B03278A8E76436B21B93A144F516400B"
+                  },
+                  {
+                      "file":  "screenshots/zh-TW/02-preview-bamboo-dark.png",
+                      "bytes":  450661,
+                      "sha256":  "EAEE31EFBD953267DF9DD6BFC0ACCC50644270955CA3CE4192B32011491633C4"
+                  },
+                  {
+                      "file":  "screenshots/zh-TW/03-preview-light.png",
+                      "bytes":  270447,
+                      "sha256":  "D0BD3952C773B499C5DD63366C80E736E22950FEBAA264A9EA7517CF6D90C312"
+                  },
+                  {
+                      "file":  "screenshots/zh-TW/04-preview-dark.png",
+                      "bytes":  276492,
+                      "sha256":  "E477A92A3A852DE5D7779186082DE77B0923838B9A81F636D598DFA17A3A99C1"
+                  },
+                  {
+                      "file":  "screenshots/zh-TW/05-edit-bamboo-light.png",
+                      "bytes":  524694,
+                      "sha256":  "FBF56128F5A8856468025936C50309055E3D52E9CB0CC339CA2396E17A1D2CF4"
+                  },
+                  {
+                      "file":  "source/Build-ListingPack.ps1",
+                      "bytes":  17038,
+                      "sha256":  "5BAAE20395EA569D4612374D30ADC25DE584995CAB55EA3B7F9FCA7912806347"
+                  },
+                  {
+                      "file":  "source/Generate-StoreArtwork.ps1",
+                      "bytes":  5365,
+                      "sha256":  "63EA76A72D27BD5F4AED3BA4BE23D66F3EA24B0005BA76320C6C64CAF2D5FFC8"
+                  },
+                  {
+                      "file":  "source/README.md",
+                      "bytes":  2995,
+                      "sha256":  "94091546E4F12D1A19BA4DCC62E0943F94DBD5B47A48431EBF1E5005829AF008"
+                  },
+                  {
+                      "file":  "source/Screenshots/Program.cs",
+                      "bytes":  16612,
+                      "sha256":  "48A7754827208EA2FA7B0E2AE526241B7C8EF6C4B7E107D4A119E0613473BEB6"
+                  },
+                  {
+                      "file":  "source/Screenshots/Screenshots.csproj",
+                      "bytes":  628,
+                      "sha256":  "BFB8FB8CEC15723867B7AD4FCDCA2C9008B5709ADD5BAB48FCD7ECA01B31E3BD"
+                  },
+                  {
+                      "file":  "source/StoreArtworkRenderer.cs",
+                      "bytes":  12004,
+                      "sha256":  "1447ECA5D7DB97EF6EDF060C3B28E7A76DA7C41259BB082AC4EFF8A2F6FFBE40"
+                  },
+                  {
+                      "file":  "submission-notes.md",
+                      "bytes":  8346,
+                      "sha256":  "C09F4AE11933106AB901381D46FECBEAF848C2196D61C6A6A193E6DF73AAC5FF"
+                  },
+                  {
+                      "file":  "verification/screenshots.txt",
+                      "bytes":  5332,
+                      "sha256":  "AEDD51D74FDA267A9E3CB32D2846ADDAADF15A9C7BAF3CAFE89C1D65B5EAF134"
+                  },
+                  {
+                      "file":  "verification/validation.json",
+                      "bytes":  44310,
+                      "sha256":  "44AE6C80D1C68A9E9DBA05AEEB9EE7794C33B890E662D96F9B0FDE543C46C178"
+                  }
+              ],
+    "excludes":  "file-manifest.json (self)"
+}

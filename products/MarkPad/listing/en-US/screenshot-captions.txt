@@ -1,0 +1,5 @@
+﻿01-preview-bamboo-light.png	Read on a paper-inspired canvas with the Bamboo Light theme. The chapter list gathers H1–H6 headings for quick navigation.
+02-preview-bamboo-dark.png	Choose Bamboo Dark for a darker reading surface, with paper texture and chapter navigation kept in view.
+03-preview-light.png	Preview Markdown with the clean Light theme. Navigate chapters and read formatted tables and task lists.
+04-preview-dark.png	Read Markdown with bright text on the Dark theme's muted background. Use the chapter list to jump to a heading.
+05-edit-bamboo-light.png	Write in Bamboo Light: edit Markdown on the left with a live preview on the right. Adjust fonts, size, and formatting from the toolbar above.

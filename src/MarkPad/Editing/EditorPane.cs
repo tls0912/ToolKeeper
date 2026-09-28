@@ -13,13 +13,14 @@ using ICSharpCode.AvalonEdit.Editing;
 using ICSharpCode.AvalonEdit.Indentation;
 using ICSharpCode.AvalonEdit.Rendering;
 using MarkPad.Models;
+using MarkPad.Theming;
 
 namespace MarkPad.Editing;
 
 public sealed record SearchResult(int Index, int Count, bool Wrapped);
 
 /// <summary>A single editor surface, with the actual text and undo stack owned by each tab.</summary>
-public sealed class EditorPane : UserControl
+public sealed partial class EditorPane : UserControl
 {
     private static readonly Regex UrlPattern = new(@"https?://[^\s<>""\[\]]+", RegexOptions.Compiled | RegexOptions.IgnoreCase, TimeSpan.FromMilliseconds(100));
     private readonly SearchRenderer _searchRenderer;
@@ -59,6 +60,7 @@ public sealed class EditorPane : UserControl
             AllowDrop = true,
         };
         Editor.Options.IndentationSize = 4;
+        ConfigureScrollAppearance();
         Editor.Options.ConvertTabsToSpaces = true;
         Editor.Options.HighlightCurrentLine = true;
         // Navigation is routed to the host, so only an explicit Ctrl+Click opens URLs.
@@ -105,6 +107,7 @@ public sealed class EditorPane : UserControl
         {
             SavePosition();
             _selectionPopup.IsOpen = false;
+            OnScrollOffsetChanged();
         };
         Editor.TextArea.TextEntering += OnTextEntering;
         Editor.PreviewKeyDown += OnPreviewKeyDown;
@@ -144,6 +147,7 @@ public sealed class EditorPane : UserControl
         }
 
         SavePosition();
+        _synchronizedOffset = null;
         var scrollToRestore = tab?.EditorScroll ?? 0;
         _searchRefresh.Stop();
         _selectionPopup.IsOpen = false;
@@ -172,26 +176,27 @@ public sealed class EditorPane : UserControl
         }, DispatcherPriority.Loaded);
     }
 
-    public void ApplyOptions(bool dark, string fontFamily, double fontSize)
+    public void ApplyOptions(bool dark, string fontFamily, double fontSize, bool ink = false)
     {
+        UpdateScrollAppearance(dark, ink);
         Editor.FontFamily = new FontFamily(string.IsNullOrWhiteSpace(fontFamily) ? "Cascadia Mono, Consolas" : fontFamily);
         Editor.FontSize = Math.Clamp(double.IsFinite(fontSize) ? fontSize : 16, 8, 72);
-        Editor.Background = Brush(dark ? "#0D1117" : "#E8EBEF");
-        Editor.Foreground = Brush(dark ? "#E6EDF3" : "#24292F");
-        Editor.LineNumbersForeground = Brush(dark ? "#7D8590" : "#8C959F");
+        Editor.Background = ink ? PaperTexture.For(dark) : Brush(dark ? "#0D1117" : "#E8EBEF");
+        Editor.Foreground = Brush(ink ? (dark ? "#E5E1D5" : "#2C302D") : dark ? "#E6EDF3" : "#24292F");
+        Editor.LineNumbersForeground = Brush(ink ? (dark ? "#AAAFA3" : "#73786F") : dark ? "#7D8590" : "#8C959F");
         _lineNumbers.SetValue(Control.ForegroundProperty, Editor.LineNumbersForeground);
-        _lineNumbers.ActiveBrush = Brush(dark ? "#79C0FF" : "#0969DA");
-        _lineNumbers.ActiveBackground = Brush(dark ? "#161B22" : "#DDE2E8");
+        _lineNumbers.ActiveBrush = Brush(ink ? (dark ? "#A2BEA9" : "#456B61") : dark ? "#79C0FF" : "#0969DA");
+        _lineNumbers.ActiveBackground = Brush(ink ? (dark ? "#2A322C" : "#E8E7DC") : dark ? "#161B22" : "#DDE2E8");
         Editor.TextArea.TextView.CurrentLineBackground = _lineNumbers.ActiveBackground;
         Editor.TextArea.TextView.CurrentLineBorder = new Pen(Brushes.Transparent, 0);
-        Editor.TextArea.SelectionBrush = Brush(dark ? "#264F78" : "#ADD6FF");
+        Editor.TextArea.SelectionBrush = Brush(ink ? (dark ? "#405648" : "#C9D7CC") : dark ? "#264F78" : "#ADD6FF");
         Editor.TextArea.SelectionForeground = Editor.Foreground;
-        Editor.SyntaxHighlighting = MarkdownHighlighting.Create(dark);
-        _popupBorder.Background = Brush(dark ? "#21262D" : "#E8EBEF");
-        _popupBorder.BorderBrush = Brush(dark ? "#30363D" : "#BEC6CF");
+        Editor.SyntaxHighlighting = MarkdownHighlighting.Create(dark, ink);
+        _popupBorder.Background = Brush(ink ? (dark ? "#1F2421" : "#F3F0E7") : dark ? "#21262D" : "#E8EBEF");
+        _popupBorder.BorderBrush = Brush(ink ? (dark ? "#414A42" : "#CCC9BE") : dark ? "#30363D" : "#BEC6CF");
         _popupBorder.SetValue(TextElement.ForegroundProperty, Editor.Foreground);
-        _searchRenderer.MatchBrush = Brush(dark ? "#665A1D" : "#FFF0A6");
-        _searchRenderer.CurrentBrush = Brush(dark ? "#9E6A03" : "#FFCE53");
+        _searchRenderer.MatchBrush = Brush(ink ? (dark ? "#514B32" : "#E7DDAF") : dark ? "#665A1D" : "#FFF0A6");
+        _searchRenderer.CurrentBrush = Brush(ink ? (dark ? "#6A5730" : "#D9BE83") : dark ? "#9E6A03" : "#FFCE53");
         Editor.TextArea.TextView.InvalidateLayer(KnownLayer.Selection);
         _lineNumbers.InvalidateVisual();
     }
@@ -321,7 +326,7 @@ public sealed class EditorPane : UserControl
 
     public void SetHeading(int level)
     {
-        if (Editor.IsReadOnly || level is < 1 or > 6) return;
+        if (Editor.IsReadOnly || level is < 0 or > 6) return;
         var first = Editor.Document.GetLineByOffset(Editor.SelectionStart).LineNumber;
         var finalOffset = Editor.SelectionStart + Math.Max(0, Editor.SelectionLength - 1);
         var last = Editor.Document.GetLineByOffset(finalOffset).LineNumber;
@@ -333,7 +338,8 @@ public sealed class EditorPane : UserControl
                 var line = Editor.Document.GetLineByNumber(index);
                 var value = Editor.Document.GetText(line.Offset, line.Length);
                 var existing = Regex.Match(value, @"^ {0,3}#{1,6}(?:[ \t]+|$)");
-                Editor.Document.Replace(line.Offset, existing.Length, new string('#', level) + " ");
+                if (level == 0 && existing.Length == 0) continue;
+                Editor.Document.Replace(line.Offset, existing.Length, level == 0 ? string.Empty : new string('#', level) + " ");
             }
         }
         finally { Editor.Document.EndUpdate(); }
@@ -345,7 +351,7 @@ public sealed class EditorPane : UserControl
         if (_binding || _tab is null) return;
         _tab.CaretOffset = Editor.CaretOffset;
         // Collapsing the editor for Preview can reset its layout offset to zero.
-        if (Editor.IsVisible) _tab.EditorScroll = Editor.VerticalOffset;
+        if (Editor.IsVisible) _tab.EditorScroll = Editor.TextArea.TextView.ScrollOffset.Y;
     }
 
     private void OnTextChanged(object? sender, EventArgs e)
@@ -390,7 +396,8 @@ public sealed class EditorPane : UserControl
         _selectionPopup.IsOpen = true;
     }
 
-    private void InsertLink()
+    /// <summary>Wraps the selection in a link and selects its URL placeholder for replacement.</summary>
+    public void InsertLink()
     {
         if (Editor.IsReadOnly) return;
         var offset = Editor.SelectionStart;

@@ -1,6 +1,6 @@
-# MarkPad third-party notices
+# 汗青 third-party notices
 
-MarkPad uses the following components. Their original licenses and notices are preserved in the `licenses/` folder. Package names, versions, license declarations, and repository revisions below were verified against the restored NuGet `.nuspec` files on 2026-09-22.
+汗青 uses the following components. Their original licenses and notices are preserved in the `licenses/` folder. Package names, versions, license declarations, and repository revisions below were verified against the restored NuGet `.nuspec` files on 2026-09-22.
 
 | Component | Version | Use | License source |
 | --- | --- | --- | --- |
@@ -19,4 +19,3 @@ The separately installed Microsoft Edge WebView2 Runtime is not bundled in this 
 ## .NET runtime packs in this build
 
 For self-contained builds, the publish script appends the actual runtime pack versions below and copies the original license and third-party notices available in those restored packs. Framework-dependent builds do not bundle these packs.
-

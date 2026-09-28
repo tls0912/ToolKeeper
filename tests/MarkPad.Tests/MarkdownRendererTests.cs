@@ -1,4 +1,5 @@
 using System.IO;
+using System.Reflection;
 using AngleSharp.Dom;
 using AngleSharp.Html.Parser;
 using MarkPad.Rendering;
@@ -170,7 +171,102 @@ public sealed class MarkdownRendererTests
         var document = new HtmlParser().ParseDocument(html);
         Assert.Equal("Report & Notes.pdf", document.Title);
         Assert.Contains("<title>Report &amp; Notes.pdf</title>", html);
-        Assert.Equal("MarkPad", Render("# Heading").Title);
+        Assert.Equal("汗青", Render("# Heading").Title);
+    }
+
+    [Fact]
+    public void OutlineUsesRenderedAtxAndSetextHeadingsWithPlainInlineLabelsAndExactLines()
+    {
+        var (document, headings) = RenderWithHeadings("# *First* &amp; `code`\n\nSecond [link](#first-code)\n---\n\n### Third\n#### Fourth\n##### Fifth\n###### Sixth\n");
+        Assert.Equal(new[] { 1, 2, 3, 4, 5, 6 }, headings.Select(heading => heading.Level));
+        Assert.Equal(new[] { 1, 3, 6, 7, 8, 9 }, headings.Select(heading => heading.Line));
+        Assert.Equal(new[] { "First & code", "Second link", "Third", "Fourth", "Fifth", "Sixth" }, headings.Select(heading => heading.Title));
+        Assert.All(headings, heading =>
+        {
+            var element = document.GetElementById(heading.Id);
+            Assert.NotNull(element);
+            Assert.Equal("h" + heading.Level, element.LocalName);
+            Assert.Equal(heading.Line.ToString(), element.GetAttribute("data-source-line"));
+        });
+    }
+
+    [Fact]
+    public void OutlineIdsStayUniqueAndStableAcrossRendersIncludingChineseAndRepeatedHeadings()
+    {
+        const string markdown = "# 重複 標題\n\n## 重複 標題\n\n# Duplicate\n\n# Duplicate\n\n<h3>自訂 <strong>標題</strong></h3>";
+        var (_, first) = RenderWithHeadings(markdown);
+        var (_, second) = RenderWithHeadings(markdown, new PreviewOptions(Dark: true, Ink: true, ReadOnly: true));
+        Assert.Equal(5, first.Count);
+        Assert.All(first, heading => Assert.False(string.IsNullOrWhiteSpace(heading.Id)));
+        Assert.Equal(first.Count, first.Select(heading => heading.Id).Distinct(StringComparer.Ordinal).Count());
+        Assert.Equal(first.ToArray(), second.ToArray());
+        Assert.Equal("自訂 標題", first[^1].Title);
+    }
+
+    [Theory]
+    [InlineData("\n")]
+    [InlineData("\r\n")]
+    [InlineData("\r")]
+    public void MultilineSetextOutlinePointsAtItsFirstTextLine(string newline)
+    {
+        var markdown = string.Join(newline, "Intro", "", "First title line", "second title line", "===", "", "After");
+        var (_, headings) = RenderWithHeadings(markdown);
+        var heading = Assert.Single(headings);
+        Assert.Equal("First title line second title line", heading.Title);
+        Assert.Equal(1, heading.Level);
+        Assert.Equal(3, heading.Line);
+    }
+
+    [Fact]
+    public void OutlineCannotPointAtShellOrNonHeadingWithDuplicateAuthoredIds()
+    {
+        var (document, headings) = RenderWithHeadings("""
+            <div id="document"></div>
+            <div id="duplicate"></div>
+            <h1 id="document">Shell collision</h1>
+            <h2 id="duplicate">First duplicate</h2>
+            <h2 id="duplicate">Second duplicate</h2>
+            <h3 id="percent%20中文">Encoded-looking ID</h3>
+            """);
+        Assert.Equal("main", document.GetElementById("document")!.LocalName);
+        var ids = document.QuerySelectorAll("[id]").Select(element => element.Id).ToArray();
+        Assert.Equal(ids.Length, ids.Distinct(StringComparer.Ordinal).Count());
+        Assert.Equal(4, headings.Count);
+        Assert.Equal("percent%20中文", headings[^1].Id);
+        Assert.All(headings, heading => Assert.Equal("h" + heading.Level, document.GetElementById(heading.Id)!.LocalName));
+    }
+
+    [Fact]
+    public void OutlineIgnoresFencedEscapedAndUnsafeHeadingsAndKeepsImageAltAsPlainText()
+    {
+        var (document, headings) = RenderWithHeadings("""
+            ```markdown
+            # Fenced example
+            <h1>Fenced HTML</h1>
+            ```
+
+            \# Escaped example
+
+            <script><h1>Unsafe heading</h1></script>
+
+            ## Real **heading** ![picture](https://example.invalid/picture.png) &lt;tag&gt;
+            """);
+        var heading = Assert.Single(headings);
+        Assert.Equal("Real heading picture <tag>", heading.Title);
+        Assert.Equal(2, heading.Level);
+        Assert.Equal(10, heading.Line);
+        Assert.Empty(document.QuerySelectorAll("#document script"));
+    }
+
+    private static (IDocument Document, IReadOnlyList<PreviewHeading> Headings) RenderWithHeadings(string markdown, PreviewOptions? options = null)
+    {
+        // The public pane exposes metadata after navigation; inspect its internal render
+        // snapshot here without requiring WebView2 or widening the renderer's public API.
+        var build = typeof(MarkdownRenderer).GetMethod("Build", BindingFlags.Instance | BindingFlags.NonPublic)!;
+        var rendered = build.Invoke(new MarkdownRenderer(), [markdown, options ?? new PreviewOptions(), null])!;
+        var html = (string)rendered.GetType().GetProperty("Html")!.GetValue(rendered)!;
+        var headings = Assert.IsAssignableFrom<IReadOnlyList<PreviewHeading>>(rendered.GetType().GetProperty("Headings")!.GetValue(rendered));
+        return (new HtmlParser().ParseDocument(html), headings);
     }
 
     private static IDocument Render(string markdown, PreviewOptions? options = null, string? documentPath = null) =>

@@ -1,8 +1,10 @@
+using ToolKeeper.UI;
+
 namespace MarkPad.Models;
 
 public sealed class AppSettings
 {
-    public string Theme { get; set; } = "System";
+    public string Theme { get; set; } = "Ink";
     public string Language { get; set; } = "System";
     public string UiFontFamily { get; set; } = string.Empty;
     public string PreviewFontFamily { get; set; } = string.Empty;
@@ -22,13 +24,5 @@ public sealed class AppSettings
     public bool EmojiShortcodes { get; set; } = true;
     public List<string> RecentFiles { get; set; } = [];
 
-    public string ResolveLanguage(string systemLanguage)
-    {
-        if (Language is "en" or "zh-TW" or "ja") return Language;
-        if (systemLanguage.Equals("zh-TW", StringComparison.OrdinalIgnoreCase)
-            || systemLanguage.Equals("zh-HK", StringComparison.OrdinalIgnoreCase)
-            || systemLanguage.Equals("zh-MO", StringComparison.OrdinalIgnoreCase)
-            || systemLanguage.StartsWith("zh-Hant", StringComparison.OrdinalIgnoreCase)) return "zh-TW";
-        return systemLanguage.StartsWith("ja", StringComparison.OrdinalIgnoreCase) ? "ja" : "en";
-    }
+    public string ResolveLanguage(string systemLanguage) => UiLanguage.Resolve(Language, systemLanguage);
 }

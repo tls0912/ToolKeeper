@@ -37,7 +37,7 @@ public sealed class GroupPreviewWindow : Window
         caption.Children.Add(new TextBlock { Text = "群組操作預覽", FontSize = 22, FontWeight = FontWeights.SemiBold });
         caption.Children.Add(new TextBlock
         {
-            Text = "單擊展開 · 雙擊開啟項目 · 拖曳標題移動群組 · 拖曳項目改分類\n預覽時桌面接管暫停，原生圖示保留。可回到設定啟用桌面接管。",
+            Text = "單擊展開 · 點標題展開或收合 · 雙擊開啟項目 · 拖曳標題移動群組 · 拖曳項目改分類\n預覽時桌面接管暫停，原生圖示保留。可回到設定啟用桌面接管。",
             Margin = new Thickness(0, 8, 0, 0), Foreground = Brushes.DimGray, TextWrapping = TextWrapping.Wrap
         });
         DockPanel.SetDock(caption, Dock.Top);

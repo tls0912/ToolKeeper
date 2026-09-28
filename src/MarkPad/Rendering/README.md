@@ -9,13 +9,20 @@ Markdown Preview 相關邏輯集中在這裡。
 ## API
 
 - `ShowAsync(markdown, filePath, options, scroll, sourceLine)`：背景產生 HTML、導覽預覽、恢復位置；較舊的非同步結果不會覆蓋新文件。
-- `PrepareAsync(markdown, filePath, options)`：編輯停止後只預先產生 HTML。它不啟動 WebView2，也不改變目前畫面。
-- `Suspend()`：切換文件或模式前，停止舊預覽傳回事件。需要記住位置時，先呼叫 `GetScrollAsync()`。
+- `PrepareAsync(markdown, filePath, options)`：僅預先產生 HTML 的選用 API；編輯模式自 0.1.15 起直接使用 `ShowAsync` 更新右側即時預覽。
+- `Headings`／`HeadingsChanged`：目前成功顯示頁面的 H1–H6 清單。標題含唯一 ID、純文字名稱、層級與原稿行號，由清理過的 DOM 產生，供原生章節列表使用。
+- `IsShowing(markdown, filePath)`：確認已顯示的頁面與原稿完全一致；主視窗使用此檢查拒絕即時預覽更新前的舊待辦勾選事件。
+- `InvalidateDisplay()`：互動元件已改變 DOM 時，要求下次顯示重新導覽。待辦點擊不論接受或拒絕都會立即從原稿重繪，避免快速 Undo 或過期點擊留下錯誤勾選狀態。
 - `FindAsync(text, matchCase, backwards, restart)`：literal 搜尋；空字串會清除標記。支援跨 inline formatting 搜尋。
 - `GetSelectionAsync()`、`GetScrollAsync()`、`CloseOverlayAsync()`、`GoToAnchorAsync()`。
+- `ScrollToPositionAsync(position)`：依小數原稿行號連續對齊編輯器；捲至頂端或底端時同步到另一側的文件邊界。
 - `PreviewOptions`：暗色、閱讀字型、字級（8–72）、code 行號、emoji、語系、唯讀。後者停用 task checkbox。
 
-`MessageReceived` 以 `PreviewMessage` 傳回 `link`、`edit`、`task`、`copy`、`copy-markdown`、`copy-link`、`search`、`scroll`、`shortcut`、`overlay`、`ready`、`error`。`Line` 與搜尋 `Index` 為 1-based；沒有結果時 `Index=0`。搜尋 `Flag` 表示已循環，task `Flag` 表示勾選狀態，overlay `Flag` 表示開啟。主視窗負責檔案操作、剪貼簿與外部瀏覽器。
+`MessageReceived` 以 `PreviewMessage` 傳回 `link`、`edit`、`task`、`copy`、`copy-markdown`、`copy-link`、`search`、`scroll`、`shortcut`、`overlay`、`ready`、`error`。`Line` 與搜尋 `Index` 為 1-based；沒有結果時 `Index=0`。搜尋 `Flag` 表示已循環，task `Flag` 表示勾選狀態，overlay `Flag` 表示開啟。scroll 的 `SourcePosition` 是視窗頂端對應的小數原稿行號，`ScrollProgress` 是 0–1 捲動比例，`Flag` 標示同步或恢復位置產生的事件，以防止回授。主視窗負責檔案操作、剪貼簿與外部瀏覽器。
+
+每個分頁保留獨立的預覽與編輯器。閱讀模式左側為原生章節列表，編輯模式左側為 AvalonEdit；右側共用此預覽。輸入停止後在背景轉譯（一般 300 ms、大型檔案 750 ms），導覽前保存目前捲動位置，舊請求不能覆蓋新頁面。章節跳轉會展開折疊內容，並透過 `scroll` 的原稿行號更新大綱目前項目。
+
+編輯模式由 `DocumentView` 雙向同步兩側捲動，依原文行號與區塊高度插值，支援不同字級與自動換行；同步不移動游標或選取範圍。快速捲動合併至最新位置，重新轉譯後以編輯器目前位置對齊；隱藏分頁、閱讀模式與尚未追上原稿的預覽不會反向移動編輯器。
 
 ## 安全與離線
 
@@ -26,3 +33,5 @@ Markdown HTML 先經 HtmlSanitizer 元素／屬性／URI allowlist；文件無�
 `Resources/Preview.css` 與 `Preview.js` 以 embedded resource 打包，沒有 CDN 或外部 JavaScript。程式碼使用本機輕量 tokenizer；支援常見語言的 keyword/string/number/comment，其餘語言保留原始文字。Preview 提供 heading fold/anchor、code copy、table 自身捲動、圖片放大與 Ctrl+wheel/拖曳、純文字／Markdown 複製與右鍵選單。
 
 可選的 `PreviewPane(browserDataFolder)` 讓 smoke test 使用獨立的 WebView2 profile，不接觸使用者資料。
+
+捲動回歸檢查：`dotnet test tests/MarkPad.Tests/MarkPad.Tests.csproj` 包含真實 WPF／WebView2 連動；標記為 `Category=WebView2` 的測試需要已安裝 Runtime 且允許啟動瀏覽器子程序。`node --test tests/MarkPad.Tests/PreviewScroll.test.cjs` 驗證預覽位置插值、文件邊界與延遲事件抑制。

@@ -25,6 +25,11 @@ internal static class ViewTheme
         window.FontSize = 14;
         window.Foreground = Ink;
         window.Background = Surface;
+        ApplyControlStyles(window);
+    }
+
+    public static void ApplyControlStyles(Window window)
+    {
         var button = new Style(typeof(Controls.Button));
         button.Setters.Add(new Setter(Controls.Control.PaddingProperty, new Thickness(14, 7, 14, 7)));
         button.Setters.Add(new Setter(Controls.Control.BackgroundProperty, Brushes.White));

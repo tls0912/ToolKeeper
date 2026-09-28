@@ -14,14 +14,18 @@ using Markdig.Extensions.TaskLists;
 using Markdig.Renderers;
 using Markdig.Renderers.Html;
 using Markdig.Syntax;
+using ToolKeeper.UI;
 
 namespace MarkPad.Rendering;
 
 public sealed record PreviewOptions(bool Dark = false, string FontFamily = "Segoe UI", double FontSize = 16,
     bool CodeLineNumbers = false, bool EmojiShortcodes = false, string Language = "en", bool ReadOnly = false,
-    string? DocumentTitle = null);
+    string? DocumentTitle = null, bool Ink = false);
 
-internal sealed record RenderedPreview(string Html, string Token, IReadOnlyDictionary<string, string> Images);
+public sealed record PreviewHeading(string Id, string Title, int Level, int Line);
+
+internal sealed record RenderedPreview(string Html, string Token, IReadOnlyDictionary<string, string> Images,
+    IReadOnlyList<PreviewHeading> Headings);
 
 /// <summary>Produces an offline document. Only the trusted, bundled preview script may execute.</summary>
 public sealed class MarkdownRenderer
@@ -45,9 +49,21 @@ public sealed class MarkdownRenderer
         if (options.EmojiShortcodes) builder.UseEmojiAndSmiley();
         var pipeline = builder.Build();
         var document = Markdown.Parse(markdown, pipeline);
+        var sourceLines = new List<int> { 0 };
+        for (var index = 0; index < markdown.Length; index++)
+            if (markdown[index] == '\n' || markdown[index] == '\r' && (index + 1 == markdown.Length || markdown[index + 1] != '\n'))
+                sourceLines.Add(index + 1);
         foreach (var block in document.Descendants<Block>())
         {
-            block.GetAttributes().AddProperty("data-source-line", (block.Line + 1).ToString(CultureInfo.InvariantCulture));
+            var sourceLine = block.Line + 1;
+            if (block is HeadingBlock)
+            {
+                // Markdig reports the underline line for Setext headings. The source span
+                // begins at their text, including multi-line titles and nested headings.
+                var index = sourceLines.BinarySearch(Math.Clamp(block.Span.Start, 0, markdown.Length));
+                sourceLine = index >= 0 ? index + 1 : ~index;
+            }
+            block.GetAttributes().AddProperty("data-source-line", sourceLine.ToString(CultureInfo.InvariantCulture));
             // Span offsets let Copy as Markdown preserve the actual source instead of round-tripping HTML.
             block.GetAttributes().AddProperty("data-source-start", block.Span.Start.ToString(CultureInfo.InvariantCulture));
             block.GetAttributes().AddProperty("data-source-end", block.Span.End.ToString(CultureInfo.InvariantCulture));
@@ -61,6 +77,7 @@ public sealed class MarkdownRenderer
 
         var sanitizer = CreateSanitizer();
         var body = new HtmlParser().ParseDocument(sanitizer.Sanitize(writer.ToString())).Body!;
+        var headings = CollectHeadings(body, sourceLines.Count);
         foreach (var input in body.QuerySelectorAll("span[data-task-token]").ToArray())
         {
             var key = input.GetAttribute("data-task-token")!;
@@ -108,15 +125,76 @@ public sealed class MarkdownRenderer
         var size = double.IsFinite(options.FontSize) ? Math.Clamp(options.FontSize, 8, 72) : 16;
         var config = JsonSerializer.Serialize(new { token, markdown, language = options.Language, codeLineNumbers = options.CodeLineNumbers, readOnly = options.ReadOnly });
         var html = $$"""
-            <!doctype html><html lang="{{WebUtility.HtmlEncode(options.Language)}}" class="{{(options.Dark ? "dark" : "light")}}">
+            <!doctype html><html lang="{{WebUtility.HtmlEncode(options.Language)}}" class="{{(options.Dark ? "dark" : "light")}}{{(options.Ink ? " ink" : "")}}" data-theme="{{(options.Ink ? options.Dark ? "ink-dark" : "ink" : options.Dark ? "dark" : "light")}}">
             <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
             <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'nonce-{{nonce}}'; style-src 'nonce-{{nonce}}'; img-src {{Origin}}; connect-src 'none'; frame-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
-            <title>{{WebUtility.HtmlEncode(options.DocumentTitle ?? "MarkPad")}}</title><style nonce="{{nonce}}">{{Styles.Value}}
+            <title>{{WebUtility.HtmlEncode(options.DocumentTitle ?? "汗青")}}</title><style nonce="{{nonce}}">{{Styles.Value}}
             :root { --reading-font: '{{font}}', 'Segoe UI', sans-serif; --reading-size: {{size.ToString(CultureInfo.InvariantCulture)}}px; }
             </style></head><body><main id="document" aria-label="Markdown">{{body.InnerHtml}}</main>
             <script nonce="{{nonce}}">window.markpadConfig={{config}};{{Script.Value}}</script></body></html>
             """;
-        return new RenderedPreview(html, token, images);
+        return new RenderedPreview(html, token, images, headings);
+    }
+
+    private static IReadOnlyList<PreviewHeading> CollectHeadings(IElement body, int lineCount)
+    {
+        const string headingSelector = "h1,h2,h3,h4,h5,h6";
+        // Include authored HTML IDs and reserve our shell ID before creating fallbacks, so
+        // every outline entry resolves to its actual heading rather than another element.
+        var elements = body.QuerySelectorAll("[id]," + headingSelector);
+        var reserved = new HashSet<string>(elements.Select(element => element.Id).OfType<string>(), StringComparer.Ordinal) { "document" };
+        var used = new HashSet<string>(StringComparer.Ordinal) { "document" };
+        var headings = new List<PreviewHeading>();
+        var lastLine = 1;
+        foreach (var element in body.QuerySelectorAll("*"))
+        {
+            if (int.TryParse(element.GetAttribute("data-source-line"), NumberStyles.None, CultureInfo.InvariantCulture, out var line))
+                lastLine = Math.Clamp(line, 1, lineCount);
+            var isHeading = element.Matches(headingSelector);
+            if (!isHeading && !element.HasAttribute("id")) continue;
+            var title = isHeading ? HeadingTitle(element) : "";
+            var id = element.Id ?? "";
+            var generatedId = string.IsNullOrWhiteSpace(id) || id.Any(char.IsControl);
+            if (generatedId)
+                id = isHeading ? HeadingId(title) : "element";
+            if (generatedId && reserved.Contains(id) || !used.Add(id))
+            {
+                var basis = id;
+                var suffix = 1;
+                do { id = basis + "-" + (suffix++).ToString(CultureInfo.InvariantCulture); }
+                while (reserved.Contains(id) || !used.Add(id));
+            }
+            element.Id = id;
+            if (isHeading)
+            {
+                // Raw HTML headings have no Markdig source attributes; retain the closest
+                // preceding source position. Markdown ATX/Setext headings carry exact lines.
+                element.SetAttribute("data-source-line", lastLine.ToString(CultureInfo.InvariantCulture));
+                headings.Add(new PreviewHeading(id, title, element.LocalName[1] - '0', lastLine));
+            }
+        }
+        return headings.AsReadOnly();
+    }
+
+    private static string HeadingTitle(IElement heading)
+    {
+        var text = (IElement)heading.Clone(true);
+        foreach (var image in text.QuerySelectorAll("img").ToArray())
+            image.Replace(heading.Owner!.CreateTextNode(image.GetAttribute("alt") ?? ""));
+        foreach (var br in text.QuerySelectorAll("br").ToArray())
+            br.Replace(heading.Owner!.CreateTextNode(" "));
+        return string.Join(" ", text.TextContent.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries));
+    }
+
+    private static string HeadingId(string title)
+    {
+        var id = new StringBuilder();
+        foreach (var character in title)
+        {
+            if (char.IsLetterOrDigit(character) || character is '_' or '-') id.Append(char.ToLowerInvariant(character));
+            else if (char.IsWhiteSpace(character) && id.Length > 0 && id[^1] != '-') id.Append('-');
+        }
+        return id.ToString().Trim('-') is { Length: > 0 } value ? value : "heading";
     }
 
     public static bool IsSafeLink(string href)
@@ -172,8 +250,7 @@ public sealed class MarkdownRenderer
     }
 
     internal static string Translate(string language, string english, string chinese, string japanese) =>
-        language.StartsWith("zh", StringComparison.OrdinalIgnoreCase) ? chinese :
-        language.StartsWith("ja", StringComparison.OrdinalIgnoreCase) ? japanese : english;
+        UiLanguage.Text(language, english, chinese, japanese);
 
     private static string ReadResource(string name)
     {

@@ -1,0 +1,21 @@
+汗青 - Markdown Writer Privacy Policy
+Updated: September 28, 2026
+Publisher: 不告訴你
+
+1. Documents and local processing
+Hanqing reads Markdown documents you choose to open, associated file paths, and permitted local images referenced by those documents for editing, preview, saving, and PDF export. This content may include personal information you put into your documents. The app has no feature that uploads documents or PDFs to a publisher server and does not require a Hanqing account.
+
+2. Data stored on your device
+The app stores preferences such as language, theme, and fonts, recent file paths, recovery drafts of unsaved documents, error logs, local WebView2 data, and a record of a confirmed full license in the current Windows user's application data area. Drafts may contain full document text; error logs may contain file paths and exception details. Hanqing does not automatically send these files to the publisher. Recovery drafts are still created when automatic saving is disabled. Recent files are limited to 20 paths; error logs rotate without a fixed retention period. Other local data may remain across sessions until the app cleans it up or you delete it.
+
+3. Microsoft services
+The Store edition checks Microsoft Store licensing and reads whether the license is active, whether it is a trial, and expiration information. After a full purchase is confirmed, a local confirmation record protected for the current Windows user is saved for subsequent launches. Microsoft handles account sign-in, purchases, and payment. Hanqing does not request or store your Microsoft account password or credit card details. Preview and PDF export use Microsoft Edge WebView2 Runtime. Microsoft Store, Windows, and WebView2 service and diagnostic data practices are covered by the Microsoft Privacy Statement: https://privacy.microsoft.com/privacystatement
+
+4. Links, networking, and sharing
+Document preview blocks remote images and network requests initiated by document content. Clicking a web link opens your default browser; the destination website may process information under its own policy. Copying text, links, or email addresses uses the Windows clipboard; clipboard history and synchronization depend on your Windows settings. Choosing to visit the Store opens this product's Microsoft Store page. If you save documents to a network location or cloud-synchronized folder, that service may separately process the files. The app has no built-in advertising or usage analytics tracking.
+
+5. Your control and data security
+You can view, edit, or delete your saved documents and exported PDFs, and change preferences and automatic saving in the app. Resetting settings only resets preferences and recent files; it does not erase other data. After closing the app, you can manage or delete Hanqing's own local preferences, drafts, logs, WebView2 data, and license record. Deleting drafts removes their recovery content; deleting the license record requires a new license check on a subsequent launch. Hanqing does not add encryption to documents, preferences, drafts, or logs; use appropriate Windows access controls and device protection. The publisher cannot remotely access or delete files on your computer through Hanqing.
+
+6. Policy updates
+This policy will be updated when the app's data practices change.

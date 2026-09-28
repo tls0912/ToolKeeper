@@ -16,9 +16,10 @@ public partial class MainWindow
     {
         if (_documentViews.TryGetValue(tab.Id, out var existing)) return existing;
         var view = new DocumentView(tab, Path.Combine(App.Preferences.DataDirectory, "WebView2"));
-        view.Editor.ApplyOptions(_dark, Settings.EditorFontFamily, Settings.EditorFontSize);
+        view.Editor.ApplyOptions(_dark, EditorFontName, Settings.EditorFontSize, IsInkTheme);
         view.Editor.ApplyLanguage(UiLanguage);
-        _ = GuardAsync(() => view.Preview.SetThemeAsync(_dark));
+        view.ApplyLanguage(UiLanguage);
+        _ = GuardAsync(() => view.Preview.SetThemeAsync(_dark, IsInkTheme));
         view.Editor.SelectionChanged += OnEditorSelectionChanged;
         view.Editor.SearchChanged += OnEditorSearchChanged;
         view.Editor.PasteImageRequested += OnEditorPasteImageRequested;

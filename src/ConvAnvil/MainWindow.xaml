@@ -1,0 +1,228 @@
+<ui:AppWindow x:Class="ConvAnvil.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:ui="clr-namespace:ToolKeeper.UI;assembly=ToolKeeper.UI"
+        MainName="ConvAnvil" SubName="Text, Encoding &amp; Byte Converter"
+        Description="{DynamicResource Conv.Description}"
+        Width="1160" Height="820" MinWidth="860" MinHeight="680">
+    <ui:AppWindow.Resources>
+        <Style TargetType="TextBlock">
+            <Setter Property="Foreground" Value="{DynamicResource TextBrush}" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+        </Style>
+        <Style x:Key="Label" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="{DynamicResource MutedBrush}" />
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="Margin" Value="0,0,0,6" />
+        </Style>
+        <Style TargetType="Button" BasedOn="{StaticResource UiButtonStyle}">
+            <Setter Property="Padding" Value="16,9" />
+            <Setter Property="MinHeight" Value="38" />
+            <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource TextBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource LineBrush}" />
+            <Setter Property="Cursor" Value="Hand" />
+        </Style>
+        <Style x:Key="Primary" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+            <Setter Property="Background" Value="{DynamicResource HoverBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource TextBrush}" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+        </Style>
+        <Style TargetType="ComboBox" BasedOn="{StaticResource FontPickerComboBoxStyle}">
+            <Setter Property="MinHeight" Value="34" />
+            <Setter Property="Padding" Value="9,6" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+        </Style>
+        <Style TargetType="CheckBox">
+            <Setter Property="Foreground" Value="{DynamicResource TextBrush}" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+        </Style>
+        <Style TargetType="TextBox">
+            <Setter Property="FontFamily" Value="Cascadia Mono, Consolas, Microsoft JhengHei UI" />
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="Padding" Value="12" />
+            <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource TextBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource LineBrush}" />
+            <Setter Property="CaretBrush" Value="{DynamicResource TextBrush}" />
+            <Setter Property="AcceptsReturn" Value="True" />
+            <Setter Property="AcceptsTab" Value="True" />
+            <Setter Property="HorizontalScrollBarVisibility" Value="Auto" />
+            <Setter Property="VerticalScrollBarVisibility" Value="Auto" />
+            <Setter Property="SpellCheck.IsEnabled" Value="False" />
+        </Style>
+        <Style TargetType="TabItem">
+            <Setter Property="Foreground" Value="{DynamicResource TextBrush}" />
+            <Setter Property="Padding" Value="22,11" />
+            <Setter Property="FontWeight" Value="Normal" />
+            <Setter Property="FontSize" Value="15" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TabItem">
+                        <Border x:Name="TabBorder" Padding="{TemplateBinding Padding}" Background="Transparent"
+                                BorderBrush="Transparent" BorderThickness="0,0,0,3">
+                            <ContentPresenter ContentSource="Header" TextElement.FontWeight="SemiBold" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter TargetName="TabBorder" Property="Background" Value="{DynamicResource SurfaceBrush}" />
+                                <Setter TargetName="TabBorder" Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
+                                <Setter Property="Foreground" Value="{DynamicResource AccentBrush}" />
+                            </Trigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="TabBorder" Property="Background" Value="{DynamicResource HoverBrush}" />
+                            </Trigger>
+                            <Trigger Property="IsKeyboardFocusWithin" Value="True">
+                                <Setter TargetName="TabBorder" Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </ui:AppWindow.Resources>
+    <ui:AppWindow.HeaderActions>
+        <Border Background="{DynamicResource HoverBrush}" CornerRadius="12" Padding="12,6" VerticalAlignment="Center">
+            <TextBlock Text="{DynamicResource Conv.Offline}" Foreground="{DynamicResource AccentBrush}" FontSize="12" />
+        </Border>
+    </ui:AppWindow.HeaderActions>
+    <ui:AppWindow.Workspace>
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+            <TabControl x:Name="WorkspaceTabs" Background="Transparent" BorderThickness="0" Padding="0,18,0,0">
+                <TabItem Header="{DynamicResource Conv.FileTab}" x:Name="FileTab">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" /><RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+                        <DockPanel Margin="0,0,0,16">
+                            <Button x:Name="OpenFileButton" Content="{DynamicResource Conv.OpenFile}" Style="{StaticResource Primary}" Click="OpenFileClick" DockPanel.Dock="Left" />
+                            <StackPanel Margin="16,0,0,0" VerticalAlignment="Center">
+                                <TextBlock x:Name="FileNameLabel" Text="{DynamicResource Conv.FilePrompt}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" TextWrapping="NoWrap" />
+                                <TextBlock x:Name="FilePathLabel" Text="{DynamicResource Conv.FileSupport}" Foreground="{DynamicResource MutedBrush}" FontSize="12" TextTrimming="CharacterEllipsis" TextWrapping="NoWrap" />
+                            </StackPanel>
+                        </DockPanel>
+                        <Grid Grid.Row="1" Margin="0,0,0,12">
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="20" /><ColumnDefinition Width="*" /><ColumnDefinition Width="20" /><ColumnDefinition Width="170" /></Grid.ColumnDefinitions>
+                            <StackPanel>
+                                <TextBlock Text="{DynamicResource Conv.SourceEncodingLabel}" Style="{StaticResource Label}" />
+                                <ComboBox x:Name="SourceEncoding" DisplayMemberPath="Name" SelectionChanged="FileOptionsChanged" AutomationProperties.Name="{DynamicResource Conv.SourceEncodingName}" />
+                            </StackPanel>
+                            <StackPanel Grid.Column="2">
+                                <TextBlock Text="{DynamicResource Conv.TargetEncodingLabel}" Style="{StaticResource Label}" />
+                                <ComboBox x:Name="TargetEncoding" DisplayMemberPath="Name" SelectionChanged="FileOptionsChanged" AutomationProperties.Name="{DynamicResource Conv.TargetEncodingName}" />
+                            </StackPanel>
+                            <StackPanel Grid.Column="4">
+                                <TextBlock Text="{DynamicResource Conv.LineEnding}" Style="{StaticResource Label}" />
+                                <ComboBox x:Name="FileLineEnding" SelectionChanged="FileOptionsChanged" SelectedIndex="0" AutomationProperties.Name="{DynamicResource Conv.LineEnding}">
+                                    <ComboBoxItem Content="{DynamicResource Conv.Preserve}" /><ComboBoxItem Content="LF" /><ComboBoxItem Content="CRLF" />
+                                </ComboBox>
+                            </StackPanel>
+                        </Grid>
+                        <Border Grid.Row="2" Background="{DynamicResource SurfaceBrush}" Padding="12,9" Margin="0,0,0,14" CornerRadius="5">
+                            <TextBlock x:Name="DetectionLabel" Text="{DynamicResource Conv.DetectionHint}" Foreground="{DynamicResource TextBrush}" FontSize="13" />
+                        </Border>
+                        <Grid Grid.Row="3">
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="16" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                            <Grid><Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="*" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
+                                <TextBlock Text="{DynamicResource Conv.SourceContent}" Style="{StaticResource Label}" />
+                                <TextBox x:Name="SourcePreview" Grid.Row="1" IsReadOnly="True" AutomationProperties.Name="{DynamicResource Conv.SourcePreview}" />
+                                <TextBlock x:Name="SourceDetails" Grid.Row="2" Margin="0,8,0,0" FontSize="12" Foreground="{DynamicResource MutedBrush}" MinHeight="32" />
+                            </Grid>
+                            <Grid Grid.Column="2"><Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="*" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
+                                <TextBlock Text="{DynamicResource Conv.TargetContent}" Style="{StaticResource Label}" />
+                                <TextBox x:Name="TargetPreview" Grid.Row="1" IsReadOnly="True" AutomationProperties.Name="{DynamicResource Conv.TargetPreview}" />
+                                <TextBlock x:Name="TargetDetails" Grid.Row="2" Margin="0,8,0,0" FontSize="12" Foreground="{DynamicResource MutedBrush}" MinHeight="32" />
+                            </Grid>
+                        </Grid>
+                        <Grid Grid.Row="4" Margin="0,14,0,0">
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                            <StackPanel VerticalAlignment="Center" Margin="0,0,16,0">
+                                <CheckBox x:Name="FileControls" Content="{DynamicResource Conv.FileControls}" Checked="FileControlsChanged" Unchecked="FileControlsChanged" />
+                                <TextBlock x:Name="FileResult" Text="{DynamicResource Conv.FileResultHint}" Margin="0,7,0,0" FontSize="12" />
+                            </StackPanel>
+                            <Button x:Name="SaveFileButton" Grid.Column="1" Content="{DynamicResource Conv.SaveFile}" Style="{StaticResource Primary}" Click="SaveFileClick" IsEnabled="False" VerticalAlignment="Center" />
+                        </Grid>
+                    </Grid>
+                </TabItem>
+                <TabItem Header="{DynamicResource Conv.TextTab}" x:Name="TextTab">
+                    <Grid>
+                        <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="*" /><RowDefinition Height="Auto" /><RowDefinition Height="120" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
+                        <Grid Margin="0,0,0,14">
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="16" /><ColumnDefinition Width="190" /><ColumnDefinition Width="16" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                            <StackPanel><TextBlock Text="Encoding / BOM" Style="{StaticResource Label}" /><ComboBox x:Name="TextEncoding" DisplayMemberPath="Name" SelectionChanged="TextOptionsChanged" AutomationProperties.Name="{DynamicResource Conv.TextEncoding}" /></StackPanel>
+                            <StackPanel Grid.Column="2"><TextBlock Text="{DynamicResource Conv.ByteDisplayFormat}" Style="{StaticResource Label}" /><ComboBox x:Name="TextFormat" DisplayMemberPath="Name" SelectionChanged="TextOptionsChanged" AutomationProperties.Name="{DynamicResource Conv.ByteDisplayFormat}" /></StackPanel>
+                            <Button x:Name="EncodeButton" Grid.Column="4" Content="Text → Bytes" Style="{StaticResource Primary}" Click="EncodeClick" VerticalAlignment="Bottom" />
+                        </Grid>
+                        <Grid Grid.Row="1">
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="16" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                            <Grid><Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="*" /></Grid.RowDefinitions>
+                                <TextBlock Text="{DynamicResource Conv.TextEntryLabel}" Style="{StaticResource Label}" />
+                                <TextBox x:Name="TextEntry" Grid.Row="1" TextChanged="TextInputChanged" AutomationProperties.Name="{DynamicResource Conv.TextEntry}" />
+                            </Grid>
+                            <Grid Grid.Column="2"><Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="*" /></Grid.RowDefinitions>
+                                <TextBlock Text="{DynamicResource Conv.BytesOutput}" Style="{StaticResource Label}" />
+                                <TextBox x:Name="EncodedOutput" Grid.Row="1" IsReadOnly="True" TextWrapping="Wrap" HorizontalScrollBarVisibility="Disabled" AutomationProperties.Name="{DynamicResource Conv.BytesOutput}" />
+                            </Grid>
+                        </Grid>
+                        <DockPanel Grid.Row="2" Margin="0,12,0,12">
+                            <StackPanel Orientation="Horizontal" DockPanel.Dock="Right">
+                                <Button x:Name="CopyBytesButton" Content="{DynamicResource Conv.CopyBytes}" Click="CopyBytesClick" IsEnabled="False" Margin="0,0,8,0" />
+                                <Button x:Name="SendBytesButton" Content="{DynamicResource Conv.SendBytes}" Click="SendBytesClick" IsEnabled="False" />
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal">
+                                <Button Content="{DynamicResource Conv.NormalizeLf}" Click="NormalizeLfClick" Margin="0,0,8,0" />
+                                <Button Content="{DynamicResource Conv.NormalizeCrLf}" Click="NormalizeCrLfClick" />
+                            </StackPanel>
+                        </DockPanel>
+                        <Grid Grid.Row="3"><Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="*" /></Grid.RowDefinitions>
+                            <TextBlock Text="{DynamicResource Conv.TextControlsLabel}" Style="{StaticResource Label}" />
+                            <TextBox x:Name="TextControlPreview" Grid.Row="1" IsReadOnly="True" AutomationProperties.Name="{DynamicResource Conv.TextControls}" />
+                        </Grid>
+                        <TextBlock x:Name="TextResult" Grid.Row="4" Text="{DynamicResource Conv.TextResultHint}" Margin="0,12,0,0" FontSize="12" MinHeight="34" />
+                    </Grid>
+                </TabItem>
+                <TabItem Header="{DynamicResource Conv.BytesTab}" x:Name="BytesTab">
+                    <Grid>
+                        <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="*" /><RowDefinition Height="Auto" /><RowDefinition Height="120" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
+                        <Grid Margin="0,0,0,12">
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="190" /><ColumnDefinition Width="16" /><ColumnDefinition Width="*" /><ColumnDefinition Width="16" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                            <StackPanel><TextBlock Text="{DynamicResource Conv.BytesInputFormat}" Style="{StaticResource Label}" /><ComboBox x:Name="BytesFormat" DisplayMemberPath="Name" SelectionChanged="BytesOptionsChanged" AutomationProperties.Name="{DynamicResource Conv.BytesInputFormat}" /></StackPanel>
+                            <StackPanel Grid.Column="2"><TextBlock Text="{DynamicResource Conv.DecodeEncoding}" Style="{StaticResource Label}" /><ComboBox x:Name="BytesEncoding" DisplayMemberPath="Name" SelectionChanged="BytesOptionsChanged" AutomationProperties.Name="{DynamicResource Conv.DecodeEncoding}" /></StackPanel>
+                            <Button x:Name="DecodeButton" Grid.Column="4" Content="Bytes → Text" Style="{StaticResource Primary}" Click="DecodeClick" VerticalAlignment="Bottom" />
+                        </Grid>
+                        <TextBlock Grid.Row="1" Text="{DynamicResource Conv.HexHint}" FontSize="12" Foreground="{DynamicResource MutedBrush}" Margin="0,0,0,12" />
+                        <Grid Grid.Row="2">
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="16" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                            <Grid><Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="*" /></Grid.RowDefinitions>
+                                <TextBlock Text="{DynamicResource Conv.BytesInput}" Style="{StaticResource Label}" />
+                                <TextBox x:Name="BytesInput" Grid.Row="1" TextChanged="BytesInputChanged" TextWrapping="Wrap" HorizontalScrollBarVisibility="Disabled" AutomationProperties.Name="{DynamicResource Conv.BytesInput}" />
+                            </Grid>
+                            <Grid Grid.Column="2"><Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="*" /></Grid.RowDefinitions>
+                                <TextBlock Text="{DynamicResource Conv.DecodedText}" Style="{StaticResource Label}" />
+                                <TextBox x:Name="DecodedOutput" Grid.Row="1" IsReadOnly="True" AutomationProperties.Name="{DynamicResource Conv.DecodedText}" />
+                            </Grid>
+                        </Grid>
+                        <DockPanel Grid.Row="3" Margin="0,12,0,12">
+                            <Button x:Name="CopyTextButton" Content="{DynamicResource Conv.CopyText}" Click="CopyTextClick" DockPanel.Dock="Right" IsEnabled="False" />
+                            <CheckBox x:Name="StripByteBom" Content="{DynamicResource Conv.StripBom}" IsChecked="True" Checked="BytesBomChanged" Unchecked="BytesBomChanged" VerticalAlignment="Center" />
+                        </DockPanel>
+                        <Grid Grid.Row="4"><Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="*" /></Grid.RowDefinitions>
+                            <TextBlock Text="{DynamicResource Conv.BytesControlsLabel}" Style="{StaticResource Label}" />
+                            <TextBox x:Name="BytesControlPreview" Grid.Row="1" IsReadOnly="True" AutomationProperties.Name="{DynamicResource Conv.BytesControls}" />
+                        </Grid>
+                        <TextBlock x:Name="BytesResult" Grid.Row="5" Text="{DynamicResource Conv.BytesResultHint}" Margin="0,12,0,0" FontSize="12" MinHeight="34" />
+                    </Grid>
+                </TabItem>
+            </TabControl>
+            <Border Grid.Row="1" BorderBrush="{DynamicResource LineBrush}" BorderThickness="0,1,0,0" Padding="0,12,0,0" Margin="0,16,0,0">
+                <TextBlock x:Name="StatusLabel" Text="{DynamicResource Conv.Ready}" FontSize="12" Foreground="{DynamicResource MutedBrush}" />
+            </Border>
+        </Grid>
+    </ui:AppWindow.Workspace>
+</ui:AppWindow>

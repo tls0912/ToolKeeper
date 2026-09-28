@@ -1,12 +1,33 @@
 using System.IO;
 using MarkPad.Models;
 using MarkPad.Services;
+using ToolKeeper.UI;
 using Xunit;
 
 namespace MarkPad.Tests;
 
 public sealed class SettingsServiceTests
 {
+    [Theory]
+    [InlineData("Ink")]
+    [InlineData("InkDark")]
+    public void InkThemeAndFontPresetsPersistWithoutOverwritingOtherFontChoices(string theme)
+    {
+        using var directory = new TestDirectory();
+        var service = new SettingsService(directory.PathName);
+        service.Settings.Theme = theme;
+        service.Settings.PreviewFontFamily = InkTypography.FontChoice;
+        service.Settings.UiFontFamily = "Segoe UI";
+        service.Settings.EditorFontFamily = "Consolas";
+        service.Save();
+
+        var restored = new SettingsService(directory.PathName).Settings;
+        Assert.Equal(theme, restored.Theme);
+        Assert.Equal(InkTypography.FontChoice, restored.PreviewFontFamily);
+        Assert.Equal("Segoe UI", restored.UiFontFamily);
+        Assert.Equal("Consolas", restored.EditorFontFamily);
+    }
+
     [Fact]
     public void FirstRunUsesCapturedDefaultsWithoutRecentFiles()
     {
@@ -123,7 +144,7 @@ public sealed class SettingsServiceTests
               "EditorFontFamily": null, "PreviewFontFamily": null, "RecentFiles": null }
             """);
         var settings = new SettingsService(directory.PathName).Settings;
-        Assert.Equal("System", settings.Theme);
+        Assert.Equal("Ink", settings.Theme);
         Assert.Equal("System", settings.Language);
         Assert.Equal(string.Empty, settings.UiFontFamily);
         Assert.Equal(16, settings.UiFontSize);
@@ -211,7 +232,7 @@ public sealed class SettingsServiceTests
 
     private static void AssertCapturedDefaults(AppSettings settings)
     {
-        Assert.Equal("System", settings.Theme);
+        Assert.Equal("Ink", settings.Theme);
         Assert.Equal("System", settings.Language);
         Assert.Equal(string.Empty, settings.UiFontFamily);
         Assert.Equal(string.Empty, settings.PreviewFontFamily);

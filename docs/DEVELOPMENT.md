@@ -1,6 +1,8 @@
-# MarkPad 開發與可攜式發佈
+# 汗青開發與可攜式發佈
 
-002 CabiDock 使用獨立的 `net10.0-windows` WPF 專案，建置、測試、群組操作預覽與桌面整合限制見 [CabiDock 開發說明](CABIDOCK-IMPLEMENTATION.md)。以下內容專屬 MarkPad。
+002 CabiDock 使用獨立的 `net10.0-windows` WPF 專案，建置、測試、群組操作預覽與桌面整合限制見 [CabiDock 開發說明](CABIDOCK-IMPLEMENTATION.md)。以下內容專屬汗青。
+
+自 **0.1.11** 起，產品對外名稱為「汗青」，Microsoft Store 名稱為「汗青 - Markdown Writer」，執行檔為 `Hanqing.exe`。原有 `MarkPad` 專案、命名空間、腳本及資料儲存路徑保留，以沿用既有設定與整合。
 
 在 Windows 安裝 .NET 10 SDK。專案使用 WPF，編譯目標為 `net10.0-windows10.0.17763.0`。Preview 需要 [Microsoft Edge WebView2 Runtime](https://developer.microsoft.com/microsoft-edge/webview2/)。
 
@@ -20,7 +22,7 @@ dotnet run --project src/MarkPad/MarkPad.csproj -- "C:\Notes\README.md"
 # ARM64：-Runtime win-arm64
 ```
 
-輸出至 `artifacts/portable/MarkPad-<runtime>-<時間>/`，預設包含 .NET runtime，並附上註冊腳本與使用說明。整個資料夾需一起攜帶；ZIP 包含此完整資料夾。WebView2 Runtime 須另外安裝，發佈腳本不會下載或安裝它；Microsoft 的[部署說明](https://learn.microsoft.com/en-us/microsoft-edge/webview2/concepts/distribution)涵蓋線上與離線安裝方式。
+輸出至 `artifacts/portable/Hanqing-<runtime>-<時間>/`，啟動其中的 `Hanqing.exe`；預設包含 .NET runtime，並附上註冊腳本與使用說明。整個資料夾需一起攜帶；ZIP 包含此完整資料夾。WebView2 Runtime 須另外安裝，發佈腳本不會下載或安裝它；Microsoft 的[部署說明](https://learn.microsoft.com/en-us/microsoft-edge/webview2/concepts/distribution)涵蓋線上與離線安裝方式。
 
 可用 `-OutputDirectory` 指定空資料夾；腳本不會清除已有檔案。若使用 `-FrameworkDependent`，執行端須先安裝 .NET 10 Desktop Runtime。Portable 表示無安裝程式的資料夾發佈，設定、復原暫存與 log 仍儲存在 `%LOCALAPPDATA%\ToolKeeper\MarkPad`。
 
@@ -31,8 +33,8 @@ dotnet run --project src/MarkPad/MarkPad.csproj -- "C:\Notes\README.md"
 將 portable 資料夾放到預計長期保留的位置後，再明確執行：
 
 ```powershell
-.\scripts\Register-MarkPad.ps1 -ExecutablePath 'C:\Apps\MarkPad\MarkPad.exe' -WhatIf
-.\scripts\Register-MarkPad.ps1 -ExecutablePath 'C:\Apps\MarkPad\MarkPad.exe'
+.\scripts\Register-MarkPad.ps1 -ExecutablePath 'C:\Apps\Hanqing\Hanqing.exe' -WhatIf
+.\scripts\Register-MarkPad.ps1 -ExecutablePath 'C:\Apps\Hanqing\Hanqing.exe'
 
 # 搬移／刪除 portable 資料夾前移除註冊：
 .\scripts\Unregister-MarkPad.ps1 -WhatIf
@@ -50,8 +52,10 @@ dotnet run --project src/MarkPad/MarkPad.csproj -- "C:\Notes\README.md"
 
 腳本不改 `.md` 預設值或 Windows `UserChoice`，也不需要系統管理員權限。預設程式由使用者在 Windows 設定選擇；[Microsoft 文件](https://learn.microsoft.com/en-us/windows/win32/shell/how-to-register-a-file-type-for-a-new-application)說明 Open With 與應用程式檔案類型的註冊方式。解除註冊只移除帶有這組腳本 ownership marker 的項目，保留文件與個人設定；遇到其他安裝方式建立的同名項目時，註冊會停止，避免覆寫。
 
-URI 目前只喚起 MarkPad，不從 URI 解析或執行任意命令。一般檔案參數透過單一實例協調送至既有程序。
+URI 目前只喚起汗青，不從 URI 解析或執行任意命令。一般檔案參數透過單一實例協調送至既有程序。上述含 `MarkPad` 的登錄識別與 `toolkeeper-markpad:` 協定保留相容性。
 
-## Store 發行尚待設定
+## Microsoft Store / MSIX
 
-目前輸出是開發用、未簽章的 portable build。Microsoft Store / MSIX 正式發行仍需真實 Partner Center package identity、publisher、視覺資產及簽章流程；尚未建立假 identity、憑證或聲稱可直接上架的套件。
+MSIX 封裝使用 `scripts/Publish-MarkPadMsix.ps1`，包含 self-contained runtime、套件圖示、`.md` 關聯、URI 協定及第三方授權；會執行 MakeAppx 與套件內容驗證。先填入 Partner Center 的真實產品識別，並確認保留的商店名稱為「汗青 - Markdown Writer」；顯示名稱更改不等於已取得套件識別。操作與驗收說明見 [MSIX 封裝](../packaging/MarkPad/README.md)。
+
+正式輸出未簽章，供上傳 Microsoft Store 後由商店簽章；不需購買商用憑證。現有 `Publish-MarkPad.ps1` 仍產生可攜版。WebView2 Runtime 不包含在任一輸出中，安裝版與乾淨環境驗收仍須另外完成。

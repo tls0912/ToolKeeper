@@ -10,7 +10,7 @@ namespace MarkPad.Services;
 public enum FileChangeStatus { Unchanged, Changed, Missing, ReadOnlyChanged }
 
 public sealed class FileConflictException(string path)
-    : IOException($"The file changed outside MarkPad. Reload it or save to another file: {path}")
+    : IOException($"The file changed outside 汗青. Reload it or save to another file: {path}")
 {
     public string FilePath { get; } = path;
 }

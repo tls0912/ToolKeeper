@@ -1,7 +1,7 @@
-#Requires -Version 5.1
+﻿#Requires -Version 5.1
 <#
 .SYNOPSIS
-Removes only MarkPad portable registrations created by Register-MarkPad.ps1.
+Removes only Hanqing (汗青) or earlier MarkPad portable registrations created by Register-MarkPad.ps1.
 .DESCRIPTION
 Preserves documents, app data, other applications, .md defaults, and UserChoice.
 .EXAMPLE
@@ -17,10 +17,10 @@ if ($env:OS -ne 'Windows_NT') { throw 'Windows is required for app registration.
 
 $owned = @($script:OwnedRoots | Where-Object { Test-MarkPadOwnedKey $_ })
 if ($owned.Count -eq 0) {
-    Write-Output 'No MarkPad portable registration created by these scripts was found.'
+    Write-Output 'No 汗青 portable registration created by these scripts was found.'
     return
 }
-if ($PSCmdlet.ShouldProcess('Owned MarkPad portable registration in HKCU', 'Remove .md Open With entry, app capabilities, and URI registration')) {
+if ($PSCmdlet.ShouldProcess('Owned 汗青 portable registration in HKCU', 'Remove .md Open With entry, app capabilities, and URI registration')) {
     if ($owned -contains "Software\Classes\$script:MarkdownProgId") {
         $openWith = [Microsoft.Win32.Registry]::CurrentUser.OpenSubKey('Software\Classes\.md\OpenWithProgids', $true)
         if ($null -ne $openWith) {
@@ -44,6 +44,5 @@ if ($PSCmdlet.ShouldProcess('Owned MarkPad portable registration in HKCU', 'Remo
         [Microsoft.Win32.Registry]::CurrentUser.DeleteSubKeyTree($path, $false)
     }
     Send-MarkPadAssociationChanged
-    Write-Output 'Removed MarkPad portable registration. Documents and local app data were preserved.'
+    Write-Output 'Removed 汗青 portable registration. Documents and local app data were preserved.'
 }
-

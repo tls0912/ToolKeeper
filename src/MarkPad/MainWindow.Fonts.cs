@@ -5,6 +5,8 @@ using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Shell;
+using MarkPad.Services;
+using ToolKeeper.UI;
 
 namespace MarkPad;
 
@@ -12,24 +14,18 @@ public partial class MainWindow
 {
     private double UiSize(double size) => size * Settings.UiFontSize / 13;
     private double UiTitleHeight => Math.Max(40, UiSize(40));
-    private string UiFontName => string.IsNullOrWhiteSpace(Settings.UiFontFamily)
-        ? UiLanguage switch { "zh-TW" => "Microsoft JhengHei UI", "ja" => "Yu Gothic UI", _ => "Segoe UI" }
-        : Settings.UiFontFamily;
-    private string PreviewFontName => string.IsNullOrWhiteSpace(Settings.PreviewFontFamily)
-        ? UiLanguage switch { "zh-TW" => "Microsoft JhengHei", "ja" => "Yu Gothic", _ => "Segoe UI" }
-        : Settings.PreviewFontFamily;
+    private string UiFontName => UiTypography.ResolveInterfaceFont(Settings.UiFontFamily, UiLanguage, IsInkTheme);
+    private string PreviewFontName => UiTypography.ResolveReadingFont(Settings.PreviewFontFamily, UiLanguage, IsInkTheme);
+    private string EditorFontName => Settings.EditorFontFamily == InkTypography.FontChoice
+        ? InkTypography.Resolve(UiLanguage) : Settings.EditorFontFamily;
+
+    private sealed record FontOption(string Value, string Label);
 
     private void ApplyUiTypography()
     {
         FontFamily = new FontFamily(UiFontName);
         FontSize = Settings.UiFontSize;
-        Resources["UiFontFamily"] = FontFamily;
-        Resources["UiFontSize"] = FontSize;
-        Resources["UiSmallFontSize"] = UiSize(9);
-        Resources["UiHeadingFontSize"] = UiSize(17);
-        Resources["UiSectionFontSize"] = UiSize(16);
-        Resources["UiMenuMaxWidth"] = Math.Max(320, UiSize(360));
-        BrandColumn.Width = new GridLength(Math.Max(104, UiSize(104)));
+        UiTypography.ApplyResources(Resources, FontFamily, FontSize);
         RailToggleButton.Height = Math.Max(32, UiSize(32));
         StatusToast.Margin = new Thickness(20, UiTitleHeight + 24, 20, 0);
         TitleRow.Height = new GridLength(_fullScreen ? 0 : UiTitleHeight);
@@ -42,28 +38,32 @@ public partial class MainWindow
         if (_disposed || _current is null || Keyboard.Modifiers != ModifierKeys.Control || e.Delta == 0) return;
         // Intercept before AvalonEdit/WebView2 scrolls or applies its own zoom.
         e.Handled = true;
-        var previewMode = _current.IsPreviewMode;
+        var previewMode = _current.IsPreviewMode || _preview.IsMouseOver;
         var previous = previewMode ? Settings.PreviewFontSize : Settings.EditorFontSize;
-        var size = Math.Clamp(previous + Math.Sign(e.Delta), 8, 72);
+        await GuardAsync(() => ChangeContentFontSizeAsync(previewMode, previous + Math.Sign(e.Delta)));
+    }
+
+    private async Task ChangeContentFontSizeAsync(bool previewMode, double requestedSize)
+    {
+        if (_disposed || !double.IsFinite(requestedSize)) return;
+        var previous = previewMode ? Settings.PreviewFontSize : Settings.EditorFontSize;
+        var size = Math.Clamp(requestedSize, 8, 72);
         if (size == previous) return;
         if (previewMode) Settings.PreviewFontSize = size;
         else Settings.EditorFontSize = size;
-
-        await GuardAsync(async () =>
+        var updates = new List<Task>();
+        foreach (var window in Application.Current.Windows.OfType<MainWindow>())
         {
-            var updates = new List<Task>();
-            foreach (var window in Application.Current.Windows.OfType<MainWindow>())
+            if (window._disposed) continue;
+            foreach (var view in window._documentViews.Values)
             {
-                if (window._disposed) continue;
-                foreach (var view in window._documentViews.Values)
-                {
-                    if (previewMode) updates.Add(view.Preview.SetFontSizeAsync(size));
-                    else view.Editor.Editor.FontSize = size;
-                }
+                if (previewMode) updates.Add(view.Preview.SetFontSizeAsync(size));
+                else view.Editor.Editor.FontSize = size;
             }
-            App.Preferences.Save();
-            await Task.WhenAll(updates);
-        });
+            window.RefreshEditorToolbar();
+        }
+        App.Preferences.Save();
+        await Task.WhenAll(updates);
     }
 
     private void ShowFontPicker()
@@ -72,28 +72,64 @@ public partial class MainWindow
         var heading = new TextBlock { Text = T("Font & size", "字型與字級", "フォントとサイズ"), FontWeight = FontWeights.SemiBold, Margin = new Thickness(0, 0, 0, 10) };
         heading.SetResourceReference(TextBlock.FontSizeProperty, "UiSectionFontSize");
         body.Children.Add(heading);
-        var allFonts = Fonts.SystemFontFamilies.Select(f => f.Source).OrderBy(f => f).ToArray();
-        void AddFontRow(string label, Func<string> getFont, Action<string> setFont, Func<double> getSize, Action<double> setSize, double min, double max)
+        var traditionalNote = new TextBlock
+        {
+            Text = T("Traditional uses an installed calligraphic or serif font. Automatic pairs it with the bamboo interface and paper background in both light and dark themes.",
+                "傳統文字使用本機楷體或襯線字型；介面與內文預覽選「自動」時，會搭配亮色或深色的竹子介面與宣紙底色。",
+                "伝統書体はインストール済みの楷書体・明朝体を使用します。UI と本文プレビューの「自動」は、明暗両方の竹のインターフェースと紙の背景に合わせます。"),
+            TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 0, 0, 4)
+        };
+        traditionalNote.SetResourceReference(TextBlock.ForegroundProperty, "MutedBrush");
+        body.Children.Add(traditionalNote);
+        var allFonts = Fonts.SystemFontFamilies.Select(f => f.Source).Distinct(StringComparer.OrdinalIgnoreCase).OrderBy(f => f).ToArray();
+        void AddFontRow(string label, Func<string> getFont, Action<string> setFont, Func<string> resolvedFont,
+            Func<double> getSize, Action<double> setSize, double min, double max, string defaultValue = "")
         {
             body.Children.Add(new TextBlock { Text = label, FontWeight = FontWeights.SemiBold, Margin = new Thickness(0, 8, 0, 5) });
             var common = new[] { "Segoe UI", "Microsoft JhengHei UI", "Microsoft JhengHei", "Yu Gothic UI", "Yu Gothic", "Cascadia Mono", "Consolas", "Arial" }
-                .Where(f => allFonts.Contains(f)).ToList();
+                .Where(f => allFonts.Contains(f, StringComparer.OrdinalIgnoreCase));
+            List<FontOption> Options(IEnumerable<string> fonts)
+            {
+                var options = new List<FontOption>
+                {
+                    new(defaultValue, T("Automatic", "自動", "自動")),
+                    new(InkTypography.FontChoice, T("Traditional", "傳統文字", "伝統書体"))
+                };
+                options.AddRange(fonts.Where(f => f != defaultValue).Select(f => new FontOption(f, f)));
+                var selected = getFont();
+                if (!options.Any(f => f.Value == selected)) options.Add(new FontOption(selected, selected));
+                return options;
+            }
             var value = getFont();
-            if (!common.Contains(value)) common.Insert(0, value);
-            var combo = new ComboBox { ItemsSource = common, IsEditable = false, MinHeight = 30, SelectedItem = value, Margin = new Thickness(0, 0, 0, 3) };
+            var combo = new ComboBox { ItemsSource = Options(common), DisplayMemberPath = nameof(FontOption.Label), SelectedValuePath = nameof(FontOption.Value),
+                IsEditable = false, MinHeight = 30, SelectedValue = value, Margin = new Thickness(0, 0, 0, 3) };
+            combo.SetResourceReference(StyleProperty, "FontPickerComboBoxStyle");
             // The platform ComboBox style otherwise keeps its system font in this detached popup.
             combo.SetResourceReference(Control.FontFamilyProperty, "UiFontFamily");
             combo.SetResourceReference(Control.FontSizeProperty, "UiFontSize");
             System.Windows.Automation.AutomationProperties.SetName(combo, label);
+            var sample = new TextBlock { Text = T("Traditional lettering · Abc 123", "傳統文字 · Abc 123", "伝統書体 · Abc 123"),
+                TextWrapping = TextWrapping.Wrap, FontSize = 18, Margin = new Thickness(0, 3, 0, 0) };
+            var familyName = new TextBlock { TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 1, 0, 3) };
+            familyName.SetResourceReference(TextBlock.ForegroundProperty, "MutedBrush");
+            void UpdateSample()
+            {
+                var family = resolvedFont();
+                sample.FontFamily = new FontFamily(family);
+                familyName.Text = family;
+            }
+            UpdateSample();
             combo.SelectionChanged += (_, _) =>
             {
-                if (combo.SelectedItem is not string font || font == getFont()) return;
-                setFont(font); App.ApplyPreferences();
+                if (combo.SelectedValue is not string font || font == getFont()) return;
+                setFont(font); App.ApplyPreferences(); UpdateSample();
             };
             body.Children.Add(combo);
+            body.Children.Add(sample);
+            body.Children.Add(familyName);
             var more = new Button { Content = T("More fonts…", "更多字型…", "その他のフォント…"), HorizontalAlignment = HorizontalAlignment.Left, Padding = new Thickness(0, 3, 0, 3) };
             more.SetResourceReference(Control.ForegroundProperty, "AccentBrush");
-            more.Click += (_, _) => { var selected = getFont(); combo.ItemsSource = allFonts; combo.SelectedItem = selected; combo.IsDropDownOpen = true; };
+            more.Click += (_, _) => { var selected = getFont(); combo.ItemsSource = Options(allFonts); combo.SelectedValue = selected; combo.IsDropDownOpen = true; };
             body.Children.Add(more);
             var row = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 4, 0, 8) };
             var size = new TextBox { Text = getSize().ToString(CultureInfo.InvariantCulture), Width = 66, TextAlignment = TextAlignment.Center,
@@ -118,12 +154,12 @@ public partial class MainWindow
             size.KeyDown += (_, e) => { if (e.Key == Key.Enter) { Commit(); e.Handled = true; } };
             row.Children.Add(minus); row.Children.Add(size); row.Children.Add(plus); body.Children.Add(row);
         }
-        AddFontRow(T("User interface", "UI 介面", "UI インターフェース"), () => UiFontName, v => Settings.UiFontFamily = v,
+        AddFontRow(T("User interface", "UI 介面", "UI インターフェース"), () => Settings.UiFontFamily, v => Settings.UiFontFamily = v, () => UiFontName,
             () => Settings.UiFontSize, v => Settings.UiFontSize = v, 10, 20);
-        AddFontRow(T("Document preview", "內文預覽", "本文プレビュー"), () => PreviewFontName, v => Settings.PreviewFontFamily = v,
+        AddFontRow(T("Document preview", "內文預覽", "本文プレビュー"), () => Settings.PreviewFontFamily, v => Settings.PreviewFontFamily = v, () => PreviewFontName,
             () => Settings.PreviewFontSize, v => Settings.PreviewFontSize = v, 8, 72);
-        AddFontRow(T("Document editor", "內文編輯器", "本文エディター"), () => Settings.EditorFontFamily, v => Settings.EditorFontFamily = v,
-            () => Settings.EditorFontSize, v => Settings.EditorFontSize = v, 8, 72);
+        AddFontRow(T("Document editor", "內文編輯器", "本文エディター"), () => Settings.EditorFontFamily, v => Settings.EditorFontFamily = v, () => EditorFontName,
+            () => Settings.EditorFontSize, v => Settings.EditorFontSize = v, 8, 72, "Cascadia Mono");
         var scroll = new ScrollViewer { Content = body, VerticalScrollBarVisibility = ScrollBarVisibility.Auto, HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled };
         // Keep the three sections reachable in a short window, including when UI size changes live.
         void FitPicker()
