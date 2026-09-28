@@ -19,7 +19,7 @@ public sealed class NativeWindowOpacityTests
         var reportPath = Path.Combine(Path.GetTempPath(), $"CabiDock-opacity-{Guid.NewGuid():N}.json");
         using var process = new Process
         {
-            StartInfo = new ProcessStartInfo(Path.Combine(AppContext.BaseDirectory, "CabiDock.exe"))
+            StartInfo = new ProcessStartInfo(Path.Combine(AppContext.BaseDirectory, "ToolKeeper.exe"))
             {
                 UseShellExecute = false, CreateNoWindow = true, WindowStyle = ProcessWindowStyle.Hidden,
                 ArgumentList = { "--diagnose-group-opacity", reportPath }

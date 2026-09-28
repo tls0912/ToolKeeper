@@ -2,21 +2,24 @@
 
 更新日期：2026-09-28。版本：0.1.0 開發預覽。
 
-已實作分類、互動及桌面接管流程。一般啟動在成功掃描後自動嘗試接管；群組以 Explorer 子視窗顯示，受管理的原生檔案圖示以 region 裁切隱去。系統／未管理圖示保留。這仍是**尚未完成真實桌面 V1 驗收**的實驗實作；取不到 Shell、附掛或恢復保護失敗時，保留原生桌面並顯示原因。
+已實作分類、互動、桌面接管流程與 ToolKeeper 平台整併。正式入口是 `ToolKeeper.exe`，其載入的 `ToolKeeper.Desktop` 保留 `CabiDock` 命名空間、資料格式與位置；`src/CabiDock` 的 EXE 薄殼已退役，只留說明。依平台保存的啟停偏好，在成功掃描後嘗試接管；群組以 Explorer 子視窗顯示，受管理的原生檔案圖示以 region 裁切隱去，系統／未管理圖示保留。這仍是**尚未完成真實桌面 V1 驗收**的實驗實作；取不到 Shell、附掛或恢復保護失敗時，保留原生桌面並顯示原因。
 
 ## 已實作
 
+- 桌面能力抽為 `src/ToolKeeper.Desktop/ToolKeeper.Desktop.csproj`；`DesktopModule` 管理掃描、分類、監看、設定與群組，ToolKeeper 本體管理程序、主視窗、系統匣與產品狀態。正式恢復助手使用 `ToolKeeper.exe --desktop-recovery` 私有模式，仍為獨立程序以保護主程序異常恢復。
+- 主視窗與「工具番」專屬群組使用同一產品目錄，列出 001 汗青、002 CabiDock、003 ConvAnvil、004 Hash Checker、005 Image → ICO。002／004／005 在宿主內各自開窗；只有單獨上架的 001／003 保留自己的 EXE。入口一律使用 `toolkeeper://run/001` 至 `toolkeeper://run/005`，由 ToolKeeper 派發，桌面模組只轉交 URI。群組固定展開，不因滑鼠離開、點標題或開啟其他分類而收合，仍可拖曳、調大小、保存與恢復，受主螢幕範圍限制。入口不加入分類規則或檔案清單，刷新入口不覆寫已保存的展開尺寸。
 - 設定視窗標題右側提供共用「風格／語言／關於」。亮色、暗色、水墨與暗水墨套用至分類表格、規則欄位與操作區；介面可切換繁中、英文與日文。既有分類名稱與使用者輸入保持原樣，切換時原位更新，不重建未儲存的編輯內容。桌面群組與群組預覽仍沿用自己的外觀。
 - 檔案變更合併更新，正常新增、改名、移除沿用群組 HWND 及展開狀態；短暫幾何不一致保留視窗、快速重試，持續異常才完整停止。
-- 離開群組 3 秒後收合，回到群組取消；右鍵、改名與拖曳期間保持展開。檔案原生傳統 Shell 選單、CabiDock 分類子選單、Shell 改名及 F2。
+- 一般分類離開 3 秒後收合，回到群組取消；右鍵、改名與拖曳期間保持展開。檔案原生傳統 Shell 選單、CabiDock 分類子選單、Shell 改名及 F2。
 - 分類區不透明度 30–100%，保存並套用所有桌面群組／操作預覽，純外觀修改不重分類。舊設定預設 100%。
+- 拖曳標題支援工作區邊緣與可見群組吸附：門檻 12 DIP、群組間距 8 DIP，拉遠可脫離，Shift 暫停吸附。工具番與一般分類、桌面與操作預覽共用計算；不改變大小，也不在刷新或載入既有配置時吸附。原生 Presenter 先完成兩軸移動，再以實體像素執行圖示避讓，保存最後位置。
 
 - 桌面群組附掛、主螢幕工作區約束與配置保存。暫停接管、正常退出及掃描失敗會撤下群組、恢復原始圖示區域。
 - 透過 Shell 項目與 MSAA 名稱／範圍完整核對裁切清單，只裁切已掃描且已分類的路徑；保留系統圖示與未管理項目，遇到同名歧義或不完整快照則停止接管。
 - 接管前啟動獨立恢復程序，確認就緒後才變更 region；程序死亡或連線中斷時還原。管線程序與 HWND 身分檢查、接管互斥避免並行衝突。
 - 定期檢查 Shell 與群組存活，圖示配置事件重新核對現有接管映射；短暫不一致快速重試，持續錯誤才停止並延遲重試。自訂掃描目錄不啟用真實桌面接管。
 
-- 獨立 `src/CabiDock/CabiDock.csproj`，.NET 10、WPF，WinForms 僅用於系統匣；未增加第三方執行時套件。2026-09-28 設定主視窗改用 `ToolKeeper.UI` 的 `AppWindow`，與本體、003 共用標題與內容配置；桌面群組、分類與保存邏輯仍由 CabiDock 負責。
+- .NET 10、WPF，宿主的 WinForms 僅用於系統匣；未增加第三方執行時套件。設定視窗使用 `ToolKeeper.UI` 的 `AppWindow`，與本體、003 共用標題與內容配置；桌面群組、分類與保存邏輯留在桌面模組。
 - 七個預設分類，由內嵌 JSON 提供副檔名。分類使用固定 ID，名稱可修改；資料夾及兜底分類具有獨立種類。
 - 手動指定、檔名關鍵字順序、自訂副檔名、預設規則與兜底的分類優先順序。
 - 分類衝突驗證，自訂分類可覆蓋預設副檔名；不同自訂分類衝突會顯示副檔名與既有分類名稱。
@@ -25,8 +28,8 @@
 - `FileSystemWatcher` 觀察新增、移除與重新命名，另以定期掃描補足漏事件；移除事件立即清除紀錄。監看失效後重新建立，桌面路徑改變時重新解析。
 - 可辨識的同一檔案重新命名保留分類。以檔案識別碼與磁碟識別資訊核對，無法取得時退回路徑；不追查程式關閉期間的移動。
 - 完整掃描失敗時保留全部既有分類，不把掃描失敗當成空桌面。
-- 群組收合預覽、點擊展開、點擊標題切換展開或立即收合、離開 3 秒收合、內容捲動、雙擊開啟、原生右鍵選單與手動分類、群組間拖曳、拖曳標題與調整展開大小。空群組隱藏但保留配置。
-- 設定視窗管理分類與關鍵字，支援規則拖曳排序；視窗最小化或關閉縮至系統匣，不佔工作列。系統匣只有「設定」與「結束程式」。同一資料目錄只啟動一個實例，再次啟動喚起設定。
+- 一般分類收合預覽、點擊展開、點擊標題切換展開或立即收合、離開 3 秒收合、內容捲動、雙擊開啟、原生右鍵選單與手動分類、群組間拖曳、拖曳標題與調整展開大小。空群組隱藏但保留配置。
+- 設定視窗管理分類與關鍵字，支援規則拖曳排序，最小化或關閉只隱藏。正式入口使用本體系統匣，提供開啟本體、桌面設定、桌面啟停與退出；正常退出及登出走 `PrepareExit` 恢復桌面。同一資料目錄的單一實例保護保留。
 - JSON 同目錄原子替換與健康備份。損壞主檔可讀備份；主檔與備份均無法讀取時停用保存並保留檔案。規則指紋可在設定已保存、分類狀態尚未寫入的中斷後重套自動分類。
 
 ## 建置與執行
@@ -34,21 +37,25 @@
 在 Windows 安裝 .NET 10 SDK：
 
 ```powershell
-dotnet restore src/CabiDock/CabiDock.csproj
-dotnet build src/CabiDock/CabiDock.csproj
+dotnet restore src/ToolKeeper/ToolKeeper.csproj
+dotnet build src/ToolKeeper/ToolKeeper.csproj
 dotnet test tests/CabiDock.Tests/CabiDock.Tests.csproj
-dotnet run --project src/CabiDock/CabiDock.csproj
+dotnet run --project src/ToolKeeper/ToolKeeper.csproj
 ```
 
-主介面是設定視窗，桌面接管自動嘗試啟用；可按「暫停桌面接管」恢復原生桌面，再按「啟用桌面接管」重試。「開啟群組操作預覽」會先暫停接管。手動分類只改 CabiDock 的紀錄，不移動、複製或重新命名檔案。雙擊項目會交由 Windows 預設程式開啟。
+正式啟動顯示只含工具列表的 ToolKeeper 主視窗，可由 002 CabiDock 列表入口或系統匣進入桌面設定。首次使用與沒有平台偏好的既有使用者預設啟用，之後沿用保存的啟停狀態；可按「暫停桌面接管」恢復原生桌面，再按「啟用桌面接管」重試。「開啟群組操作預覽」會先暫停接管。手動分類只改紀錄，不移動、複製或重新命名檔案，雙擊項目交由 Windows 預設程式開啟。
+
+桌面模組的測試、預覽與診斷均透過 ToolKeeper 執行，不再建置或執行 CabiDock 薄殼。可從產品目錄、工具番群組或 `toolkeeper://run/002` 開啟獨立的 CabiDock 設定視窗。
 
 開發時可以指定獨立的測試目錄與狀態目錄，避免使用真實桌面：
 
 ```powershell
 New-Item -ItemType Directory -Force artifacts/cabidock-demo/desktop
 Set-Content artifacts/cabidock-demo/desktop/Welcome.md '# CabiDock'
-dotnet run --project src/CabiDock/CabiDock.csproj -- --desktop-directory artifacts/cabidock-demo/desktop --data-directory artifacts/cabidock-demo/profile
+dotnet run --project src/ToolKeeper/ToolKeeper.csproj -- --desktop-directory artifacts/cabidock-demo/desktop --data-directory artifacts/cabidock-demo/profile
 ```
+
+自訂桌面目錄不接管真實 Explorer 桌面。指定 `--data-directory` 時，桌面資料放在該目錄，平台 `platform.json` 與本體 `ui.json` 同時隔離到其中的 `toolkeeper-host` 子目錄。
 
 ## 本機資料
 
@@ -61,11 +68,21 @@ dotnet run --project src/CabiDock/CabiDock.csproj -- --desktop-directory artifac
 | `ui-preferences.json` | 設定視窗的語言與介面風格；使用 `--data-directory` 時一併移至指定目錄 |
 | 同名 `.bak` | 上一次健康版本 |
 
+以上檔案與路徑在整併時不遷移。本體另外在 `%LOCALAPPDATA%\ToolKeeper\ToolKeeper\platform.json` 保存桌面啟停狀態，主檔損毀或缺必要欄位時嘗試備份；沒有健康備份則預設停用並保留壞檔。暫時性 I/O 保存失敗在產品刷新及退出時重試。
+
 設定使用陣列與固定分類 ID，避免改名使手動分類失效；此格式是產品文件所允許的內部設計。首次未保存設定時，從 `Defaults/categories.json` 載入七個預設分類。
 
 可恢復的寫入失敗保留記憶體變更並重試；未恢復前關閉仍可能失去該次變更，介面會顯示未儲存狀態。全部檔案都無法讀取時，需修復資料檔後重啟。
 
 ## 驗證與限制
+
+2026-09-28 群組吸附：`CabiDock.Tests` Release **167／167** 通過，TRX 位於 `artifacts/snap-tests/desktop-snap-verified_*`。新增驗證涵蓋工作區四邊、相鄰／同側對齊、12 DIP 門檻、負座標、吸附組合避免重疊、逐步拉開、Shift 略過、微小位移仍視為點擊、保存與恢復、150% DPI、原生圖示避讓優先，以及隱藏分類不參與。既有分類、收合、縮放、恢復助手與模組生命週期測試也通過。已目視離屏預覽 `artifacts/cabidock-ui/groups-preview-snapped-to-tools.png`，並更新 `artifacts/ToolKeeper.Integrated`；真實 Explorer 拖曳手感仍待實機驗收。
+
+2026-09-28 第一輪平台整併（固定展開與統一 URI 前）：桌面模組由 `CabiDock.Tests` 驗證，**135／135** 通過；本體 **98／98**、共用 UI **35／35**、ConvAnvil **117／117** 通過。MarkPad 在 sandbox 有 6 項 DPAPI／WebView2 相關失敗，正常 Windows 使用者環境以 `--no-build --no-restore` 重測 **157／157** 通過。分環境合計 **542／542**，不表示單次 solution 全部通過；TRX 在 `artifacts/integration-tests`。整併後的真實 Explorer 接管、Win+D、Explorer 重啟、混合 DPI、登出／關機與實際 Store 啟動仍待人工驗收。
+
+第一輪 `ToolKeeper.sln` Release 建置為 **0 個警告、0 個錯誤**。已發布 `artifacts/ToolKeeper.Integrated`，其中只有一個主執行檔 `ToolKeeper.exe`，另含桌面／共用 UI 組件。實際使用該發布版執行 `--diagnose-group-opacity`，報告 `Succeeded: true`、程序退出碼 0；30／50／100% 不透明度與父子視窗關係檢查通過。此紀錄不代替後續固定展開、URI 路由與工具視窗變更的回歸；診斷只建立隱藏的合成視窗，不能代表真實 Explorer 接管已驗收。
+
+以下保留整併前的驗證紀錄，不能直接作為本輪實機驗收結論。
 
 2026-09-28 共用主視窗調整：Release 建置無警告，測試 **128／128 通過**。已目視 740×620 最小內容尺寸的離屏渲染，標頭、產品簡介、操作區與工作區配置正常；原生標題以 `Title`／`WindowStyle` 自動測試驗證。本輪未完成完整人工桌面驗收。
 

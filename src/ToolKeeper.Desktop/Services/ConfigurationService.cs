@@ -70,6 +70,8 @@ public static class ConfigurationService
 
             if (string.IsNullOrWhiteSpace(category.Id) || !ids.Add(category.Id.Trim()))
                 errors.Add("分類識別碼不得留白或重複。");
+            if (category.Id?.Trim() == DesktopToolsGroup.Id)
+                errors.Add("工具番群組由主程式管理，不能作為檔案分類。");
             if (string.IsNullOrWhiteSpace(category.Name) || !names.Add(category.Name.Trim()))
                 errors.Add("分類名稱不得留白或重複。");
             if (!Enum.IsDefined(category.Kind))

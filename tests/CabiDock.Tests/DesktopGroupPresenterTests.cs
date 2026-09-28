@@ -22,11 +22,226 @@ public sealed class DesktopGroupPresenterTests
     };
 
     [Fact]
+    public Task SnapsToVisibleToolsInDipsAndAppliesNativeIconAvoidanceAfterTheCompleteMove() => OnSta(() =>
+    {
+        var hosts = new List<FakeHost>();
+        using var presenter = CreatePresenter(hosts, new Rect(0, 0, 1800, 1200), 1.5);
+        var (config, state, items) = Data();
+        state.Groups[DesktopToolsGroup.Id] = new GroupLayout { X = 40, Y = 40 };
+        state.Groups["documents"] = new GroupLayout { X = 500, Y = 230 };
+        state.Groups["images"] = new GroupLayout { X = 800, Y = 550 };
+        presenter.SetTools([new("002", "CabiDock", "Ready", "Open", ActivationUri: "toolkeeper://run/002")], _ => { });
+        presenter.LayoutChanged += (id, layout) => state.Groups[id] = layout;
+        // This obstacle intersects the intermediate X-only move, but not the complete move.
+        // Applying X and Y atomically prevents an unnecessary sideways jump.
+        presenter.SetReservedAreas([new Rect(625, 350, 30, 50)]);
+        Assert.True(presenter.TryUpdate(config, state, items, Desktop, out var reason), reason);
+        var documents = hosts[1];
+        var header = Descendants<Thumb>((DependencyObject)documents.Window.Content).First();
+        header.RaiseEvent(new DragStartedEventArgs(0, 0) { RoutedEvent = Thumb.DragStartedEvent });
+        header.RaiseEvent(new DragDeltaEventArgs(-88, -182) { RoutedEvent = Thumb.DragDeltaEvent });
+        header.RaiseEvent(new DragCompletedEventArgs(-88, -182, false) { RoutedEvent = Thumb.DragCompletedEvent });
+        Assert.Equal(new Rect(612, 60, 207, 240), documents.Bounds);
+        Assert.Equal(408, state.Groups["documents"].X);
+        Assert.Equal(40, state.Groups["documents"].Y);
+        Assert.Equal(12, documents.Bounds.Left - hosts[0].Bounds.Right); // 8 DIP at 150%.
+
+        var nativeItem = new Rect(625, 70, 30, 50);
+        presenter.SetReservedAreas([nativeItem]);
+        header.RaiseEvent(new DragStartedEventArgs(0, 0) { RoutedEvent = Thumb.DragStartedEvent });
+        header.RaiseEvent(new DragDeltaEventArgs(2, 5) { RoutedEvent = Thumb.DragDeltaEvent });
+        header.RaiseEvent(new DragCompletedEventArgs(2, 5, false) { RoutedEvent = Thumb.DragCompletedEvent });
+        nativeItem.Inflate(12, 12);
+        Assert.False(Overlaps(documents.Bounds, nativeItem));
+        Assert.Equal(documents.Bounds.X / 1.5, state.Groups["documents"].X);
+        Assert.Equal(documents.Bounds.Y / 1.5, state.Groups["documents"].Y);
+    });
+
+    [Fact]
+    public Task HiddenGroupsDoNotAttractDraggingAndRestoringSavedPositionsDoesNotSnap() => OnSta(() =>
+    {
+        var hosts = new List<FakeHost>();
+        var bounds = new Rect(0, 0, 1500, 1000);
+        using var presenter = CreatePresenter(hosts, bounds);
+        var (config, state, items) = Data();
+        state.Groups[DesktopToolsGroup.Id] = new GroupLayout { X = 40, Y = 40 };
+        state.Groups["documents"] = new GroupLayout { X = 412, Y = 48 };
+        state.Groups["images"] = new GroupLayout { X = 800, Y = 550 };
+        DesktopTool[] tools = [new("002", "CabiDock", "Ready", "Open", ActivationUri: "toolkeeper://run/002")];
+        presenter.SetTools(tools, _ => { });
+        presenter.LayoutChanged += (id, layout) => state.Groups[id] = layout;
+        Assert.True(presenter.TryUpdate(config, state, items, Desktop, out var reason), reason);
+        Assert.Equal(new Rect(412, 48, 138, 160), hosts[1].Bounds); // Within snap distance, but no drag.
+        presenter.SuspendVisibility();
+        var header = Descendants<Thumb>((DependencyObject)hosts[1].Window.Content).First();
+        header.RaiseEvent(new DragStartedEventArgs(0, 0) { RoutedEvent = Thumb.DragStartedEvent });
+        header.RaiseEvent(new DragDeltaEventArgs(1, 1) { RoutedEvent = Thumb.DragDeltaEvent });
+        header.RaiseEvent(new DragCompletedEventArgs(1, 1, false) { RoutedEvent = Thumb.DragCompletedEvent });
+        Assert.Equal(new Rect(413, 49, 138, 160), hosts[1].Bounds);
+        presenter.Dispose();
+
+        var restoredHosts = new List<FakeHost>();
+        using var restored = CreatePresenter(restoredHosts, bounds);
+        restored.SetTools(tools, _ => { });
+        Assert.True(restored.TryUpdate(config, state, items, Desktop, out reason), reason);
+        Assert.Equal(new Rect(413, 49, 138, 160), restoredHosts[1].Bounds);
+        Assert.True(restored.TryUpdate(config, state, items, Desktop, out reason), reason);
+        Assert.Equal(new Rect(413, 49, 138, 160), restoredHosts[1].Bounds);
+    });
+
+    [Fact]
+    public Task HostToolsHaveIndependentActionsAndNeverRepresentOrReclassifyFiles() => OnSta(() =>
+    {
+        var hosts = new List<FakeHost>();
+        using var presenter = CreatePresenter(hosts, new Rect(0, 0, 1920, 1040));
+        var (config, state, items) = Data();
+        var assignments = state.Items.Select(item => (item.FullPath, item.CategoryId, item.Source)).ToArray();
+        var activated = new List<string>();
+        presenter.SetTools([
+            new("001", "汗青", "已安裝", "開啟", ActivationUri: "toolkeeper://run/001"),
+            new("003", "ConvAnvil", "尚未安裝", "尚未上架", false, "toolkeeper://run/003")
+        ], activated.Add);
+        Assert.True(presenter.TryUpdate(config, state, items, Desktop, out var reason), reason);
+        Assert.Equal(3, hosts.Count);
+        Assert.Equal(items.Select(item => item.FullPath).Order(), presenter.RepresentedFilePaths.Order());
+        Assert.Equal(items.Select(item => item.FullPath).Order(), presenter.PlannedFilePaths(config, state, items).Order());
+        Assert.Equal(assignments, state.Items.Select(item => (item.FullPath, item.CategoryId, item.Source)).ToArray());
+        Assert.DoesNotContain(config.Categories, category => category.Id == DesktopToolsGroup.Id);
+        Assert.Contains(DesktopToolsGroup.Id, state.Groups.Keys);
+
+        var toolsHost = hosts[0];
+        Assert.Equal("CabiDock｜工具番", toolsHost.Window.Title);
+        var card = Assert.IsType<Border>(toolsHost.Window.Content);
+        Assert.False(card.AllowDrop);
+        Assert.Null(card.ContextMenu);
+        var header = Descendants<Thumb>(card).First();
+        header.RaiseEvent(new DragStartedEventArgs(0, 0) { RoutedEvent = Thumb.DragStartedEvent });
+        header.RaiseEvent(new DragCompletedEventArgs(0, 0, false) { RoutedEvent = Thumb.DragCompletedEvent });
+        card.Measure(new Size(360, 320));
+        card.Arrange(new Rect(0, 0, 360, 320));
+        card.UpdateLayout();
+        var buttons = Descendants<Button>(card).ToArray();
+        Assert.Equal(2, buttons.Length);
+        buttons[0].RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        buttons[1].RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Assert.Equal(new[] { "toolkeeper://run/001" }, activated);
+        Assert.False(buttons[1].IsEnabled);
+
+        presenter.SetTools([new("003", "ConvAnvil", "已安裝", "開啟", ActivationUri: "toolkeeper://run/003")], activated.Add);
+        Assert.True(presenter.TryUpdate(config, state, items, Desktop, out reason), reason);
+        Assert.Equal(3, hosts.Count);
+        Assert.False(toolsHost.Disposed);
+        presenter.SetTools([], activated.Add);
+        Assert.True(presenter.TryUpdate(config, state, items, Desktop, out reason), reason);
+        Assert.True(toolsHost.Disposed);
+        Assert.All(hosts.Skip(1), host => Assert.False(host.Disposed));
+        Assert.Equal(assignments, state.Items.Select(item => (item.FullPath, item.CategoryId, item.Source)).ToArray());
+    });
+
+    [Fact]
+    public Task ToolGroupStaysExpandedWhileOtherGroupsToggleAndRestoresMovedResizedLayout() => OnSta(() =>
+    {
+        var hosts = new List<FakeHost>();
+        using var presenter = CreatePresenter(hosts, new Rect(0, 0, 1200, 900));
+        var (config, state, items) = Data();
+        state.Groups[DesktopToolsGroup.Id] = new GroupLayout { X = 30, Y = 40, Width = 510, Height = 410 };
+        // Keep this lifecycle/resize case outside the new drag-snap range.
+        state.Groups["documents"] = new GroupLayout { X = 700, Y = 500 };
+        state.Groups["images"] = new GroupLayout { X = 850, Y = 500 };
+        var tools = Enumerable.Range(1, 5).Select(index => new DesktopTool($"{index:000}", $"Tool {index}", "Ready", "Open",
+            ActivationUri: $"toolkeeper://run/{index:000}")).ToArray();
+        presenter.SetTools(tools, _ => { });
+        presenter.LayoutChanged += (id, layout) => state.Groups[id] = layout;
+        Assert.True(presenter.TryUpdate(config, state, items, Desktop, out var reason), reason);
+        var toolsHost = hosts[0];
+        Assert.Equal(new Rect(30, 40, 510, 410), toolsHost.Bounds);
+        var toolCard = (FrameworkElement)toolsHost.Window.Content;
+        toolCard.Measure(new Size(510, 410));
+        toolCard.Arrange(new Rect(0, 0, 510, 410));
+        toolCard.UpdateLayout();
+        Assert.Equal(5, Descendants<Button>(toolCard).Count());
+
+        static void ClickHeader(FakeHost host)
+        {
+            var header = Descendants<Thumb>((DependencyObject)host.Window.Content).First();
+            header.RaiseEvent(new DragStartedEventArgs(0, 0) { RoutedEvent = Thumb.DragStartedEvent });
+            header.RaiseEvent(new DragCompletedEventArgs(0, 0, false) { RoutedEvent = Thumb.DragCompletedEvent });
+        }
+        ClickHeader(toolsHost);
+        ClickHeader(hosts[1]);
+        Assert.Equal(360, hosts[1].Bounds.Width);
+        ClickHeader(hosts[2]);
+        Assert.Equal(138, hosts[1].Bounds.Width);
+        Assert.Equal(360, hosts[2].Bounds.Width);
+        Assert.Equal(510, toolsHost.Bounds.Width);
+
+        var thumbs = Descendants<Thumb>(toolCard).ToArray();
+        var drag = thumbs[0];
+        drag.RaiseEvent(new DragStartedEventArgs(0, 0) { RoutedEvent = Thumb.DragStartedEvent });
+        drag.RaiseEvent(new DragDeltaEventArgs(20, 10) { RoutedEvent = Thumb.DragDeltaEvent });
+        drag.RaiseEvent(new DragCompletedEventArgs(20, 10, false) { RoutedEvent = Thumb.DragCompletedEvent });
+        var resize = thumbs.Single(thumb => Equals(thumb.ToolTip, "拖曳以調整展開大小"));
+        Assert.Equal(Visibility.Visible, resize.Visibility);
+        resize.RaiseEvent(new DragStartedEventArgs(0, 0) { RoutedEvent = Thumb.DragStartedEvent });
+        resize.RaiseEvent(new DragDeltaEventArgs(40, 30) { RoutedEvent = Thumb.DragDeltaEvent });
+        resize.RaiseEvent(new DragCompletedEventArgs(40, 30, false) { RoutedEvent = Thumb.DragCompletedEvent });
+        Assert.Equal(new Rect(50, 50, 550, 440), toolsHost.Bounds);
+        Assert.Equal(550, state.Groups[DesktopToolsGroup.Id].Width);
+        Assert.Equal(440, state.Groups[DesktopToolsGroup.Id].Height);
+        presenter.SetTools(tools.Select(tool => tool with { ActionLabel = "開啟" }).ToArray(), _ => { });
+        Assert.True(presenter.TryUpdate(config, state, items, Desktop, out reason), reason);
+        Assert.Equal(new Rect(50, 50, 550, 440), toolsHost.Bounds);
+        Assert.Equal(3, hosts.Count);
+        presenter.Dispose();
+
+        var restoredHosts = new List<FakeHost>();
+        using var restored = CreatePresenter(restoredHosts, new Rect(0, 0, 580, 460));
+        restored.SetTools(tools, _ => { });
+        Assert.True(restored.TryUpdate(config, state, items, Desktop, out reason), reason);
+        Assert.Equal(new Rect(30, 20, 550, 440), restoredHosts[0].Bounds);
+        Assert.Equal(550, state.Groups[DesktopToolsGroup.Id].Width);
+        Assert.Equal(440, state.Groups[DesktopToolsGroup.Id].Height);
+    });
+
+    [Fact]
+    public Task NewCategoryPositionsAvoidExpandedToolsAndPreserveSavedUserPositions() => OnSta(() =>
+    {
+        var hosts = new List<FakeHost>();
+        using var presenter = CreatePresenter(hosts, new Rect(0, 0, 1400, 1000));
+        var config = ConfigurationService.LoadDefaults();
+        var items = config.Categories.Select(category => new DesktopItem($@"C:\CabiDock-tests\{category.Id}.txt", false)).ToArray();
+        var state = new CabiDockState
+        {
+            Items = config.Categories.Zip(items).Select(pair => new ClassifiedItem
+            {
+                FullPath = pair.Second.FullPath, CategoryId = pair.First.Id, Source = ClassificationSource.Manual
+            }).ToList()
+        };
+        state.Groups["documents"] = new GroupLayout { X = 750, Y = 100, Width = 440, Height = 330 };
+        presenter.SetTools([new("001", "汗青", "Ready", "Open", ActivationUri: "toolkeeper://run/001")], _ => { });
+        Assert.True(presenter.TryUpdate(config, state, items, Desktop, out var reason), reason);
+        Assert.Equal(config.Categories.Count + 1, hosts.Count);
+        Assert.Equal(360, hosts[0].Bounds.Width);
+        Assert.Equal(320, hosts[0].Bounds.Height);
+        for (var first = 0; first < hosts.Count; first++)
+        for (var second = first + 1; second < hosts.Count; second++)
+            Assert.False(Overlaps(hosts[first].Bounds, hosts[second].Bounds), $"Initial groups {first} and {second} overlap.");
+        Assert.Equal(750, state.Groups["documents"].X);
+        Assert.Equal(100, state.Groups["documents"].Y);
+        Assert.Equal(440, state.Groups["documents"].Width);
+        var bounds = hosts.Select(host => host.Bounds).ToArray();
+        Assert.True(presenter.TryUpdate(config, state, items, Desktop, out reason), reason);
+        Assert.Equal(bounds, hosts.Select(host => host.Bounds));
+    });
+
+    [Fact]
     public Task KeepsWindowsAcrossRefreshAndConvertsDraggingToPhysicalScreenBounds() => OnSta(() =>
     {
         var hosts = new List<FakeHost>();
         using var presenter = CreatePresenter(hosts, new Rect(0, 60, 1200, 840), 1.5);
         var (config, state, items) = Data();
+        // Test unsnapped DPI conversion separately from the snap-specific cases above.
+        state.Groups["images"] = new GroupLayout { X = 500, Y = 300 };
         var layouts = new Dictionary<string, GroupLayout>();
         presenter.LayoutChanged += (category, layout) => layouts[category] = layout;
         Assert.True(presenter.TryUpdate(config, state, items, Desktop, out var reason), reason);

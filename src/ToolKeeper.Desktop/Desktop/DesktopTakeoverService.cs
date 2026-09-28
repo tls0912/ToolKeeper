@@ -15,6 +15,8 @@ internal sealed class DesktopTakeoverService : IDisposable
     private CabiDockConfiguration? _configuration;
     private CabiDockState? _state;
     private IReadOnlyList<DesktopItem> _items = [];
+    private IReadOnlyList<DesktopTool> _tools = [];
+    private Action<string>? _activateTool;
     private DesktopRecoveryGuard? _guard;
     private DesktopIconClipper? _clipper;
     private DesktopProbeResult? _desktop;
@@ -22,7 +24,7 @@ internal sealed class DesktopTakeoverService : IDisposable
     private bool _ownsLease, _disposed, _refreshing, _rebuild, _hasSnapshot, _refreshQueued, _geometrySuspended;
     private DateTime _retryAfter;
     private DateTime? _geometryUnstableSince;
-    public bool Enabled { get; private set; } = true;
+    public bool Enabled { get; private set; }
     public bool IsActive { get; private set; }
     public string Status { get; private set; } = "正在準備桌面接管。";
     public event Action? StatusChanged;
@@ -66,6 +68,7 @@ internal sealed class DesktopTakeoverService : IDisposable
 
     private void BindGroups()
     {
+        _groups.SetTools(_tools, id => _activateTool?.Invoke(id));
         var presenter = _groups;
         _groups.ItemOpenRequested += item => ItemOpenRequested?.Invoke(item);
         _groups.ManualAssignmentRequested += (item, category) => ManualAssignmentRequested?.Invoke(item, category);
@@ -77,6 +80,14 @@ internal sealed class DesktopTakeoverService : IDisposable
             StopSession();
             SetStatus(false, reason);
         }, DispatcherPriority.Send);
+    }
+
+    public void SetTools(IReadOnlyList<DesktopTool> tools, Action<string> activateTool)
+    {
+        _tools = tools;
+        _activateTool = activateTool;
+        _groups.SetTools(tools, activateTool);
+        if (Enabled) Refresh();
     }
 
     public void SetEnabled(bool enabled)

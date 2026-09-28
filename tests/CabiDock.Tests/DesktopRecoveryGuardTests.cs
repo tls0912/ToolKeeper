@@ -9,6 +9,28 @@ namespace CabiDock.Tests;
 
 public sealed class DesktopRecoveryGuardTests
 {
+    [Theory]
+    [InlineData(@"C:\apps\ToolKeeper.exe")]
+    public void AppHostRunsItsOwnExecutableForRecovery(string executable)
+    {
+        var start = DesktopRecoveryGuard.CreateHostStartInfo(executable, @"C:\apps\ToolKeeper.dll");
+        Assert.Equal(executable, start.FileName);
+        Assert.Empty(start.ArgumentList);
+        Assert.False(start.UseShellExecute);
+        Assert.True(start.CreateNoWindow);
+    }
+
+    [Fact]
+    public void DotnetHostRunsEntryAssemblyAndRejectsDesktopLibrary()
+    {
+        var start = DesktopRecoveryGuard.CreateHostStartInfo(@"C:\dotnet\dotnet.exe", @"C:\apps\ToolKeeper.dll");
+        Assert.Equal(@"C:\dotnet\dotnet.exe", start.FileName);
+        Assert.Equal(new[] { @"C:\apps\ToolKeeper.dll" }, start.ArgumentList);
+        Assert.Throws<InvalidOperationException>(() => DesktopRecoveryGuard.CreateHostStartInfo(
+            @"C:\dotnet\dotnet.exe", typeof(DesktopRecoveryGuard).Assembly.Location));
+        Assert.Throws<InvalidOperationException>(() => DesktopRecoveryGuard.CreateHostStartInfo(null, null));
+    }
+
     [Fact]
     public void DisposeRestoresOriginalComplexRegion()
     {
@@ -21,7 +43,7 @@ public sealed class DesktopRecoveryGuardTests
         var original = ReadRegion(window.Handle);
         Assert.NotNull(original);
 
-        Assert.True(DesktopRecoveryGuard.TryStartForOwnedWindow(window.Handle, out var guard, out var reason), reason);
+        Assert.True(DesktopRecoveryGuard.TryStartForOwnedWindow(window.Handle, System.IO.Path.Combine(AppContext.BaseDirectory, "ToolKeeper.exe"), out var guard, out var reason), reason);
         using (guard)
         {
             Assert.True(guard!.IsAlive);
@@ -36,7 +58,7 @@ public sealed class DesktopRecoveryGuardTests
     {
         using var window = new TestListView();
         Assert.Null(ReadRegion(window.Handle));
-        Assert.True(DesktopRecoveryGuard.TryStartForOwnedWindow(window.Handle, out var guard, out var reason), reason);
+        Assert.True(DesktopRecoveryGuard.TryStartForOwnedWindow(window.Handle, System.IO.Path.Combine(AppContext.BaseDirectory, "ToolKeeper.exe"), out var guard, out var reason), reason);
         using (guard) SetRegion(window.Handle, CreateRectRgn(10, 10, 20, 20));
         Assert.Null(ReadRegion(window.Handle));
     }
@@ -46,10 +68,10 @@ public sealed class DesktopRecoveryGuardTests
     {
         using var first = new TestListView();
         using var second = new TestListView();
-        Assert.True(DesktopRecoveryGuard.TryStartForOwnedWindow(first.Handle, out var firstGuard, out var reason), reason);
+        Assert.True(DesktopRecoveryGuard.TryStartForOwnedWindow(first.Handle, System.IO.Path.Combine(AppContext.BaseDirectory, "ToolKeeper.exe"), out var firstGuard, out var reason), reason);
         using (firstGuard)
         {
-            Assert.True(DesktopRecoveryGuard.TryStartForOwnedWindow(second.Handle, out var secondGuard, out reason), reason);
+            Assert.True(DesktopRecoveryGuard.TryStartForOwnedWindow(second.Handle, System.IO.Path.Combine(AppContext.BaseDirectory, "ToolKeeper.exe"), out var secondGuard, out reason), reason);
             using (secondGuard)
             {
                 Assert.True(firstGuard!.IsAlive);
@@ -69,7 +91,7 @@ public sealed class DesktopRecoveryGuardTests
         using var window = new TestListView();
         SetRegion(window.Handle, CreateRectRgn(4, 7, 123, 145));
         var original = ReadRegion(window.Handle);
-        Assert.True(DesktopRecoveryGuard.TryStartForOwnedWindow(window.Handle, out var guard, out var reason), reason);
+        Assert.True(DesktopRecoveryGuard.TryStartForOwnedWindow(window.Handle, System.IO.Path.Combine(AppContext.BaseDirectory, "ToolKeeper.exe"), out var guard, out var reason), reason);
         using (guard)
         {
             SetRegion(window.Handle, CreateRectRgn(10, 10, 20, 20));
@@ -91,7 +113,7 @@ public sealed class DesktopRecoveryGuardTests
         using var window = new TestListView();
         SetRegion(window.Handle, CreateRectRgn(5, 8, 127, 149));
         var original = ReadRegion(window.Handle);
-        Assert.True(DesktopRecoveryGuard.TryStartForOwnedWindow(window.Handle, out var guard, out var reason), reason);
+        Assert.True(DesktopRecoveryGuard.TryStartForOwnedWindow(window.Handle, System.IO.Path.Combine(AppContext.BaseDirectory, "ToolKeeper.exe"), out var guard, out var reason), reason);
         using (guard)
         {
             SetRegion(window.Handle, CreateRectRgn(10, 10, 20, 20));
@@ -133,7 +155,7 @@ public sealed class DesktopRecoveryGuardTests
             return plan!;
         }
 
-        Assert.True(DesktopRecoveryGuard.TryStartForOwnedWindow(window.Handle, out var guard, out var reason), reason);
+        Assert.True(DesktopRecoveryGuard.TryStartForOwnedWindow(window.Handle, System.IO.Path.Combine(AppContext.BaseDirectory, "ToolKeeper.exe"), out var guard, out var reason), reason);
         using (guard)
         using (var clipper = new DesktopIconClipper(window.Handle, checked((uint)Environment.ProcessId)))
         {
@@ -177,7 +199,7 @@ public sealed class DesktopRecoveryGuardTests
             new("Recycle Bin", new System.Windows.Rect(bounds.Left + 90, bounds.Top + 90, 30, 30))
         ];
         Assert.True(DesktopClipPlan.TryCreate(shell, [localPath, distantPath], accessible, out var plan, out var reason), reason);
-        Assert.True(DesktopRecoveryGuard.TryStartForOwnedWindow(window.Handle, out var guard, out reason), reason);
+        Assert.True(DesktopRecoveryGuard.TryStartForOwnedWindow(window.Handle, System.IO.Path.Combine(AppContext.BaseDirectory, "ToolKeeper.exe"), out var guard, out reason), reason);
         using (guard)
         using (var clipper = new DesktopIconClipper(window.Handle, checked((uint)Environment.ProcessId)))
         {

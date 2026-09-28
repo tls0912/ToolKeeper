@@ -7,6 +7,9 @@ using System.Windows.Documents;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
+using ToolKeeper.Services;
+using ToolKeeper.Modules;
+using ToolKeeper.UI;
 using Xunit;
 
 namespace ToolKeeper.Tests;
@@ -22,7 +25,7 @@ public sealed class UiSmokeTests
     {
         using var fixture = new Fixture();
         var path = fixture.WriteText("abc.txt", "abc");
-        var window = CreateHiddenWindow();
+        var window = CreateHashWindow();
         try
         {
             Assert.False(Get<Button>(window, "CopyHashesButton").IsEnabled);
@@ -54,7 +57,7 @@ public sealed class UiSmokeTests
     public Task AFailedHashLoadClearsPreviousHashesAndComparison() => OnSta(async () =>
     {
         using var fixture = new Fixture();
-        var window = CreateHiddenWindow();
+        var window = CreateHashWindow();
         try
         {
             await window.LoadHashFileAsync(fixture.WriteText("abc.txt", "abc"));
@@ -79,7 +82,7 @@ public sealed class UiSmokeTests
         using var fixture = new Fixture();
         var largePath = fixture.FilePath("older-request.bin");
         using (var stream = File.Create(largePath)) stream.SetLength(32 * 1024 * 1024);
-        var window = CreateHiddenWindow();
+        var window = CreateHashWindow();
         try
         {
             var oldRequest = window.LoadHashFileAsync(largePath);
@@ -101,7 +104,7 @@ public sealed class UiSmokeTests
         using var fixture = new Fixture();
         var largePath = fixture.FilePath("cancelled.bin");
         using (var stream = File.Create(largePath)) stream.SetLength(32 * 1024 * 1024);
-        var window = CreateHiddenWindow();
+        var window = CreateHashWindow();
         try
         {
             await window.LoadHashFileAsync(fixture.WriteText("previous.txt", "abc"));
@@ -129,7 +132,7 @@ public sealed class UiSmokeTests
         var existingIcon = fixture.WriteText("sample.ico", "Existing icon must not be replaced.");
         var existingBytes = File.ReadAllBytes(existingIcon);
         var invalidImage = fixture.WriteText("damaged.png", "This is not an image.");
-        var window = CreateHiddenWindow();
+        var window = CreateIconWindow();
         try
         {
             await window.ConvertImagesAsync(new[] { imagePath, invalidImage });
@@ -166,38 +169,35 @@ public sealed class UiSmokeTests
         var hashPath = fixture.WriteText("dropped.txt", "abc");
         var imagePath = fixture.WritePng("dropped.png");
         var imageBytes = File.ReadAllBytes(imagePath);
-        var window = CreateHiddenWindow();
+        var hash = CreateHashWindow();
+        var icon = CreateIconWindow();
         try
         {
-            var hashTarget = Get<Border>(window, "HashDropZone");
+            var hashTarget = Get<Border>(hash, "HashDropZone");
             var hashData = new DataObject(DataFormats.FileDrop, new[] { hashPath });
             Assert.Equal(DragDropEffects.Copy,
                 RaiseDrag(hashTarget, DragDrop.PreviewDragEnterEvent, hashData, DragDropEffects.Copy | DragDropEffects.Move).Effects);
-            Assert.False(Get<Button>(window, "CopyHashesButton").IsEnabled);
             var hashDrop = RaiseDrag(hashTarget, DragDrop.PreviewDropEvent, hashData, DragDropEffects.Copy | DragDropEffects.Move);
-            // The source receives the final effect as soon as the routed event returns,
-            // before the async handler finishes; Move could make it delete the source.
             Assert.Equal(DragDropEffects.Copy, hashDrop.Effects);
             Assert.True(hashDrop.Handled);
-            await WaitUntilAsync(() => Get<Button>(window, "CopyHashesButton").IsEnabled);
-            AssertAbcHashes(window);
+            await WaitUntilAsync(() => Get<Button>(hash, "CopyHashesButton").IsEnabled);
+            AssertAbcHashes(hash);
 
-            var iconTarget = Get<Border>(window, "IconDropZone");
+            var iconTarget = Get<Border>(icon, "IconDropZone");
             var imageData = new DataObject(DataFormats.FileDrop, new[] { imagePath });
             Assert.Equal(DragDropEffects.Copy,
                 RaiseDrag(iconTarget, DragDrop.PreviewDragEnterEvent, imageData, DragDropEffects.Copy | DragDropEffects.Move).Effects);
-            Assert.Empty(Get<ListBox>(window, "IconResults").Items.Cast<object>());
             var iconDrop = RaiseDrag(iconTarget, DragDrop.PreviewDropEvent, imageData, DragDropEffects.Copy | DragDropEffects.Move);
             Assert.Equal(DragDropEffects.Copy, iconDrop.Effects);
             Assert.True(iconDrop.Handled);
-            await WaitUntilAsync(() => Get<Button>(window, "ChooseImagesButton").IsEnabled);
-            var result = Assert.Single(Get<ListBox>(window, "IconResults").Items.Cast<IconConversionItem>());
+            await WaitUntilAsync(() => Get<Button>(icon, "ChooseImagesButton").IsEnabled);
+            var result = Assert.Single(Get<ListBox>(icon, "IconResults").Items.Cast<IconConversionItem>());
             Assert.True(result.Success);
             Assert.True(File.Exists(result.OutputPath));
             Assert.Equal("abc", File.ReadAllText(hashPath));
             Assert.Equal(imageBytes, File.ReadAllBytes(imagePath));
         }
-        finally { window.Close(); }
+        finally { hash.Close(); icon.Close(); }
     });
 
     [Fact]
@@ -207,11 +207,12 @@ public sealed class UiSmokeTests
         var hashPath = fixture.WriteText("rejected.txt", "abc");
         var imagePath = fixture.WritePng("rejected.png");
         var imageBytes = File.ReadAllBytes(imagePath);
-        var window = CreateHiddenWindow();
+        var hash = CreateHashWindow();
+        var icon = CreateIconWindow();
         try
         {
-            var hashTarget = Get<Border>(window, "HashDropZone");
-            var iconTarget = Get<Border>(window, "IconDropZone");
+            var hashTarget = Get<Border>(hash, "HashDropZone");
+            var iconTarget = Get<Border>(icon, "IconDropZone");
             var rejected = new[]
             {
                 (hashTarget, new DataObject(DataFormats.FileDrop, new[] { hashPath }), DragDropEffects.Move),
@@ -227,19 +228,19 @@ public sealed class UiSmokeTests
                 var drop = RaiseDrag(target, DragDrop.PreviewDropEvent, data, effects);
                 Assert.Equal(DragDropEffects.None, drop.Effects);
                 Assert.True(drop.Handled);
-                AssertCancelUnavailable(window, "CancelHashButton");
-                AssertCancelUnavailable(window, "CancelIconsButton");
-                Assert.True(Get<Button>(window, "ChooseImagesButton").IsEnabled);
+                AssertCancelUnavailable(hash, "CancelHashButton");
+                AssertCancelUnavailable(icon, "CancelIconsButton");
+                Assert.True(Get<Button>(icon, "ChooseImagesButton").IsEnabled);
             }
             await Dispatcher.Yield(DispatcherPriority.ContextIdle);
-            Assert.Empty(Get<TextBox>(window, "Sha256Output").Text);
-            Assert.False(Get<Button>(window, "CopyHashesButton").IsEnabled);
-            Assert.Empty(Get<ListBox>(window, "IconResults").Items.Cast<object>());
+            Assert.Empty(Get<TextBox>(hash, "Sha256Output").Text);
+            Assert.False(Get<Button>(hash, "CopyHashesButton").IsEnabled);
+            Assert.Empty(Get<ListBox>(icon, "IconResults").Items.Cast<object>());
             Assert.False(File.Exists(fixture.FilePath("rejected.ico")));
             Assert.Equal("abc", File.ReadAllText(hashPath));
             Assert.Equal(imageBytes, File.ReadAllBytes(imagePath));
         }
-        finally { window.Close(); }
+        finally { hash.Close(); icon.Close(); }
     });
 
     [Fact]
@@ -249,7 +250,7 @@ public sealed class UiSmokeTests
         var acceptedPath = fixture.WritePng("accepted.png");
         var rejectedPath = fixture.WritePng("busy-rejected.png");
         var rejectedBytes = File.ReadAllBytes(rejectedPath);
-        var window = CreateHiddenWindow();
+        var window = CreateIconWindow();
         try
         {
             var conversion = window.ConvertImagesAsync(new[] { acceptedPath });
@@ -272,45 +273,34 @@ public sealed class UiSmokeTests
     });
 
     [Fact]
-    public Task EmptyAndCompletedStatesRenderWithTwoTopPanelsAndOneFullWidthToolList() => OnSta(async () =>
+    public Task SeparateModulesRenderOnlyTheirOwnToolInEmptyAndCompletedStates() => OnSta(async () =>
     {
         using var fixture = new Fixture();
-        var window = CreateHiddenWindow();
+        var hash = CreateHashWindow();
+        var icon = CreateIconWindow();
         try
         {
-            Assert.Equal(1100, window.Width);
-            Assert.Equal(850, window.Height);
-            Assert.Equal(860, window.MinWidth);
-            Assert.Equal(740, window.MinHeight);
-            Assert.IsAssignableFrom<ToolKeeper.UI.AppWindow>(window);
-            Assert.Equal("ToolKeeper - 工具番", window.Title);
-            var host = HostWindowContent(window);
-            RenderAtBothSizes(host, window, "empty");
-            var products = Get<ItemsControl>(window, "Products");
-            Assert.NotEmpty(products.Items.Cast<object>());
-            for (var index = 0; index < products.Items.Count; index++)
-            {
-                var row = Assert.IsAssignableFrom<FrameworkElement>(products.ItemContainerGenerator.ContainerFromIndex(index));
-                var action = Assert.Single(VisualDescendants<Button>(row));
-                var name = Assert.Single(VisualDescendants<TextBlock>(row),
-                    text => text.Text == ReadProperty<string>(products.Items[index], "Name"));
-                Assert.False(action.IsEnabled);
-                Assert.True(Bounds(name, host).Right <= Bounds(action, host).Left + 1,
-                    "Each catalog row must show the product name on the left and its deferred action on the right.");
-            }
-
-            await window.LoadHashFileAsync(fixture.WriteText("範例檔案 abc.txt", "abc"));
-            Get<TextBox>(window, "ExpectedHash").Text = AbcSha256;
-            await window.ConvertImagesAsync(new[]
-            {
-                fixture.WritePng("範例圖片.png"),
-                fixture.WriteText("無法轉換.png", "Invalid image data.")
-            });
-            RenderAtBothSizes(host, window, "results");
-            Assert.False(window.IsVisible);
-            Assert.Null(PresentationSource.FromVisual(window));
+            Assert.Equal("Hash Checker - File Hash Verification", hash.Title);
+            Assert.Equal("Image → ICO - Icon Converter", icon.Title);
+            Assert.Null(hash.FindName("IconDropZone"));
+            Assert.Null(hash.FindName("IconResults"));
+            Assert.Null(icon.FindName("HashDropZone"));
+            Assert.Null(icon.FindName("ExpectedHash"));
+            var hashHost = HostWindowContent(hash);
+            var iconHost = HostWindowContent(icon);
+            RenderModuleAtBothSizes(hashHost, hash, "hash-empty");
+            RenderModuleAtBothSizes(iconHost, icon, "ico-empty");
+            await hash.LoadHashFileAsync(fixture.WriteText("範例檔案 abc.txt", "abc"));
+            Get<TextBox>(hash, "ExpectedHash").Text = AbcSha256;
+            await icon.ConvertImagesAsync(new[] { fixture.WritePng("範例圖片.png"), fixture.WriteText("無法轉換.png", "Invalid image data.") });
+            RenderModuleAtBothSizes(hashHost, hash, "hash-results");
+            RenderModuleAtBothSizes(iconHost, icon, "ico-results");
+            Assert.False(hash.IsVisible);
+            Assert.False(icon.IsVisible);
+            Assert.Null(PresentationSource.FromVisual(hash));
+            Assert.Null(PresentationSource.FromVisual(icon));
         }
-        finally { window.Close(); }
+        finally { hash.Close(); icon.Close(); }
     });
 
     [Fact]
@@ -353,51 +343,51 @@ public sealed class UiSmokeTests
     });
 
     [Fact]
-    public Task SwitchingPreferencesUpdatesWorkspaceWithoutReplacingResultsOrInput() => OnSta(async () =>
+    public Task SwitchingPreferencesUpdatesEachModuleWithoutReplacingResultsOrInput() => OnSta(async () =>
     {
         using var fixture = new Fixture();
-        var window = CreateHiddenWindow();
+        var hash = CreateHashWindow();
+        var icon = CreateIconWindow();
         try
         {
-            await window.LoadHashFileAsync(fixture.WriteText("abc.txt", "abc"));
-            var expected = Get<TextBox>(window, "ExpectedHash");
+            await hash.LoadHashFileAsync(fixture.WriteText("abc.txt", "abc"));
+            var expected = Get<TextBox>(hash, "ExpectedHash");
             expected.Text = AbcSha256;
             expected.Select(3, 12);
-            await window.ConvertImagesAsync(new[] { fixture.WritePng("source.png"), fixture.WriteText("bad.png", "bad") });
-            var source = Get<ListBox>(window, "IconResults").ItemsSource;
-            var items = Get<ListBox>(window, "IconResults").Items.Cast<IconConversionItem>().ToArray();
-            var workspace = window.Workspace;
-            var products = Get<ItemsControl>(window, "Products").ItemsSource;
-
+            await icon.ConvertImagesAsync(new[] { fixture.WritePng("source.png"), fixture.WriteText("bad.png", "bad") });
+            var source = Get<ListBox>(icon, "IconResults").ItemsSource;
+            var items = Get<ListBox>(icon, "IconResults").Items.Cast<IconConversionItem>().ToArray();
+            var hashWorkspace = hash.Workspace;
+            var iconWorkspace = icon.Workspace;
             foreach (var language in new[] { "en", "ja", "zh-TW" })
             foreach (var theme in new[] { "Light", "Dark", "Ink", "InkDark", "System" })
             {
-                window.SelectedLanguage = language;
-                window.SelectedTheme = theme;
-                Assert.Same(workspace, window.Workspace);
-                Assert.Same(source, Get<ListBox>(window, "IconResults").ItemsSource);
-                Assert.Same(products, Get<ItemsControl>(window, "Products").ItemsSource);
-                Assert.Same(items[0], Get<ListBox>(window, "IconResults").Items[0]);
-                Assert.Same(items[1], Get<ListBox>(window, "IconResults").Items[1]);
-                AssertAbcHashes(window);
+                hash.SelectedLanguage = icon.SelectedLanguage = language;
+                hash.SelectedTheme = icon.SelectedTheme = theme;
+                Assert.Same(hashWorkspace, hash.Workspace);
+                Assert.Same(iconWorkspace, icon.Workspace);
+                Assert.Same(source, Get<ListBox>(icon, "IconResults").ItemsSource);
+                Assert.Same(items[0], Get<ListBox>(icon, "IconResults").Items[0]);
+                Assert.Same(items[1], Get<ListBox>(icon, "IconResults").Items[1]);
+                AssertAbcHashes(hash);
                 Assert.Equal(AbcSha256, expected.Text);
                 Assert.Equal(3, expected.SelectionStart);
                 Assert.Equal(12, expected.SelectionLength);
-                Assert.True(Get<Button>(window, "CopyHashesButton").IsEnabled);
-                Assert.Equal("abc.txt", Get<TextBlock>(window, "HashFileName").Text);
-                Assert.Equal(window.FindResource("SurfaceBrush"), Get<Border>(window, "HashDropZone").Background);
-                Assert.Equal(window.FindResource("SurfaceBrush"), Get<Border>(window, "ToolList").Background);
-                Assert.Equal(window.FindResource("TextBrush"), expected.Foreground);
-                Assert.Equal(window.FindResource("SuccessBrush"), Get<TextBlock>(window, "HashComparison").Foreground);
-                Assert.Equal(ToolKeeper.UI.UiLanguage.Text(language, "Choose images", "選擇圖片", "画像を選択"), Get<Button>(window, "ChooseImagesButton").Content);
-                Assert.Equal(ToolKeeper.UI.UiLanguage.Text(language, "✓ Converted", "✓ 轉換完成", "✓ 変換完了"), items[0].Message);
-                Assert.StartsWith(ToolKeeper.UI.UiLanguage.Text(language, "Unable to convert: ", "無法轉換：", "変換できません："), items[1].Message);
-                Assert.StartsWith(ToolKeeper.UI.UiLanguage.Text(language, "Done", "完成", "完了"), Get<TextBlock>(window, "HashStatus").Text);
-                Assert.StartsWith(ToolKeeper.UI.UiLanguage.Text(language, "Done", "完成", "完了"), Get<TextBlock>(window, "IconStatus").Text);
+                Assert.True(Get<Button>(hash, "CopyHashesButton").IsEnabled);
+                Assert.Equal("abc.txt", Get<TextBlock>(hash, "HashFileName").Text);
+                Assert.Equal(hash.FindResource("SurfaceBrush"), Get<Border>(hash, "HashDropZone").Background);
+                Assert.Equal(icon.FindResource("SurfaceBrush"), Get<Border>(icon, "IconDropZone").Background);
+                Assert.Equal(hash.FindResource("TextBrush"), expected.Foreground);
+                Assert.Equal(hash.FindResource("SuccessBrush"), Get<TextBlock>(hash, "HashComparison").Foreground);
+                Assert.Equal(UiLanguage.Text(language, "Choose images", "選擇圖片", "画像を選択"), Get<Button>(icon, "ChooseImagesButton").Content);
+                Assert.Equal(UiLanguage.Text(language, "✓ Converted", "✓ 轉換完成", "✓ 変換完了"), items[0].Message);
+                Assert.StartsWith(UiLanguage.Text(language, "Unable to convert: ", "無法轉換：", "変換できません："), items[1].Message);
+                Assert.StartsWith(UiLanguage.Text(language, "Done", "完成", "完了"), Get<TextBlock>(hash, "HashStatus").Text);
+                Assert.StartsWith(UiLanguage.Text(language, "Done", "完成", "完了"), Get<TextBlock>(icon, "IconStatus").Text);
             }
             Assert.True(File.Exists(items[0].OutputPath));
         }
-        finally { window.Close(); }
+        finally { hash.Close(); icon.Close(); }
     });
 
     [Fact]
@@ -406,56 +396,119 @@ public sealed class UiSmokeTests
         using var fixture = new Fixture();
         var path = fixture.FilePath("large.bin");
         using (var stream = File.Create(path)) stream.SetLength(32 * 1024 * 1024);
-        var window = CreateHiddenWindow();
+        var hash = CreateHashWindow();
+        var icon = CreateIconWindow();
         try
         {
-            var hashWork = window.LoadHashFileAsync(path);
-            var iconWork = window.ConvertImagesAsync(new[] { fixture.WritePng("source.png") });
-            window.SelectedTheme = "InkDark";
-            window.SelectedLanguage = "en";
-            Assert.True(Get<Button>(window, "CancelHashButton").IsEnabled);
-            Assert.True(Get<Button>(window, "CancelIconsButton").IsEnabled);
-            Assert.False(Get<Button>(window, "ChooseImagesButton").IsEnabled);
-            Assert.StartsWith("Calculating", Get<TextBlock>(window, "HashStatus").Text);
-            Assert.StartsWith("Converting", Get<TextBlock>(window, "IconStatus").Text);
+            var hashWork = hash.LoadHashFileAsync(path);
+            var iconWork = icon.ConvertImagesAsync(new[] { fixture.WritePng("source.png") });
+            hash.SelectedTheme = icon.SelectedTheme = "InkDark";
+            hash.SelectedLanguage = icon.SelectedLanguage = "en";
+            Assert.True(Get<Button>(hash, "CancelHashButton").IsEnabled);
+            Assert.True(Get<Button>(icon, "CancelIconsButton").IsEnabled);
+            Assert.False(Get<Button>(icon, "ChooseImagesButton").IsEnabled);
+            Assert.StartsWith("Calculating", Get<TextBlock>(hash, "HashStatus").Text);
+            Assert.StartsWith("Converting", Get<TextBlock>(icon, "IconStatus").Text);
             await Task.WhenAll(hashWork, iconWork);
-            Assert.NotEmpty(Get<TextBox>(window, "Sha256Output").Text);
-            Assert.True(Assert.Single(Get<ListBox>(window, "IconResults").Items.Cast<IconConversionItem>()).Success);
-            Assert.StartsWith("Done", Get<TextBlock>(window, "HashStatus").Text);
-            Assert.StartsWith("Done", Get<TextBlock>(window, "IconStatus").Text);
-            AssertCancelUnavailable(window, "CancelHashButton");
-            AssertCancelUnavailable(window, "CancelIconsButton");
+            Assert.NotEmpty(Get<TextBox>(hash, "Sha256Output").Text);
+            Assert.True(Assert.Single(Get<ListBox>(icon, "IconResults").Items.Cast<IconConversionItem>()).Success);
+            Assert.StartsWith("Done", Get<TextBlock>(hash, "HashStatus").Text);
+            Assert.StartsWith("Done", Get<TextBlock>(icon, "IconStatus").Text);
+            AssertCancelUnavailable(hash, "CancelHashButton");
+            AssertCancelUnavailable(icon, "CancelIconsButton");
         }
-        finally { window.Close(); }
+        finally { hash.Close(); icon.Close(); }
     });
 
     [Theory]
     [InlineData("en", "Dark")]
     [InlineData("ja", "InkDark")]
     [InlineData("zh-TW", "Ink")]
-    public Task LocalizedWholeWindowRetainsItsMinimumLayout(string language, string theme) => OnSta(() =>
+    public Task LocalizedModuleWindowsRetainTheirMinimumLayout(string language, string theme) => OnSta(() =>
     {
-        var window = CreateHiddenWindow();
+        foreach (var window in new AppWindow[] { CreateHashWindow(), CreateIconWindow() })
+        {
+            try
+            {
+                window.SelectedTheme = theme;
+                window.SelectedLanguage = language;
+                RenderModuleAtBothSizes(HostWindowContent(window), window, window is HashCheckerWindow ? "hash-" + language + "-" + theme : "ico-" + language + "-" + theme);
+            }
+            finally { window.Close(); }
+        }
+        return Task.CompletedTask;
+    });
+
+    [Theory]
+    [InlineData("en", "Dark")]
+    [InlineData("ja", "InkDark")]
+    [InlineData("zh-TW", "Ink")]
+    public Task LauncherShowsFiveModuleEntriesAtMinimumSize(string language, string theme) => OnSta(() =>
+    {
+        var window = new MainWindow { PreferencesPath = null, ShowActivated = false, ShowInTaskbar = false, SelectedTheme = theme, SelectedLanguage = language };
         try
         {
-            window.SelectedTheme = theme;
-            window.SelectedLanguage = language;
+            Assert.Null(window.FindName("HashDropZone"));
+            Assert.Null(window.FindName("IconDropZone"));
+            window.SetProducts(ProductCatalogService.Definitions.Select(product =>
+                new ProductStatus(product, product.Id == "001" ? ProductAvailability.Get : ProductAvailability.Available,
+                    product.ActivationUri)).ToArray());
+            window.SetPlatformStatus("Example status: an application could not be opened. Try again after checking its installation.");
             var host = HostWindowContent(window);
-            RenderAtBothSizes(host, window, language + "-" + theme);
-            Assert.All(VisualDescendants<Button>(Get<ItemsControl>(window, "Products")), action => Assert.False(action.IsEnabled));
+            foreach (var (width, height, suffix) in new[] { (820, 620, "default"), (704, 460, "minimum-client") })
+            {
+                Render(host, width, height, $"launcher-{language}-{theme}-{suffix}.png");
+                AssertCommonShell(host, window);
+                foreach (var name in new[] { "PlatformStatus", "ToolList" })
+                    AssertVisibleBounds(Get<FrameworkElement>(window, name), host, width, height);
+                var products = Get<ItemsControl>(window, "Products");
+                Assert.Equal(new[] { "001", "002", "003", "004", "005" }, products.Items.Cast<object>().Select(item => ReadProperty<string>(item, "Id")));
+                var scroller = VisualDescendants<ScrollViewer>(Get<Border>(window, "ToolList")).First();
+                scroller.ScrollToBottom();
+                host.UpdateLayout();
+                var last = Assert.IsAssignableFrom<FrameworkElement>(products.ItemContainerGenerator.ContainerFromIndex(4));
+                Assert.True(Bounds(last, host).Bottom <= Bounds(scroller, host).Bottom + 1);
+                Assert.All(VisualDescendants<Button>(products), action => Assert.True(action.IsEnabled));
+                scroller.ScrollToTop();
+            }
         }
         finally { window.Close(); }
         return Task.CompletedTask;
     });
 
-    private static void AssertAbcHashes(MainWindow window)
+    [Fact]
+    public Task HostCancellingWindowCloseKeepsTheRunningUtilityAvailable() => OnSta(async () =>
+    {
+        using var fixture = new Fixture();
+        var path = fixture.FilePath("continue-after-hide.bin");
+        using (var stream = File.Create(path)) stream.SetLength(32 * 1024 * 1024);
+        var window = CreateHashWindow();
+        System.ComponentModel.CancelEventHandler hideToTray = (_, args) => args.Cancel = true;
+        window.Closing += hideToTray;
+        try
+        {
+            var work = window.LoadHashFileAsync(path);
+            window.Close();
+            await work;
+            Assert.NotEmpty(Get<TextBox>(window, "Sha256Output").Text);
+            await window.LoadHashFileAsync(fixture.WriteText("after-hide.txt", "abc"));
+            AssertAbcHashes(window);
+        }
+        finally
+        {
+            window.Closing -= hideToTray;
+            window.Close();
+        }
+    });
+
+    private static void AssertAbcHashes(HashCheckerWindow window)
     {
         Assert.Equal(AbcMd5, Get<TextBox>(window, "Md5Output").Text.ToLowerInvariant());
         Assert.Equal(AbcSha1, Get<TextBox>(window, "Sha1Output").Text.ToLowerInvariant());
         Assert.Equal(AbcSha256, Get<TextBox>(window, "Sha256Output").Text.ToLowerInvariant());
     }
 
-    private static void AssertCancelUnavailable(MainWindow window, string name)
+    private static void AssertCancelUnavailable(Window window, string name)
     {
         var button = Get<Button>(window, name);
         Assert.True(!button.IsEnabled || button.Visibility != Visibility.Visible,
@@ -479,7 +532,7 @@ public sealed class UiSmokeTests
     private static T ReadProperty<T>(object item, string name) =>
         Assert.IsAssignableFrom<T>(item.GetType().GetProperty(name)?.GetValue(item));
 
-    private static T Get<T>(MainWindow window, string name) where T : FrameworkElement =>
+    private static T Get<T>(Window window, string name) where T : FrameworkElement =>
         Assert.IsAssignableFrom<T>(window.FindName(name));
 
     private static DragEventArgs RaiseDrag(FrameworkElement target, RoutedEvent routedEvent,
@@ -507,15 +560,15 @@ public sealed class UiSmokeTests
         Assert.True(condition(), "The routed drop operation did not finish before the timeout.");
     }
 
-    private static MainWindow CreateHiddenWindow()
+    private static HashCheckerWindow CreateHashWindow() => new()
     {
-        // Never show/activate a window or create an Application. All render checks use
-        // detached WPF content and leave the user's desktop and clipboard untouched.
-        var window = new MainWindow { ShowActivated = false, ShowInTaskbar = false, PreferencesPath = null, SelectedLanguage = "zh-TW" };
-        Assert.False(window.IsVisible);
-        Assert.Null(PresentationSource.FromVisual(window));
-        return window;
-    }
+        ShowActivated = false, ShowInTaskbar = false, PreferencesPath = null, SelectedLanguage = "zh-TW"
+    };
+
+    private static ImageToIcoWindow CreateIconWindow() => new()
+    {
+        ShowActivated = false, ShowInTaskbar = false, PreferencesPath = null, SelectedLanguage = "zh-TW"
+    };
 
     private static FrameworkElement HostWindowContent(Window window)
     {
@@ -528,75 +581,71 @@ public sealed class UiSmokeTests
         return host;
     }
 
-    private static void RenderAtBothSizes(FrameworkElement host, MainWindow window, string state)
+    private static void RenderModuleAtBothSizes(FrameworkElement host, AppWindow window, string state)
     {
-        foreach (var (width, height, suffix) in new[] { (1100, 850, "default"), (844, 700, "minimum-client") })
+        foreach (var (width, height, suffix) in new[] { (760, 660, "default"), (644, 520, "minimum-client") })
         {
             Render(host, width, height, $"{state}-{suffix}.png");
-            var heading = VisualDescendants<TextBlock>(host).Single(text => text.Name == "ProductHeading");
-            var description = VisualDescendants<TextBlock>(host).Single(text => text.Name == "ProductDescription");
-            Assert.Equal("ToolKeeper", heading.Text);
-            Assert.Equal(window.Description, description.Text);
-            var headingBounds = Bounds(heading, host);
-            Assert.InRange(headingBounds.Top, 0, 0.5);
-            var descriptionBounds = Bounds(description, host);
-            var actionBounds = Bounds(Assert.IsAssignableFrom<FrameworkElement>(window.HeaderActions), host);
-            var workspaceBounds = Bounds(Assert.IsAssignableFrom<FrameworkElement>(window.Workspace), host);
-            Assert.True(headingBounds.Bottom <= descriptionBounds.Top);
+            AssertCommonShell(host, window);
+            var controls = window is HashCheckerWindow
+                ? new[] { "HashDropZone", "ChooseHashButton", "Md5Output", "Sha1Output", "Sha256Output", "CopyHashesButton", "PrivacyNotice" }
+                : new[] { "IconDropZone", "ChooseImagesButton", "IconStatus", "PrivacyNotice", Get<Border>(window, "IconEmptyState").Visibility == Visibility.Visible ? "IconEmptyState" : "IconResults" };
+            foreach (var name in controls) AssertVisibleBounds(Get<FrameworkElement>(window, name), host, width, height);
+            if (window is HashCheckerWindow)
+            {
+                var scroller = VisualDescendants<ScrollViewer>(Get<Border>(window, "HashDropZone")).First();
+                scroller.ScrollToBottom();
+                host.UpdateLayout();
+                var viewport = Bounds(scroller, host);
+                foreach (var name in new[] { "ExpectedHash", "HashComparison", "HashStatus" })
+                {
+                    var bounds = Bounds(Get<FrameworkElement>(window, name), host);
+                    Assert.True(bounds.Height > 0);
+                    Assert.InRange(bounds.Top, viewport.Top - 0.5, viewport.Bottom);
+                    Assert.InRange(bounds.Bottom, viewport.Top, viewport.Bottom + 0.5);
+                }
+                scroller.ScrollToTop();
+                host.UpdateLayout();
+            }
+            else if (Get<Border>(window, "IconEmptyState").Visibility == Visibility.Visible)
+            {
+                var empty = Get<Border>(window, "IconEmptyState");
+                foreach (var label in VisualDescendants<TextBlock>(empty))
+                    Assert.True(Bounds(label, host).Bottom <= Bounds(empty, host).Bottom - empty.Padding.Bottom + 0.5,
+                        "ICO drop instructions must fit without clipping.");
+            }
+        }
+    }
+
+    private static void AssertCommonShell(FrameworkElement host, AppWindow window)
+    {
+        var heading = VisualDescendants<TextBlock>(host).Single(text => text.Name == "ProductHeading");
+        var description = VisualDescendants<TextBlock>(host).Single(text => text.Name == "ProductDescription");
+        Assert.Equal(window.MainName, heading.Text);
+        Assert.Equal(window.Description, description.Text);
+        var headingBounds = Bounds(heading, host);
+        var descriptionBounds = Bounds(description, host);
+        Assert.InRange(headingBounds.Top, 0, 0.5);
+        Assert.True(headingBounds.Bottom <= descriptionBounds.Top);
+        var workspaceBounds = Bounds(Assert.IsAssignableFrom<FrameworkElement>(window.Workspace), host);
+        Assert.True(workspaceBounds.Top >= descriptionBounds.Bottom);
+        if (window.HeaderActions is FrameworkElement actions)
+        {
+            var actionBounds = Bounds(actions, host);
             Assert.False(headingBounds.IntersectsWith(actionBounds));
             Assert.False(descriptionBounds.IntersectsWith(actionBounds));
-            Assert.True(workspaceBounds.Top >= Math.Max(descriptionBounds.Bottom, actionBounds.Bottom));
-            var hash = Bounds(Get<FrameworkElement>(window, "HashDropZone"), host);
-            var icon = Bounds(Get<FrameworkElement>(window, "IconDropZone"), host);
-            var tools = Bounds(Get<Border>(window, "ToolList"), host);
-            Assert.True(hash.Width > 300 && icon.Width > 300, "Both drop zones must remain wide enough to use.");
-            Assert.InRange(Math.Abs(hash.Top - icon.Top), 0, 1);
-            Assert.True(hash.Right <= icon.Left, "Hash belongs at the upper left and ICO at the upper right.");
-            Assert.True(tools.Top >= Math.Max(hash.Bottom, icon.Bottom), "The tool list must be below both drop zones.");
-            Assert.True(tools.Width >= hash.Width + icon.Width, "The tool list must span both upper panels.");
-            Assert.True(tools.Height >= 100, "The lower tool list must retain usable height.");
-            if (Get<Border>(window, "IconEmptyState").Visibility == Visibility.Visible)
-            {
-                var emptyCard = Get<Border>(window, "IconEmptyState");
-                var cardBounds = Bounds(emptyCard, host);
-                foreach (var label in VisualDescendants<TextBlock>(emptyCard))
-                {
-                    Assert.True(Bounds(label, host).Bottom <= cardBounds.Bottom - emptyCard.Padding.Bottom + 0.5,
-                        "The empty ICO drop instruction must fit without clipping at the minimum window size.");
-                }
-            }
-
-            foreach (var name in new[]
-                     {
-                         "HashDropZone", "IconDropZone", "Md5Output", "Sha1Output", "Sha256Output",
-                         "ChooseHashButton",
-                         "CopyHashesButton", "IconStatus", Get<Border>(window, "IconEmptyState").Visibility == Visibility.Visible ? "IconEmptyState" : "IconResults", "ChooseImagesButton", "ToolList"
-                     })
-            {
-                var control = Get<FrameworkElement>(window, name);
-                var bounds = Bounds(control, host);
-                Assert.True(bounds.Width > 0 && bounds.Height > 0, $"{name} must retain a rendered size at {width} × {height}.");
-                Assert.InRange(bounds.Left, -0.5, width);
-                Assert.InRange(bounds.Top, -0.5, height);
-                Assert.InRange(bounds.Right, 0, width + 0.5);
-                Assert.InRange(bounds.Bottom, 0, height + 0.5);
-            }
-
-            var hashScroller = VisualDescendants<ScrollViewer>(Get<Border>(window, "HashDropZone")).First();
-            hashScroller.ScrollToBottom();
-            host.UpdateLayout();
-            var viewport = Bounds(hashScroller, host);
-            foreach (var name in new[] { "ExpectedHash", "HashComparison", "HashStatus" })
-            {
-                var control = Get<FrameworkElement>(window, name);
-                var bounds = Bounds(control, host);
-                Assert.True(bounds.Height > 0, $"{name} must have visible content.");
-                Assert.InRange(bounds.Top, viewport.Top - 0.5, viewport.Bottom);
-                Assert.InRange(bounds.Bottom, viewport.Top, viewport.Bottom + 0.5);
-            }
-            hashScroller.ScrollToTop();
-            host.UpdateLayout();
+            Assert.True(workspaceBounds.Top >= actionBounds.Bottom);
         }
+    }
+
+    private static void AssertVisibleBounds(FrameworkElement element, FrameworkElement host, int width, int height)
+    {
+        var bounds = Bounds(element, host);
+        Assert.True(bounds.Width > 0 && bounds.Height > 0, $"{element.Name} must remain rendered.");
+        Assert.InRange(bounds.Left, -0.5, width);
+        Assert.InRange(bounds.Top, -0.5, height);
+        Assert.InRange(bounds.Right, 0, width + 0.5);
+        Assert.InRange(bounds.Bottom, 0, height + 0.5);
     }
 
     private static Rect Bounds(FrameworkElement element, FrameworkElement host) =>

@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <AssemblyName>ToolKeeper.Desktop</AssemblyName>
+    <RootNamespace>CabiDock</RootNamespace>
+    <Version>0.1.0</Version>
+    <Description>ToolKeeper desktop classification, presentation and recovery module.</Description>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\ToolKeeper.UI\ToolKeeper.UI.csproj" />
+    <Using Include="System.IO" />
+    <EmbeddedResource Include="Defaults\*.json" />
+  </ItemGroup>
+</Project>

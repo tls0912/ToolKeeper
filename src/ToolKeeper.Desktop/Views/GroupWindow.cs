@@ -19,11 +19,14 @@ public sealed class GroupWindow : Window
     private readonly Controls.Grid _body;
     private readonly Controls.TextBlock _count;
     private readonly Primitives.Thumb _resize;
+    private readonly Primitives.Thumb _header;
     private readonly DispatcherTimer _collapseTimer;
     private readonly DispatcherTimer _hoverTimer;
     private readonly ShellIconProvider _icons = new();
     private List<DesktopItem> _items = [];
     private List<CategoryDefinition> _categories = [];
+    private IReadOnlyList<DesktopTool>? _tools;
+    private Action<string>? _activateTool;
     private Rect _bounds = new(0, 0, 1920, 1080);
     private double _expandedWidth;
     private double _expandedHeight;
@@ -36,8 +39,12 @@ public sealed class GroupWindow : Window
 
     public string CategoryId => _category.Id;
     public bool IsExpanded { get; private set; }
+    public bool IsAlwaysExpanded => _tools is not null;
     public bool IsInteractionActive => _operations > 0 || _dragOver;
     public FrameworkElement CardContent => _card;
+    internal Func<IReadOnlyList<Rect>>? SnapTargets { get; set; }
+    internal bool IsApplyingDragPosition { get; private set; }
+    internal event Action? DragPositionChanged;
     public event Action<DesktopItem>? ItemOpenRequested;
     public event Action<DesktopItem, string>? ManualAssignmentRequested;
     public event Action<GroupLayout>? LayoutChanged;
@@ -83,7 +90,7 @@ public sealed class GroupWindow : Window
         grid.RowDefinitions.Add(new() { Height = new GridLength(1, GridUnitType.Star) });
         grid.RowDefinitions.Add(new() { Height = new GridLength(26) });
         _card.Child = grid;
-        var header = new Primitives.Thumb { Cursor = Cursors.SizeAll, ToolTip = "拖曳分類名稱以移動群組；按一下展開或收合" };
+        var header = _header = new Primitives.Thumb { Cursor = Cursors.SizeAll, ToolTip = "拖曳以移動並吸附；按住 Shift 暫停吸附；點擊展開或收合" };
         var headerBorder = new FrameworkElementFactory(typeof(Controls.Border));
         headerBorder.SetValue(Controls.Border.BackgroundProperty, ViewTheme.Brush("#EAF2F1"));
         headerBorder.SetValue(Controls.Border.PaddingProperty, new Thickness(12, 0, 12, 0));
@@ -99,9 +106,8 @@ public sealed class GroupWindow : Window
         header.DragDelta += (_, e) =>
         {
             if (Math.Abs(e.HorizontalChange) + Math.Abs(e.VerticalChange) > 0.5) _headerMoved = true;
-            Left += e.HorizontalChange;
-            Top += e.VerticalChange;
-            ClampPosition();
+            if (!_headerMoved) return;
+            MoveHeader(e.HorizontalChange, e.VerticalChange, (Keyboard.Modifiers & ModifierKeys.Shift) != 0);
         };
         header.DragCompleted += (_, e) =>
         {
@@ -186,6 +192,21 @@ public sealed class GroupWindow : Window
         RenderBody();
     }
 
+    public void UpdateTools(IReadOnlyList<DesktopTool> tools, Action<string> activateTool)
+    {
+        _activateTool = activateTool;
+        if (_tools is not null && _tools.SequenceEqual(tools)) return;
+        _tools = tools.ToArray();
+        _items.Clear();
+        _categories.Clear();
+        _card.AllowDrop = false;
+        _header.ToolTip = "拖曳以移動並吸附；按住 Shift 暫停吸附；工具番固定展開";
+        _count.Text = $"{tools.Count} 個工具";
+        // Restore the expanded dimensions; the collapsed card is never a layout source.
+        if (!IsExpanded) Expand();
+        else RenderBody();
+    }
+
     public void SetPrimaryBounds(Rect bounds)
     {
         if (bounds.IsEmpty || bounds.Width <= 0 || bounds.Height <= 0) return;
@@ -203,17 +224,21 @@ public sealed class GroupWindow : Window
     {
         _collapseTimer.Stop();
         if (IsExpanded) return;
+        var originalLeft = Left;
+        var originalTop = Top;
         IsExpanded = true;
         Width = Math.Min(_expandedWidth, _bounds.Width);
         Height = Math.Min(_expandedHeight, _bounds.Height);
         _resize.Visibility = Visibility.Visible;
         ClampPosition();
+        if (Left != originalLeft || Top != originalTop) PublishLayout();
         RenderBody();
         Expanded?.Invoke(this, EventArgs.Empty);
     }
 
     public void Collapse()
     {
+        if (IsAlwaysExpanded) return;
         if (_operations > 0 || _dragOver) return;
         _collapseTimer.Stop();
         if (!IsExpanded) return;
@@ -231,6 +256,7 @@ public sealed class GroupWindow : Window
         if (_operations > 0) { _renderPending = true; return; }
         _renderPending = false;
         _body.Children.Clear();
+        if (_tools is not null) { RenderTools(); return; }
         if (!IsExpanded)
         {
             var previews = new Primitives.UniformGrid { Rows = 2, Columns = 2, Background = Brushes.Transparent, Cursor = Cursors.Hand };
@@ -251,6 +277,34 @@ public sealed class GroupWindow : Window
             Content = wrap, VerticalScrollBarVisibility = Controls.ScrollBarVisibility.Auto,
             HorizontalScrollBarVisibility = Controls.ScrollBarVisibility.Disabled,
             CanContentScroll = false, PanningMode = Controls.PanningMode.VerticalOnly
+        });
+    }
+
+    private void RenderTools()
+    {
+        var stack = new Controls.StackPanel();
+        foreach (var tool in _tools!)
+        {
+            var content = new Controls.StackPanel();
+            content.Children.Add(new Controls.TextBlock { Text = tool.Name, FontWeight = FontWeights.SemiBold });
+            content.Children.Add(new Controls.TextBlock { Text = tool.Description, TextWrapping = TextWrapping.Wrap, FontSize = 11 });
+            content.Children.Add(new Controls.TextBlock { Text = tool.ActionLabel, FontSize = 11, Foreground = ViewTheme.Accent });
+            var button = new Controls.Button
+            {
+                Content = content, IsEnabled = tool.CanActivate && !string.IsNullOrWhiteSpace(tool.ActivationUri),
+                HorizontalContentAlignment = HorizontalAlignment.Stretch,
+                Margin = new Thickness(0, 0, 0, 6), Padding = new Thickness(8), ToolTip = tool.Description
+            };
+            button.Click += (_, _) =>
+            {
+                if (tool.CanActivate && !string.IsNullOrWhiteSpace(tool.ActivationUri)) _activateTool?.Invoke(tool.ActivationUri);
+            };
+            stack.Children.Add(button);
+        }
+        _body.Children.Add(new Controls.ScrollViewer
+        {
+            Content = stack, VerticalScrollBarVisibility = Controls.ScrollBarVisibility.Auto,
+            HorizontalScrollBarVisibility = Controls.ScrollBarVisibility.Disabled
         });
     }
 
@@ -374,13 +428,33 @@ public sealed class GroupWindow : Window
     }
     private void ScheduleCollapse()
     {
-        if (IsExpanded && !_card.IsMouseOver && _operations == 0 && !_dragOver)
+        if (!IsAlwaysExpanded && IsExpanded && !_card.IsMouseOver && _operations == 0 && !_dragOver)
         { _collapseTimer.Stop(); _collapseTimer.Start(); }
     }
     private void ClampPosition()
     {
         Left = Math.Clamp(Left, _bounds.Left, Math.Max(_bounds.Left, _bounds.Right - Width));
         Top = Math.Clamp(Top, _bounds.Top, Math.Max(_bounds.Top, _bounds.Bottom - Height));
+    }
+
+    internal void MoveHeader(double horizontalChange, double verticalChange, bool suppressSnap)
+    {
+        if (!double.IsFinite(horizontalChange) || !double.IsFinite(verticalChange)) return;
+        // WPF Thumb reports the cursor offset from its initial thumb-local anchor, not a
+        // per-frame mouse delta. Adding it to the displayed position recovers the unsnapped
+        // position, so small continued pointer movements naturally escape the snap range.
+        var next = new Rect(Left + horizontalChange, Top + verticalChange, Width, Height);
+        if (!suppressSnap) next = GroupSnapGeometry.SnapMove(next, _bounds, SnapTargets?.Invoke() ?? []);
+        IsApplyingDragPosition = true;
+        try
+        {
+            Left = next.Left;
+            Top = next.Top;
+            ClampPosition();
+        }
+        finally { IsApplyingDragPosition = false; }
+        // The native presenter applies its final icon-avoidance check to the complete move.
+        DragPositionChanged?.Invoke();
     }
     private void PublishLayout() => LayoutChanged?.Invoke(new GroupLayout
     {

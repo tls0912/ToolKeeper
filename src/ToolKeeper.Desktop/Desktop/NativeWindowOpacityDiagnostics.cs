@@ -4,16 +4,16 @@ using System.Windows.Interop;
 
 namespace CabiDock.Desktop;
 
-internal sealed record NativeWindowOpacitySample(
+public sealed record NativeWindowOpacitySample(
     double Opacity, bool Layered, byte? Alpha, uint Flags, bool ChildParentRetained, bool ClickThrough);
 
-internal sealed record NativeWindowOpacityReport(
+public sealed record NativeWindowOpacityReport(
     bool Succeeded, string Message, IReadOnlyList<NativeWindowOpacitySample> Samples);
 
 /// <summary>Exercises the manifested apphost using hidden windows owned only by this process.</summary>
-internal static class NativeWindowOpacityDiagnostics
+public static class NativeWindowOpacityDiagnostics
 {
-    internal static NativeWindowOpacityReport Capture()
+    public static NativeWindowOpacityReport Capture()
     {
         var samples = new List<NativeWindowOpacitySample>();
         var parent = new Window { ShowInTaskbar = false, WindowStyle = WindowStyle.None };

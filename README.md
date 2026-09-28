@@ -8,21 +8,32 @@ ToolKeeper（工具番）是一個以「超好用的小工具」為核心的 Win
 - 開啟就能用
 - 不增加工作流程，只刪除工作流程
 - 低價、低維護、離線優先
-- 各正式工具原則上維持獨立 App；002 CabiDock 例外，作為 ToolKeeper 的桌面模組由本體載入
+- 001 汗青、003 ConvAnvil 維持獨立 App；002 CabiDock、004 Hash Checker、005 Image → ICO 由 ToolKeeper 宿主載入
 - 所有軟體的標題列都顯示主標題與副標題，格式為 `MainName - SubName`（見[全域規則](docs/PRODUCT_VISION.md#21-軟體標題與副標題全域規則)）
 
-ToolKeeper、CabiDock 現有設定介面與 003 ConvAnvil 已使用 `ToolKeeper.UI` 的共用視窗元件。後續整併後，使用者以 `ToolKeeper.exe` 作為唯一主入口；CabiDock 的桌面掃描、分類、監看、Explorer 接管、桌面群組與 Recovery 保持模組邊界，由 ToolKeeper 載入與管理。003 ConvAnvil 及其他正式工具仍保留自己的 App。001 汗青維持既有自訂介面。範圍見[架構說明](docs/ARCHITECTURE.md)。
+ToolKeeper、桌面設定、004／005 與 003 ConvAnvil 使用 `ToolKeeper.UI` 共用視窗元件；001 汗青維持既有自訂介面。`ToolKeeper.exe` 是平台唯一宿主，桌面能力留在 `ToolKeeper.Desktop` 類別庫，HASH／ICO 各有獨立模組視窗並在同一程序執行。儲存庫不再保留 CabiDock 開發 EXE。實機桌面驗收仍待完成，範圍見[架構說明](docs/ARCHITECTURE.md)。
 
 ## ToolKeeper 本體
 
-ToolKeeper 是平台與單一主執行入口。免費的 Hash Checker 與 Image → ICO 已可使用；後續並負責載入 CabiDock 桌面模組、工具目錄、Launcher、系統匣與「工具番」桌面群組。桌面群組可集中呈現汗青、ConvAnvil 與未來工具的啟動入口，避免大量工具捷徑散落桌面。
+ToolKeeper 主視窗只保留五項工具列表。桌面設定由列表的 002 CabiDock 或系統匣開啟，桌面啟停由設定視窗或系統匣操作。免費的 Hash Checker 與 Image → ICO 各自開啟獨立視窗，保留原有操作，不在本體主畫面直接執行。
 
 Hash Checker 可顯示 MD5／SHA-1／SHA-256；Image → ICO 可將 PNG／JPG／BMP 在原資料夾轉成 ICO，全部在本機離線處理。
 
-下方以同一份工具列表呈現目錄與 Launcher 的規劃版面，左側名稱、右側「開啟／取得」。**目錄與 Launcher 的實際啟動／取得功能依本輪要求暫不實作**，按鈕停用。
+工具列表與固定展開的「工具番」桌面群組共用五項目錄：001 汗青、002 CabiDock、003 ConvAnvil、004 Hash Checker、005 Image → ICO。002／004／005 是內建模組，直接由宿主開啟；001／003 找到可用版本時顯示「開啟」，有正式 Store 商品頁時顯示「取得」，兩者都沒有則保留停用的「未提供」。汗青已有正式 Store ID，ConvAnvil 目前沒有商店入口。工具番群組不套用一般分類群組的離開收合行為。
+
+首次啟動與尚無平台偏好的既有使用者預設啟用桌面功能；之後記住啟停狀態。關閉或最小化主視窗會隱藏至系統匣，桌面設定視窗關閉只隱藏；從系統匣「結束程式」才會停止本體並恢復原生桌面。既有 CabiDock 分類、群組與設定資料路徑不變。
+
+五項入口統一使用 `toolkeeper://run/001` 至 `toolkeeper://run/005`。本體未執行時先啟動宿主再開啟指定工具；已執行時將請求轉交既有宿主，004／005 各只保留一個視窗。正常啟動會在目前 Windows 使用者註冊 `toolkeeper` 協定；隔離目錄與診斷模式不註冊。
 
 ```powershell
 dotnet run --project src/ToolKeeper/ToolKeeper.csproj
+```
+
+隔離桌面與資料後開啟 004，不接管真實桌面或註冊協定：
+
+```powershell
+New-Item -ItemType Directory -Force artifacts/toolkeeper-demo/desktop
+dotnet run --project src/ToolKeeper/ToolKeeper.csproj -- --desktop-directory artifacts/toolkeeper-demo/desktop --data-directory artifacts/toolkeeper-demo/profile --activate "toolkeeper://run/004"
 ```
 
 功能、測試結果、使用方式與待驗收事項見 [ToolKeeper 實作與問題報告](docs/TOOLKEEPER-IMPLEMENTATION.md)。
@@ -55,18 +66,18 @@ dotnet run --project src/MarkPad/MarkPad.csproj -- ".\README.md"
 
 ### 002 — CabiDock（ToolKeeper Desktop Module）
 
-CabiDock 原有的桌面分類能力納入 ToolKeeper，定位為 **Desktop Experience / Desktop Layer**。使用者端最終不需要另外啟動 CabiDock 常駐程式，而是由 `ToolKeeper.exe` 作為單一主入口載入桌面模組。
+CabiDock 原有的桌面分類能力已納入 ToolKeeper，定位為 **Desktop Experience / Desktop Layer**。使用者以 `ToolKeeper.exe` 作為單一主入口載入桌面模組。
 
 - 產品規格：[`docs/products/002_CabiDock.md`](docs/products/002_CabiDock.md)
-- 目前程式碼：[`src/CabiDock`](src/CabiDock)
-- 目標：逐步整理為可由 ToolKeeper 引用的桌面模組（例如 `ToolKeeper.Desktop`）
-- 狀態：已實作分類、群組操作與桌面接管；真實 Explorer 相容性仍待驗收
+- 桌面模組：[`src/ToolKeeper.Desktop`](src/ToolKeeper.Desktop)，沿用 `CabiDock` 命名空間與資料格式
+- 宿主入口：`ToolKeeper.exe` 或 `toolkeeper://run/002`；開啟桌面設定
+- 狀態：已實作平台整併、分類、群組操作與桌面接管；整併後的真實 Explorer 相容性仍待驗收
 
 CabiDock 模組負責桌面掃描、分類規則、狀態保存、桌面監看、Explorer 接管、群組互動與異常恢復；ToolKeeper 負責主程式生命週期、系統匣、Launcher 與平台整合。桌面接管程式碼保持獨立模組邊界，不直接堆入 ToolKeeper 主視窗。
 
-除了七個一般桌面分類，未來增加由 ToolKeeper 產品目錄驅動的 **「工具番」專屬群組**，直接呈現已安裝或可啟動的工具番產品，不要求先建立傳統桌面捷徑。
+除了七個一般桌面分類，已加入由 ToolKeeper 產品目錄驅動、**固定展開的「工具番」專屬群組**，列出五項工具的開啟、取得或未提供狀態，不要求先建立傳統桌面捷徑；群組位置與大小沿用桌面配置保存。
 
-目前 `src/CabiDock` 仍可獨立執行供開發與桌面整合驗證；這是過渡期工程入口，不代表最終產品仍有第二個主執行入口。
+已移除 CabiDock 獨立開發 EXE；桌面開發與診斷統一經過 ToolKeeper 宿主。獨立恢復程序使用 `ToolKeeper.exe --desktop-recovery` 私有模式，由模組自動啟動，負責異常恢復，並非第二個常駐產品入口。
 
 啟動與驗證方式見 [CabiDock 實作狀態](docs/CABIDOCK-IMPLEMENTATION.md)，桌面整合限制見 [桌面原型驗證](docs/CABIDOCK-DESKTOP.md)。
 
@@ -85,6 +96,22 @@ dotnet run --project src/ConvAnvil/ConvAnvil.csproj
 ```
 
 使用方式、驗證結果與目前限制見 [ConvAnvil 實作狀態](docs/CONVANVIL-IMPLEMENTATION.md)；已採用的預設與後續產品選擇見 [決策報告](docs/CONVANVIL-DECISIONS.md)。
+
+### 004 — Hash Checker
+
+免費的檔案 HASH 計算與比對模組。自己的視窗提供 MD5／SHA-1／SHA-256、進度、取消、結果複製與預期 HASH 比對；在 ToolKeeper 程序內執行。
+
+- 產品規格：[`docs/products/004_HashChecker.md`](docs/products/004_HashChecker.md)
+- 視窗：[`src/ToolKeeper/Modules/HashCheckerWindow.xaml`](src/ToolKeeper/Modules/HashCheckerWindow.xaml)
+- 啟動入口：`toolkeeper://run/004`
+
+### 005 — Image → ICO
+
+免費的圖片轉 ICO 模組。自己的視窗支援 PNG／JPG／BMP 批次轉換、七種圖示尺寸、保留比例／透明度與取消；在來源資料夾輸出，不覆寫原圖或既有 ICO。
+
+- 產品規格：[`docs/products/005_ImageToIco.md`](docs/products/005_ImageToIco.md)
+- 視窗：[`src/ToolKeeper/Modules/ImageToIcoWindow.xaml`](src/ToolKeeper/Modules/ImageToIcoWindow.xaml)
+- 啟動入口：`toolkeeper://run/005`
 
 ## Documents
 

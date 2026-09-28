@@ -50,7 +50,7 @@ public sealed partial class SettingsWindow : AppWindow
         WindowStartupLocation = WindowStartupLocation.CenterScreen;
         Resources.MergedDictionaries.Add(new ResourceDictionary
         {
-            Source = new Uri("/CabiDock;component/Views/SettingsStyles.xaml", UriKind.Relative)
+            Source = new Uri("/ToolKeeper.Desktop;component/Views/SettingsStyles.xaml", UriKind.Relative)
         });
         AboutAuthor = "不告訴你";
         DataContext = this;

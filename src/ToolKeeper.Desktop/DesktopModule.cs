@@ -7,16 +7,16 @@ using CabiDock.Models;
 using CabiDock.Services;
 using CabiDock.Views;
 using CabiDock.Desktop;
-using Forms = System.Windows.Forms;
+
 
 namespace CabiDock;
 
-internal sealed class AppController : IDisposable
+public sealed class DesktopModule : IDisposable
 {
-    private readonly App _app;
+    private readonly Dispatcher _dispatcher;
     private readonly JsonFileStore<CabiDockConfiguration> _configurationFile;
     private readonly JsonFileStore<CabiDockState> _stateFile;
-    private readonly DesktopScanner _scanner = new();
+    private readonly Func<IReadOnlyList<string>, Task<DesktopScanResult>> _scan;
     private readonly DesktopWatcher _watcher = new();
     private readonly ClassificationService _classification = new();
     private readonly DispatcherTimer _refreshTimer;
@@ -24,7 +24,6 @@ internal sealed class AppController : IDisposable
     private readonly DispatcherTimer _layoutTimer;
     private readonly SettingsWindow _settings;
     private readonly DesktopTakeoverService? _desktop;
-    private readonly Forms.NotifyIcon _tray;
     private readonly IReadOnlyList<string>? _overrideRoots;
     private IReadOnlyList<string> _roots;
     private IReadOnlyList<DesktopItem> _items = [];
@@ -37,14 +36,31 @@ internal sealed class AppController : IDisposable
     private bool _scanning;
     private bool _rescanRequested;
     private bool _disposed;
+    private bool _started;
+    private bool _stopping;
+    private bool _enabled = true;
+    private IReadOnlyList<DesktopTool> _tools = [];
+    private Action<string>? _activateTool;
     private long _version;
     private string? _loadWarning;
     private string? _saveError;
     private string? _lastStatus;
 
-    public AppController(App app, string dataDirectory, IReadOnlyList<string>? roots)
+    public bool Enabled => _enabled;
+    public bool SupportsDesktop => _desktop is not null;
+    public event Action? StateChanged;
+
+    public DesktopModule(Dispatcher dispatcher, string dataDirectory, IReadOnlyList<string>? roots = null)
+        : this(dispatcher, dataDirectory, roots, scanRoots => Task.Run(() => new DesktopScanner().Scan(scanRoots)))
     {
-        _app = app;
+    }
+
+    internal DesktopModule(Dispatcher dispatcher, string dataDirectory, IReadOnlyList<string>? roots,
+        Func<IReadOnlyList<string>, Task<DesktopScanResult>> scan)
+    {
+        _dispatcher = dispatcher;
+        _dispatcher.VerifyAccess();
+        _scan = scan;
         _overrideRoots = roots;
         _roots = roots ?? DesktopScanner.ResolveRoots();
         _configurationFile = new(Path.Combine(dataDirectory, "configuration.json"), ConfigurationService.ValidationError);
@@ -64,7 +80,7 @@ internal sealed class AppController : IDisposable
         _settings.PreviewRequested += (_, _) => ShowPreview();
         if (roots is null)
         {
-            _desktop = new DesktopTakeoverService(_app.Dispatcher);
+            _desktop = new DesktopTakeoverService(_dispatcher);
             _desktop.ItemOpenRequested += OpenItem;
             _desktop.ManualAssignmentRequested += AssignManually;
             _desktop.LayoutChanged += SaveLayout;
@@ -72,37 +88,24 @@ internal sealed class AppController : IDisposable
             {
                 _settings.SetDesktopState(_desktop.Enabled);
                 ShowStatus();
+                StateChanged?.Invoke();
             };
-            _settings.DesktopToggleRequested += (_, _) =>
-            {
-                if (!_desktop.Enabled) _preview?.Hide();
-                _desktop.SetEnabled(!_desktop.Enabled);
-            };
+            _settings.DesktopToggleRequested += (_, _) => SetEnabled(!Enabled);
         }
         _settings.SetDesktopState(_desktop?.Enabled == true, _desktop is not null);
-        _app.MainWindow = _settings;
-        _tray = new Forms.NotifyIcon
-        {
-            Text = "CabiDock",
-            Icon = System.Drawing.SystemIcons.Application,
-            ContextMenuStrip = new Forms.ContextMenuStrip()
-        };
-        _tray.ContextMenuStrip.Items.Add("設定", null, (_, _) => _app.Dispatcher.Invoke(ShowSettings));
-        _tray.ContextMenuStrip.Items.Add("結束程式", null, (_, _) => _app.Dispatcher.Invoke(() => _app.Shutdown()));
-        _tray.DoubleClick += (_, _) => _app.Dispatcher.Invoke(ShowSettings);
         _refreshTimer = new DispatcherTimer(TimeSpan.FromSeconds(5), DispatcherPriority.Background,
-            async (_, _) => await RefreshAsync(), _app.Dispatcher);
+            async (_, _) => await RefreshAsync(), _dispatcher);
         _refreshTimer.Stop();
         _changeTimer = new DispatcherTimer(TimeSpan.FromMilliseconds(120), DispatcherPriority.Background,
-            async (_, _) => { _changeTimer!.Stop(); await RefreshAsync(); }, _app.Dispatcher);
+            async (_, _) => { _changeTimer!.Stop(); await RefreshAsync(); }, _dispatcher);
         _changeTimer.Stop();
         _layoutTimer = new DispatcherTimer(TimeSpan.FromMilliseconds(300), DispatcherPriority.Background,
-            (_, _) => { _layoutTimer!.Stop(); SaveState(); }, _app.Dispatcher);
+            (_, _) => { _layoutTimer!.Stop(); SaveState(); }, _dispatcher);
         _layoutTimer.Stop();
-        _watcher.Changed += change => _app.Dispatcher.BeginInvoke(() => OnDesktopChanged(change));
-        _watcher.Error += message => _app.Dispatcher.BeginInvoke(() =>
+        _watcher.Changed += change => _dispatcher.BeginInvoke(() => OnDesktopChanged(change));
+        _watcher.Error += message => _dispatcher.BeginInvoke(() =>
         {
-            if (!_disposed)
+            if (!_disposed && !_stopping)
             {
                 _lastStatus = null;
                 _settings.SetLocalizedStatus("Desktop monitoring was interrupted. Existing categories will be retained during a rescan.\n" + message,
@@ -112,10 +115,13 @@ internal sealed class AppController : IDisposable
         });
     }
 
-    public void Start()
+    public void Start(bool showSettings = false)
     {
-        _tray.Visible = true;
-        ShowSettings();
+        _dispatcher.VerifyAccess();
+        if (_disposed || _stopping || _started) return;
+        _started = true;
+        _desktop?.SetEnabled(_enabled);
+        if (showSettings) ShowSettings();
         _watcher.Start(_roots);
         _refreshTimer.Start();
         _ = RefreshAsync();
@@ -123,21 +129,58 @@ internal sealed class AppController : IDisposable
 
     public void ShowSettings()
     {
-        if (_disposed) return;
+        _dispatcher.VerifyAccess();
+        if (_disposed || _stopping) return;
         _settings.Show();
         if (_settings.WindowState == WindowState.Minimized) _settings.WindowState = WindowState.Normal;
         _settings.Activate();
     }
 
+    public void SetEnabled(bool enabled)
+    {
+        _dispatcher.VerifyAccess();
+        if (_disposed || _stopping) return;
+        if (_enabled == enabled) return;
+        _enabled = enabled;
+        if (enabled) _preview?.Hide();
+        if (_started) _desktop?.SetEnabled(enabled);
+        _settings.SetDesktopState(enabled && SupportsDesktop, SupportsDesktop);
+        StateChanged?.Invoke();
+    }
+
+    /// <summary>Supplies platform entries independently of desktop files and classification.</summary>
+    public void SetTools(IReadOnlyList<DesktopTool> tools, Action<string> activateTool)
+    {
+        _dispatcher.VerifyAccess();
+        ArgumentNullException.ThrowIfNull(tools);
+        ArgumentNullException.ThrowIfNull(activateTool);
+        if (_disposed || _stopping) return;
+        if (tools.Any(tool => string.IsNullOrWhiteSpace(tool.Id)) || tools.Select(tool => tool.Id).Distinct(StringComparer.Ordinal).Count() != tools.Count)
+            throw new ArgumentException("Tool IDs must be nonempty and unique.", nameof(tools));
+        _tools = tools.ToArray();
+        _activateTool = activateTool;
+        _desktop?.SetTools(_tools, ActivateTool);
+        _preview?.SetTools(_tools, ActivateTool);
+        if (_preview is not null) _preview.SetItems(_configuration, _state, _items);
+    }
+
+    private void ActivateTool(string activationUri)
+    {
+        if (!_disposed && !_stopping && !string.IsNullOrWhiteSpace(activationUri)
+            && _tools.Any(tool => tool.ActivationUri == activationUri && tool.CanActivate)) _activateTool?.Invoke(activationUri);
+    }
+
     private void ShowPreview()
     {
-        _desktop?.SetEnabled(false);
+        if (_disposed || _stopping) return;
+        SetEnabled(false);
         if (_preview is null)
         {
             _preview = new GroupPreviewWindow();
             _preview.ItemOpenRequested += OpenItem;
             _preview.ManualAssignmentRequested += AssignManually;
             _preview.LayoutChanged += SaveLayout;
+            _preview.SetTools(_tools, ActivateTool);
         }
         _preview.SetItems(_configuration, _state, _items);
         _stateDirty = true; // Initial layouts also need persistence.
@@ -149,6 +192,7 @@ internal sealed class AppController : IDisposable
 
     private void SaveLayout(string categoryId, GroupLayout layout)
     {
+        if (_disposed || _stopping) return;
         _state.Groups[categoryId] = layout;
         _stateDirty = true;
         _layoutTimer.Stop();
@@ -157,7 +201,7 @@ internal sealed class AppController : IDisposable
 
     private async Task RefreshAsync()
     {
-        if (_disposed) return;
+        if (_disposed || _stopping) return;
         if (_scanning) { _rescanRequested = true; return; }
         _scanning = true;
         var version = _version;
@@ -169,8 +213,8 @@ internal sealed class AppController : IDisposable
                 _roots = roots;
                 _watcher.Start(roots);
             }
-            var result = await Task.Run(() => _scanner.Scan(roots));
-            if (_disposed) return;
+            var result = await _scan(roots);
+            if (_disposed || _stopping) return;
             if (version != _version) { _rescanRequested = true; return; }
             if (!result.Succeeded)
             {
@@ -195,6 +239,7 @@ internal sealed class AppController : IDisposable
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException)
         {
+            if (_disposed || _stopping) return;
             _desktop?.Suspend("無法更新桌面分類，已恢復原生圖示。");
             _lastStatus = null;
             _settings.SetLocalizedStatus("Could not update desktop categories. Existing records are retained.\n" + ex.Message,
@@ -204,17 +249,17 @@ internal sealed class AppController : IDisposable
         finally
         {
             _scanning = false;
-            if (_rescanRequested && !_disposed)
+            if (_rescanRequested && !_disposed && !_stopping)
             {
                 _rescanRequested = false;
-                _ = _app.Dispatcher.BeginInvoke(() => _ = RefreshAsync(), DispatcherPriority.Background);
+                _ = _dispatcher.BeginInvoke(() => _ = RefreshAsync(), DispatcherPriority.Background);
             }
         }
     }
 
     private void OnDesktopChanged(DesktopChange change)
     {
-        if (_disposed) return;
+        if (_disposed || _stopping) return;
         ++_version;
         // Process removal immediately: move out and back before a rescan must lose its old assignment.
         if (change.Kind == WatcherChangeTypes.Deleted)
@@ -229,6 +274,7 @@ internal sealed class AppController : IDisposable
 
     private async void SaveSettings(object? sender, SettingsSaveRequestedEventArgs e)
     {
+        if (_disposed || _stopping) return;
         if (!_canSave)
         {
             e.ErrorMessage = "原有設定或狀態無法安全讀取；請先查看檔案錯誤，再重新啟動。現有檔案未被覆寫。";
@@ -258,6 +304,7 @@ internal sealed class AppController : IDisposable
 
     private void AssignManually(DesktopItem item, string categoryId)
     {
+        if (_disposed || _stopping) return;
         if (!_canSave)
         {
             _settings.SetLocalizedStatus("Categories cannot be saved safely. Repair the state file first.",
@@ -327,6 +374,12 @@ internal sealed class AppController : IDisposable
 
     public void PrepareExit()
     {
+        _dispatcher.VerifyAccess();
+        if (_stopping) return;
+        _stopping = true;
+        _refreshTimer.Stop();
+        _changeTimer.Stop();
+        _watcher.Dispose();
         _desktop?.Dispose();
         _settings.AllowClose = true;
         if (_preview is not null) _preview.AllowClose = true;
@@ -339,11 +392,8 @@ internal sealed class AppController : IDisposable
         if (_disposed) return;
         PrepareExit();
         _disposed = true;
-        _watcher.Dispose();
         _refreshTimer.Stop();
         _changeTimer.Stop();
-        _tray.Visible = false;
-        _tray.Dispose();
         _preview?.Close();
         _settings.Close();
     }

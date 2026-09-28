@@ -7,6 +7,7 @@ using CabiDock.Models;
 using CabiDock.Views;
 
 [assembly: InternalsVisibleTo("CabiDock.Tests")]
+[assembly: InternalsVisibleTo("ToolKeeper.Tests")]
 
 namespace CabiDock.Desktop;
 
@@ -37,6 +38,8 @@ public sealed class DesktopGroupPresenter : IDisposable
     private IReadOnlyList<Rect> _reservedAreas = [];
     private bool _active, _updating, _positioning, _disposed;
     private string? _failure;
+    private IReadOnlyList<DesktopTool> _tools = [];
+    private Action<string>? _activateTool;
 
     public event Action<DesktopItem>? ItemOpenRequested;
     public event Action<DesktopItem, string>? ManualAssignmentRequested;
@@ -54,6 +57,13 @@ public sealed class DesktopGroupPresenter : IDisposable
     }
 
     public bool IsAlive => !_disposed && _active && _groups.Values.All(group => group.Host.IsAlive);
+
+    public void SetTools(IReadOnlyList<DesktopTool> tools, Action<string> activateTool)
+    {
+        _dispatcher.VerifyAccess();
+        _tools = tools.ToArray();
+        _activateTool = activateTool;
+    }
 
     internal IEnumerable<string> RepresentedFilePaths => _groups.Values.SelectMany(group => group.Items)
         .Select(item => item.FullPath).Distinct(StringComparer.OrdinalIgnoreCase);
@@ -84,7 +94,7 @@ public sealed class DesktopGroupPresenter : IDisposable
     public void SuspendVisibility()
     {
         _dispatcher.VerifyAccess();
-        foreach (var entry in _groups.Values) entry.Host.Hide();
+        foreach (var entry in _groups.Values) { entry.Host.Hide(); entry.IsPresented = false; }
     }
 
     public bool TryUpdate(CabiDockConfiguration config, CabiDockState state,
@@ -121,6 +131,7 @@ public sealed class DesktopGroupPresenter : IDisposable
                 .ToDictionary(group => group.Key, group => group.Select(item => byPath[item.FullPath])
                     .DistinctBy(item => item.FullPath, StringComparer.OrdinalIgnoreCase).ToList(), StringComparer.Ordinal);
             var populated = config.Categories.Where(category => membership.ContainsKey(category.Id)).ToList();
+            if (_tools.Count > 0) populated.Insert(0, DesktopToolsGroup.Category);
             var keep = populated.Select(category => category.Id).ToHashSet(StringComparer.Ordinal);
             foreach (var id in _groups.Keys.Where(id => !keep.Contains(id) && !_groups[id].Model.IsInteractionActive).ToList())
                 RemoveGroup(id);
@@ -131,14 +142,21 @@ public sealed class DesktopGroupPresenter : IDisposable
                 if (_groups.TryGetValue(category.Id, out var old) && old.Name != category.Name) RemoveGroup(category.Id);
                 if (!_groups.TryGetValue(category.Id, out var entry))
                 {
-                    var layout = state.Groups.GetValueOrDefault(category.Id) ?? new GroupLayout
-                    {
-                        X = 24 + _groups.Count % 6 * 154,
-                        Y = 24 + _groups.Count / 6 * 176
-                    };
-                    entry = CreateGroup(category, layout, probe);
+                    var saved = state.Groups.GetValueOrDefault(category.Id);
+                    entry = CreateGroup(category, saved ?? new GroupLayout(), probe);
                     _groups.Add(category.Id, entry);
                     var bounds = LogicalWorkArea(entry.Host.DpiScale);
+                    var occupied = _groups.Values.Where(other => other != entry)
+                        .Select(other => new Rect(other.Model.Left, other.Model.Top, other.Model.Width, other.Model.Height))
+                        .Concat(populated.Where(other => other.Id != category.Id && !_groups.ContainsKey(other.Id)
+                                && state.Groups.ContainsKey(other.Id))
+                            .Select(other =>
+                            {
+                                var position = state.Groups[other.Id];
+                                return new Rect(position.X, position.Y, other.Id == DesktopToolsGroup.Id ? position.Width : 138,
+                                    other.Id == DesktopToolsGroup.Id ? position.Height : 160);
+                            }));
+                    var layout = saved ?? InitialGroupLayout.Create(bounds, category.Id == DesktopToolsGroup.Id, occupied);
                     var normalized = NormalizeLayout(layout, bounds);
                     entry.Model.Left = normalized.X;
                     entry.Model.Top = normalized.Y;
@@ -148,7 +166,12 @@ public sealed class DesktopGroupPresenter : IDisposable
                 }
                 entry.Model.SetPrimaryBounds(LogicalWorkArea(entry.Host.DpiScale));
                 var categoryChoices = config.Categories.Select(choice => (choice.Id, choice.Name)).ToArray();
-                if (!SameItems(entry.Items, membership[category.Id]) || !entry.CategoryChoices.SequenceEqual(categoryChoices))
+                if (category.Id == DesktopToolsGroup.Id)
+                {
+                    entry.Items = [];
+                    entry.Model.UpdateTools(_tools, id => _activateTool?.Invoke(id));
+                }
+                else if (!SameItems(entry.Items, membership[category.Id]) || !entry.CategoryChoices.SequenceEqual(categoryChoices))
                 {
                     entry.Items = membership[category.Id];
                     entry.CategoryChoices = categoryChoices;
@@ -184,6 +207,7 @@ public sealed class DesktopGroupPresenter : IDisposable
         foreach (var entry in _groups.Values.OrderBy(entry => entry.Model.IsExpanded))
         {
             if (!entry.Host.TryShow(BoundsFor(entry), out reason)) return false;
+            entry.IsPresented = true;
         }
         return true;
     }
@@ -208,11 +232,20 @@ public sealed class DesktopGroupPresenter : IDisposable
             host = attachment.Host;
             if (host is null) throw new InvalidOperationException(attachment.Reason);
             var entry = new GroupEntry(category.Name, model, window, host);
+            model.SnapTargets = () => _groups.Values
+                .Where(other => other != entry && other.IsPresented && other.Host.IsAlive && other.LastBounds.HasValue)
+                .Select(other =>
+                {
+                    var bounds = other.LastBounds!.Value;
+                    var scale = entry.Host.DpiScale;
+                    return new Rect(bounds.X / scale, bounds.Y / scale, bounds.Width / scale, bounds.Height / scale);
+                }).ToArray();
             void GeometryChanged(object? sender, EventArgs e)
             {
-                if (_updating || _positioning || _disposed || _failure is not null) return;
+                if (_updating || _positioning || model.IsApplyingDragPosition || _disposed || _failure is not null) return;
                 if (!Sync(entry, out var failure)) FailClosed(failure);
             }
+            model.DragPositionChanged += () => GeometryChanged(null, EventArgs.Empty);
             foreach (var property in new[] { Window.LeftProperty, Window.TopProperty, FrameworkElement.WidthProperty, FrameworkElement.HeightProperty })
             {
                 var descriptor = DependencyPropertyDescriptor.FromProperty(property, typeof(Window));
@@ -237,7 +270,8 @@ public sealed class DesktopGroupPresenter : IDisposable
             };
             model.Expanded += (_, _) =>
             {
-                foreach (var other in _groups.Values.Where(other => other != entry)) other.Model.Collapse();
+                if (!model.IsAlwaysExpanded)
+                    foreach (var other in _groups.Values.Where(other => other != entry && !other.Model.IsAlwaysExpanded)) other.Model.Collapse();
                 if (!_updating && !Sync(entry, out var failure, force: true)) FailClosed(failure);
             };
             return entry;
@@ -364,7 +398,7 @@ public sealed class DesktopGroupPresenter : IDisposable
         if (_disposed || _failure is not null) return;
         _failure = reason;
         _active = false;
-        foreach (var entry in _groups.Values) entry.Host.Hide();
+        foreach (var entry in _groups.Values) { entry.Host.Hide(); entry.IsPresented = false; }
         Failed?.Invoke(reason);
     }
 
@@ -376,7 +410,7 @@ public sealed class DesktopGroupPresenter : IDisposable
     private void CloseGroups()
     {
         _active = false;
-        foreach (var entry in _groups.Values) entry.Host.Hide();
+        foreach (var entry in _groups.Values) { entry.Host.Hide(); entry.IsPresented = false; }
         foreach (var entry in _groups.Values) entry.Dispose();
         _groups.Clear();
         _desktop = null;
@@ -418,6 +452,7 @@ public sealed class DesktopGroupPresenter : IDisposable
         public GroupLayout Layout { get; set; } = new();
         public List<Action> Unsubscribe { get; } = [];
         public Rect? LastBounds { get; set; }
+        public bool IsPresented { get; set; }
 
         public void Dispose()
         {

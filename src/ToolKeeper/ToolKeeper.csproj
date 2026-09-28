@@ -3,11 +3,19 @@
     <OutputType>WinExe</OutputType>
     <TargetFramework>net10.0-windows</TargetFramework>
     <UseWPF>true</UseWPF>
+    <UseWindowsForms>true</UseWindowsForms>
     <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon>Resources/ToolKeeper.ico</ApplicationIcon>
     <Version>0.1.0</Version>
-    <Description>ToolKeeper — 免費 Hash Checker 與圖片轉 ICO</Description>
+    <Description>ToolKeeper — 工具平台與桌面整理</Description>
+    <NoWarn>$(NoWarn);WFO0003</NoWarn>
   </PropertyGroup>
   <ItemGroup>
+    <EmbeddedResource Include="Resources/ToolKeeper.ico" LogicalName="ToolKeeper.Resources.ToolKeeper.ico" />
     <ProjectReference Include="../ToolKeeper.UI/ToolKeeper.UI.csproj" />
+    <ProjectReference Include="../ToolKeeper.Desktop/ToolKeeper.Desktop.csproj" />
+    <Using Remove="System.Windows.Forms" />
+    <Using Remove="System.Drawing" />
+    <InternalsVisibleTo Include="ToolKeeper.Tests" />
   </ItemGroup>
 </Project>

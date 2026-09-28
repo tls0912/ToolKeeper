@@ -1,0 +1,59 @@
+<ui:AppWindow x:Class="ToolKeeper.Modules.HashCheckerWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:ui="clr-namespace:ToolKeeper.UI;assembly=ToolKeeper.UI"
+        MainName="Hash Checker" SubName="File Hash Verification"
+        Width="760" Height="660" MinWidth="660" MinHeight="560">
+    <ui:AppWindow.Resources>
+        <ResourceDictionary><ResourceDictionary.MergedDictionaries>
+            <ResourceDictionary Source="/ToolKeeper;component/Modules/UtilityStyles.xaml" />
+        </ResourceDictionary.MergedDictionaries></ResourceDictionary>
+    </ui:AppWindow.Resources>
+    <ui:AppWindow.HeaderActions>
+        <Border VerticalAlignment="Center" Background="{DynamicResource HoverBrush}" CornerRadius="12" Padding="12,6">
+            <TextBlock Text="{DynamicResource ToolKeeper.Badge}" Foreground="{DynamicResource AccentBrush}" FontSize="12" />
+        </Border>
+    </ui:AppWindow.HeaderActions>
+    <ui:AppWindow.Workspace>
+        <Grid>
+            <Grid.RowDefinitions><RowDefinition Height="*" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
+            <Border x:Name="HashDropZone" Style="{StaticResource DropCard}" AllowDrop="True"
+                    PreviewDragEnter="HashDragOver" PreviewDragOver="HashDragOver" PreviewDragLeave="DropZoneDragLeave" PreviewDrop="HashDrop">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Padding="0,0,2,0">
+                    <StackPanel>
+                        <DockPanel>
+                            <TextBlock DockPanel.Dock="Right" Text="004" Foreground="{DynamicResource MutedBrush}" FontSize="24" />
+                            <TextBlock Text="{DynamicResource ToolKeeper.HashTitle}" FontSize="20" FontWeight="SemiBold" />
+                        </DockPanel>
+                        <TextBlock Text="{DynamicResource ToolKeeper.HashDropHint}" Margin="0,8,0,4" />
+                        <TextBlock Text="MD5 · SHA-1 · SHA-256" Style="{StaticResource Muted}" />
+                        <DockPanel Margin="0,14,0,10">
+                            <Button x:Name="ChooseHashButton" Content="{DynamicResource ToolKeeper.ChooseFile}" Click="ChooseHashClick" DockPanel.Dock="Left" />
+                            <Button x:Name="CancelHashButton" Content="{DynamicResource ToolKeeper.Cancel}" Click="CancelHashClick" DockPanel.Dock="Right" Margin="8,0,0,0" Visibility="Collapsed" IsEnabled="False" />
+                            <TextBlock x:Name="HashFileName" Text="{DynamicResource ToolKeeper.OneFile}" Style="{StaticResource Muted}" VerticalAlignment="Center" Margin="10,0,0,0" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" />
+                        </DockPanel>
+                        <ProgressBar x:Name="HashProgress" Minimum="0" Maximum="1" Height="3" Value="0" BorderThickness="0" BorderBrush="{DynamicResource LineBrush}" Foreground="{DynamicResource AccentBrush}" Background="{DynamicResource LineBrush}" />
+                        <Grid Margin="0,12,0,0">
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="64" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
+                            <TextBlock Text="MD5" FontSize="12" VerticalAlignment="Center" />
+                            <TextBox x:Name="Md5Output" Grid.Column="1" Style="{StaticResource HashValue}" MinHeight="30" AutomationProperties.Name="MD5" />
+                            <TextBlock Grid.Row="1" Text="SHA-1" FontSize="12" VerticalAlignment="Center" />
+                            <TextBox x:Name="Sha1Output" Grid.Row="1" Grid.Column="1" Style="{StaticResource HashValue}" MinHeight="30" Margin="0,6,0,0" AutomationProperties.Name="SHA-1" />
+                            <TextBlock Grid.Row="2" Text="SHA-256" FontSize="12" VerticalAlignment="Center" />
+                            <TextBox x:Name="Sha256Output" Grid.Row="2" Grid.Column="1" Style="{StaticResource HashValue}" MinHeight="30" Margin="0,6,0,0" AutomationProperties.Name="SHA-256" />
+                        </Grid>
+                        <DockPanel Margin="0,12,0,0">
+                            <Button x:Name="CopyHashesButton" DockPanel.Dock="Right" Content="{DynamicResource ToolKeeper.CopyAll}" Click="CopyHashesClick" IsEnabled="False" Padding="10,5" MinHeight="30" />
+                            <TextBlock Text="{DynamicResource ToolKeeper.CompareHint}" VerticalAlignment="Center" Style="{StaticResource Muted}" />
+                        </DockPanel>
+                        <TextBox x:Name="ExpectedHash" Margin="0,7,0,0" MinHeight="34" TextChanged="ExpectedHashChanged" AutomationProperties.Name="{DynamicResource ToolKeeper.ExpectedHash}" />
+                        <TextBlock x:Name="HashComparison" Text="{DynamicResource ToolKeeper.CompareEmpty}" FontSize="12" Margin="0,7,0,0" Foreground="{DynamicResource MutedBrush}" />
+                        <TextBlock x:Name="HashStatus" Text="{DynamicResource ToolKeeper.NoFile}" Style="{StaticResource Muted}" Margin="0,8,0,0" AutomationProperties.LiveSetting="Polite" />
+                    </StackPanel>
+                </ScrollViewer>
+            </Border>
+            <TextBlock x:Name="PrivacyNotice" Grid.Row="1" Text="{DynamicResource ToolKeeper.Privacy}" Style="{StaticResource Muted}" Margin="2,8,0,0" FontSize="11" />
+        </Grid>
+    </ui:AppWindow.Workspace>
+</ui:AppWindow>

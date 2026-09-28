@@ -1,14 +1,19 @@
 # CabiDock 桌面接管
 
-更新日期：2026-09-26。一般啟動在完成桌面掃描後自動嘗試接管。已在本機 Windows 11 實測接管、暫停恢復、檔案變更時沿用群組，以及原生不透明度套用，仍屬實驗實作，各 Windows 版本與完整互動尚待驗收。
+更新日期：2026-09-28。ToolKeeper 啟動後依保存的桌面啟停偏好，在完成掃描後嘗試接管。整併前已在本機 Windows 11 實測接管、暫停恢復、檔案變更時沿用群組，以及原生不透明度套用；新的宿主整合與固定展開群組仍須實機驗收，各 Windows 版本與完整互動尚待確認。
 
 ## 使用方式
 
-- 啟動 `dotnet run --project src/CabiDock/CabiDock.csproj`，設定視窗顯示目前接管狀態與失敗原因。
-- 「暫停桌面接管」會撤下群組並恢復原生圖示；「啟用桌面接管」重新嘗試。此暫停只影響本次執行。
+桌面程式碼位於 `ToolKeeper.Desktop` 類別庫；CabiDock 已無獨立 EXE 或驗證薄殼。002 設定、004 Hash Checker 與 005 Image → ICO 在 `ToolKeeper.exe` 內各自開窗；只有單獨上架的 001 汗青與 003 ConvAnvil 保留自己的 EXE。所有目錄與桌面入口採 `toolkeeper://run/001` 至 `toolkeeper://run/005`，由本體驗證並派發。
+
+「工具番」特殊群組呈現 001 至 005，固定以大的展開模式顯示，不因點標題、滑鼠離開或展開其他分類而收合。它仍可拖曳、調整大小、保存配置並限制在主螢幕。一般七分類維持原本的展開／收合與檔案操作。特殊群組只將平台提供的啟動 URI 交回宿主，不加入分類清單或原生檔案裁切集合。
+
+- 啟動 `dotnet run --project src/ToolKeeper/ToolKeeper.csproj`，從 002 入口或系統匣開啟桌面設定，查看目前接管狀態與失敗原因。
+- 「暫停桌面接管」會撤下群組並恢復原生圖示；「啟用桌面接管」重新嘗試。啟停偏好由本體保存，重啟後沿用。
 - 開啟群組操作預覽會先暫停接管。`--desktop-directory` 自訂掃描目錄僅提供預覽，不操作真實桌面。
-- 最小化或關閉設定視窗會縮至系統匣，不佔工作列；從系統匣「設定」恢復視窗。「結束程式」或登出會恢復桌面。
-- 展開後滑鼠離開 3 秒才收合；移回取消。選單、改名與拖曳期間保持展開，結束後重新計時。
+- 最小化或關閉設定視窗只隱藏，不佔工作列；從本體系統匣「桌面設定」恢復視窗。「結束程式」或登出會恢復桌面。
+- 一般分類展開後滑鼠離開 3 秒才收合；移回取消。選單、改名與拖曳期間保持展開，結束後重新計時；工具番始終展開。
+- 群組標題拖曳接近工作區邊緣或其他可見群組時吸附，距離以 DIP 計算（門檻 12、相鄰間距 8）；Shift 可略過。只在拖移時調整自身位置，原生圖示避讓優先，隱藏群組不參與。
 - 檔案右鍵使用 Windows Shell 傳統完整選單（Windows 11「顯示其他選項」類型），附加「CabiDock 分類」子選單；選擇重新命名或按 F2 可修改檔名。改名由 Shell 執行，分類記錄交由監看流程更新。
 - 設定中的「分類區不透明度」提供 30–100%，儲存後套用所有群組，預設 100%。只改不透明度不重新分類。
 
@@ -46,17 +51,17 @@ Shell 項目與 MSAA 幾何讀取並非原子快照。程式會核對數量／�
 
 實際桌面以唯一名稱的暫存檔驗證新增、改名、移除，三個既有群組 HWND 在變更前後一致；測試檔已移除。最終核對 22 個檔案圖示全部裁切、3 個系統圖示保留。70% 不透明度儲存後三個實際群組回讀 alpha 178／255，恢復 100% 後回讀完全不透明。報告位於 `artifacts/cabidock-interaction-20260926/`。新增瞬間的唯讀診斷曾因 Shell 與檔案掃描不同步無法取得完整統計，沒有將這個瞬間當成空桌面或成功驗證。
 
-自有隱藏子視窗的透明度診斷：`CabiDock.exe --diagnose-group-opacity artifacts/cabidock-native-opacity.json`。此模式不附掛 Explorer，也不操作真實桌面檔案。
+自有隱藏子視窗的透明度診斷：`ToolKeeper.exe --diagnose-group-opacity artifacts/cabidock-native-opacity.json`。此模式不附掛 Explorer，也不操作真實桌面檔案。
 
 自動測試使用未顯示的測試 HWND 與 STA WPF，包含區域計畫、群組附掛失敗回復、配置與 DPI 換算、父視窗失效、原始 region 還原、管線中斷後獨立恢復，以及恢復程序死亡後主程序還原；不變更真實桌面。
 
 只讀診斷：
 
 ```powershell
-& ./src/CabiDock/bin/Debug/net10.0-windows/CabiDock.exe --diagnose-desktop artifacts/cabidock-desktop-probe.json
+& ./src/ToolKeeper/bin/Debug/net10.0-windows/ToolKeeper.exe --diagnose-desktop artifacts/cabidock-desktop-probe.json
 ```
 
-診斷須使用 `.exe`，使 DPI manifest 與一般啟動一致；透過 `dotnet CabiDock.dll` 啟動的宿主可能使用不同 DPI 模式。報告包含 Shell 項目、MSAA 幾何是否可用、DPI 模式比較，以及 `VisibilityAudit` 的實際原生裁切／保留圖示與可見附掛群組數。
+診斷須使用 `.exe`，使 DPI manifest 與一般啟動一致；透過 `dotnet ToolKeeper.dll` 啟動的宿主可能使用不同 DPI 模式。報告包含 Shell 項目、MSAA 幾何是否可用、DPI 模式比較，以及 `VisibilityAudit` 的實際原生裁切／保留圖示與可見附掛群組數。
 
 一般沙箱環境回報 `Available = false`、`ShellWindowHandle = 0x0`；這表示無資料，不能當作空桌面。2026-09-24 在實際桌面工作階段執行唯讀診斷，重現 `IOleWindow.GetWindow` 的 `0x80004002`：桌面物件可取得 `IShellView`，卻不支援直接查詢其 `IOleWindow` 基底介面。改用 `IUnknown_GetWindow` 後，診斷成功讀取 19 個檔案系統項目與 3 個系統項目。Microsoft 的這個函式明確處理此相容性問題。[IUnknown_GetWindow 文件](https://learn.microsoft.com/en-us/windows/win32/api/shlwapi/nf-shlwapi-iunknown_getwindow)。
 

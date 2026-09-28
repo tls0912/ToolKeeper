@@ -119,7 +119,7 @@ MainName - SubName
 
 ## 4. ToolKeeper 本體的角色
 
-ToolKeeper 本體以免費工具目錄、Launcher 與平台入口為主，另外提供少量免費小工具。自 2026-09-28 起，002 CabiDock 的桌面能力納入 ToolKeeper 平台，形成 **單一主執行入口 + 內部桌面模組**；這不代表其他獨立產品都要併入同一個 EXE。
+ToolKeeper 本體以免費工具目錄、Launcher 與平台入口為主，另外提供少量免費小工具。自 2026-09-28 起，002 CabiDock、004 Hash Checker、005 Image → ICO 在 `ToolKeeper.exe` 內執行，各有獨立工具視窗；**只有單獨上架的產品才有自己的 EXE**，目前為 001 汗青與 003 ConvAnvil。工具有自己的編號、入口與視窗，不等於需要獨立程序。
 
 ToolKeeper 本體負責：
 
@@ -131,14 +131,14 @@ ToolKeeper 本體負責：
 
 ToolKeeper 不負責下載模組、管理授權、內購或自行安裝獨立工具；安裝與更新由 Microsoft Store 處理。
 
-**2026-09-26 實作範圍：** 目錄與 Launcher 規劃合併成同一份工具列表，左側顯示名稱，右側提供「開啟／取得」；目前僅呈現版面、停用操作，尚不實作安裝偵測、URI 啟動或商店導向。本輪先完成上方左側 Hash Checker 與右側 Image → ICO。後文 Launcher 流程為後續規劃。
+**2026-09-28 整併實作：** `ToolKeeper.exe` 已引用 `ToolKeeper.Desktop`，由本體管理桌面模組、各工具視窗與系統匣。主視窗只保留工具列表，桌面設定由 002 列表入口或系統匣開啟。產品目錄與「工具番」桌面群組列出 001 至 005，以 `toolkeeper://run/<三位產品編號>` 統一派發。002 開啟桌面設定；004、005 各自開啟 Hash Checker 與 Image → ICO 視窗。CabiDock 的開發薄殼 EXE 已退役。整併後的實機驗收仍待完成，細節見 [本體實作報告](TOOLKEEPER-IMPLEMENTATION.md)。
 
 ### ToolKeeper 本體的免費小工具
 
 ToolKeeper 本體免費提供以下兩項小工具：
 
-- **Image → ICO**：將 JPG、BMP 或 PNG 圖片拖入介面，在原圖片所在資料夾產生 ICO 檔。
-- **Hash Checker**：計算 MD5、SHA-1、SHA-256；可比對雜湊值並驗證檔案。
+- **005 — Image → ICO**：將 JPG、BMP 或 PNG 圖片拖入介面，在原圖片所在資料夾產生 ICO 檔。
+- **004 — Hash Checker**：計算 MD5、SHA-1、SHA-256；可比對雜湊值並驗證檔案。
 
 **JSON Viewer 已歸入 003 — ConvAnvil**，不列為 ToolKeeper 本體內建功能。其他獨立工具仍各自是 Windows App。
 
@@ -153,8 +153,8 @@ ToolKeeper.exe
     │
     ├─ ToolKeeper 本體
     │   ├─ 工具目錄 / Launcher
-    │   ├─ Hash Checker
-    │   ├─ Image → ICO
+    │   ├─ 004 Hash Checker 獨立視窗
+    │   ├─ 005 Image → ICO 獨立視窗
     │   └─ 工具狀態與平台整合
     │
     └─ CabiDock / ToolKeeper.Desktop 模組
@@ -166,7 +166,9 @@ ToolKeeper.exe
         └─ Recovery
 ```
 
-CabiDock 的桌面程式碼仍保持清楚模組邊界，不直接散落於 ToolKeeper 主視窗。其他產品如汗青、ConvAnvil 與未來工具仍可維持獨立 App。
+CabiDock 的桌面程式碼仍保持清楚模組邊界，不直接散落於 ToolKeeper 主視窗。002／004／005 由宿主開啟各自視窗；汗青、ConvAnvil 與未來單獨上架的產品才保留自己的 App EXE。
+
+目前已抽出 `ToolKeeper.Desktop` 類別庫，沿用 `CabiDock` 命名空間與原有桌面資料位置。首次使用與無平台偏好的既有使用者預設啟用桌面功能，之後保存啟停狀態；平台偏好損毀且無健康備份時預設停用並保留原檔。主視窗關閉或最小化會隱藏至系統匣，設定視窗關閉只隱藏；系統匣退出與登出會停止整合並恢復原生桌面。恢復助手可以是由主程式啟動的獨立短用途程序，並非第二個常駐主入口。
 
 ---
 
@@ -181,12 +183,11 @@ Microsoft Store
 │
 ├─ ToolKeeper          免費（工具目錄、Launcher 與免費小工具）
 ├─ MarkPad             獨立產品
-├─ CabiDock            併入 ToolKeeper 的桌面模組
 ├─ ConvAnvil           獨立產品
 └─ 其他工具            依個別產品規劃
 ```
 
-ToolKeeper 本體提供目錄、啟動入口、少量免費小工具與 CabiDock 桌面模組；除 CabiDock 外，各獨立產品仍可單獨使用與發行。
+ToolKeeper 本體提供目錄、啟動入口與 002／004／005 內建工具，各工具有自己的視窗；001／003 等單獨上架的產品才獨立使用與發行，不為內建工具另建 EXE。
 
 這樣做的好處：
 
@@ -220,46 +221,49 @@ ToolKeeper 透過 CabiDock 桌面模組提供一個特殊的 **「工具番」�
 
 ```text
 工具番
-├─ 汗青
-├─ ConvAnvil
-├─ Tool 004
-├─ Tool 005
+├─ 001 汗青
+├─ 002 CabiDock
+├─ 003 ConvAnvil
+├─ 004 Hash Checker
+├─ 005 Image → ICO
 └─ ...
 ```
 
-預期行為：
+本輪已實作的行為：
 
-- 工具安裝完成後，可自動出現在「工具番」群組。
-- 工具可用時，點擊入口直接啟動。
-- 工具不可用或尚未安裝時，可依 ToolKeeper Launcher 規則顯示取得入口。
+- 群組使用與主視窗相同的產品目錄，列出 001 汗青、002 CabiDock、003 ConvAnvil、004 Hash Checker、005 Image → ICO。002／004／005 為宿主內的視窗；001／003 隨安裝或移除更新可用狀態。
+- 每個入口使用自己的 `toolkeeper://run/001` 至 `toolkeeper://run/005`，由 ToolKeeper 判斷開啟宿主內工具視窗或獨立產品。
+- 工具不可用或尚未安裝時，有正式 Store ID 才顯示「取得」，否則顯示停用的「未提供」。
 - 不要求使用者先建立傳統桌面捷徑，也不需要靠一般 CabiDock 副檔名規則辨識工具番產品。
 - 未來產品數量增加時，桌面仍維持單一清楚的工具番群組，而不是散落大量捷徑。
+
+狀態每十秒、主視窗重新啟用與系統匣開啟時刷新；點擊入口時再次確認。群組本身已接入桌面與預覽，固定以大的展開模式顯示，不因點標題、滑鼠離開或展開其他分類而收合；可拖移、調整大小與保存，並限制在主螢幕。一般七分類維持原本收合規則。完整實機互動仍列入整併驗收。
 
 因此，CabiDock 對 ToolKeeper 的角色不只是「桌面檔案分類器」，而是 ToolKeeper 的 **Desktop Experience / Desktop Layer**。
 
 ## 6. ToolKeeper 啟動工具的方式
 
-每個可由 Launcher 啟動的獨立工具註冊自己的 URI Protocol。
+所有使用者入口先使用 `toolkeeper://run/<三位產品編號>`，目前涵蓋 `001` 至 `005`，由 ToolKeeper 本體驗證並派發。002／004／005 在同一宿主開啟各自視窗，不建立新工具程序。001／003 才進入下列獨立產品啟動判斷；產品自己的 protocol 是派發後的啟動方式，不取代工具番入口。
 
-例如：
+宿主派發到獨立產品時，產品 protocol 例如：
 
 ```text
 toolkeeper-<product>:
 ```
 
-ToolKeeper 點擊某項獨立產品時：
+ToolKeeper 點擊某項獨立產品時重新偵測，依序選擇：
 
 ```text
-點擊工具
-   ↓
-檢查 URI 是否有 Handler
-   ↓
-┌───────────────┐
-│               │
-有              沒有
-│               │
-直接啟動 App     開啟 Microsoft Store
+已知 URI Handler 可用 → 開啟 App
+   否則
+已知本機路徑有完整 App → 開啟 App
+   否則
+已有正式 Store 商品 ID → 開啟 Microsoft Store 商品頁
+   否則
+顯示「未提供」，停用入口
 ```
+
+目前汗青沿用 `toolkeeper-markpad:` 與既有正式 Store ID `9NHF764PXW9C`；ConvAnvil 尚無正式 protocol／Store ID，僅提供可確認的本機版本啟動。偵測不搜尋任意磁碟、不自動安裝、不替產品註冊 protocol，也不建立推測的商店網址。
 
 ToolKeeper 不需要管理：
 

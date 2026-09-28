@@ -178,6 +178,117 @@ public sealed class UiSmokeTests
     });
 
     [Fact]
+    public Task PreviewKeepsToolsExpandedWhenOtherGroupsOpenAndCatalogChanges() => OnSta(() =>
+    {
+        var configuration = ConfigurationService.LoadDefaults();
+        DesktopItem[] items = [new(@"C:\CabiDock-preview\notes.md", false), new(@"C:\CabiDock-preview\photo.png", false)];
+        var state = new CabiDockState();
+        new ClassificationService().Reconcile(items, state, configuration);
+        state.Groups[DesktopToolsGroup.Id] = new GroupLayout { X = 24, Y = 24, Width = 460, Height = 400 };
+        var window = new GroupPreviewWindow { AllowClose = true };
+        try
+        {
+            var tools = Enumerable.Range(1, 5).Select(index => new DesktopTool($"{index:000}", $"工具 {index:000}", "由工具番開啟", "開啟",
+                ActivationUri: $"toolkeeper://run/{index:000}")).ToArray();
+            var activated = new List<string>();
+            window.SetTools(tools, activated.Add);
+            window.SetItems(configuration, state, items);
+            var content = HostWindowContent(window);
+            Layout(content, 1080, 650);
+            var canvas = Descendants<Canvas>(content).Single();
+            var cards = canvas.Children.OfType<FrameworkElement>().Where(card => card.Visibility == Visibility.Visible).ToArray();
+            var toolCard = cards.Single(card => Descendants<TextBlock>(card).Any(text => text.Text == "工具番"));
+            Assert.Equal(460, toolCard.Width);
+            Assert.Equal(400, toolCard.Height);
+            Assert.Equal(5, Descendants<Button>(toolCard).Count());
+            var normalCards = cards.Where(card => card != toolCard).ToArray();
+            foreach (var card in new[] { normalCards[0], toolCard, normalCards[1] })
+            {
+                var header = Descendants<Thumb>(card).First();
+                header.RaiseEvent(new DragStartedEventArgs(0, 0) { RoutedEvent = Thumb.DragStartedEvent });
+                header.RaiseEvent(new DragCompletedEventArgs(0, 0, false) { RoutedEvent = Thumb.DragCompletedEvent });
+            }
+            Assert.Equal(138, normalCards[0].Width);
+            Assert.True(normalCards[1].Width > 138);
+            Assert.Equal(460, toolCard.Width);
+            window.SetTools(tools.Select(tool => tool with { ActionLabel = "Open" }).ToArray(), activated.Add);
+            window.SetItems(configuration, state, items);
+            Layout(content, 1080, 650);
+            Assert.Equal(460, toolCard.Width);
+            Assert.Equal(400, toolCard.Height);
+            Descendants<Button>(toolCard).First().RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+            Assert.Equal(new[] { "toolkeeper://run/001" }, activated);
+            var toolBounds = new Rect(Canvas.GetLeft(toolCard), Canvas.GetTop(toolCard), toolCard.Width, toolCard.Height);
+            foreach (var card in normalCards)
+            {
+                var cardBounds = new Rect(Canvas.GetLeft(card), Canvas.GetTop(card), card.Width, card.Height);
+                Assert.False(toolBounds.IntersectsWith(cardBounds), "The rendered preview must leave every tool entry accessible.");
+            }
+            Render(content, 1080, 650, "tools-group-preview.png");
+        }
+        finally { window.Close(); }
+    });
+
+    [Fact]
+    public Task PreviewHeaderSnapsToVisibleToolsAndIgnoresHiddenCategories() => OnSta(() =>
+    {
+        var configuration = ConfigurationService.LoadDefaults();
+        DesktopItem[] items = [new(@"C:\CabiDock-preview\notes.md", false)];
+        var state = new CabiDockState();
+        new ClassificationService().Reconcile(items, state, configuration);
+        state.Groups[DesktopToolsGroup.Id] = new GroupLayout { X = 100, Y = 80, Width = 320, Height = 240 };
+        state.Groups["documents"] = new GroupLayout { X = 520, Y = 100, Width = 420, Height = 350 };
+        state.Groups["images"] = new GroupLayout { X = 700, Y = 100, Width = 360, Height = 320 };
+        var window = new GroupPreviewWindow { AllowClose = true };
+        try
+        {
+            window.SetTools([new DesktopTool("001", "汗青", "Ready", "Open", ActivationUri: "toolkeeper://run/001")], _ => { });
+            window.SetItems(configuration, state, items);
+            var content = HostWindowContent(window);
+            Layout(content, 1200, 800);
+            var canvas = Descendants<Canvas>(content).Single();
+            var cards = canvas.Children.OfType<FrameworkElement>().ToArray();
+            var toolCard = cards.Single(card => card.Visibility == Visibility.Visible
+                && Descendants<TextBlock>(card).Any(text => text.Text == "工具番"));
+            var documentCard = cards.Single(card => card.Visibility == Visibility.Visible
+                && Descendants<TextBlock>(card).Any(text => text.Text == "文件類"));
+            var hiddenImageCard = cards.Single(card => Canvas.GetLeft(card) == 700 && Canvas.GetTop(card) == 100);
+            Assert.Equal(Visibility.Collapsed, hiddenImageCard.Visibility);
+            Assert.Equal(2, cards.Count(card => card.Visibility == Visibility.Visible));
+            var saved = new List<(string Id, GroupLayout Layout)>();
+            window.LayoutChanged += (id, layout) => saved.Add((id, layout));
+            var header = Descendants<Thumb>(documentCard).First();
+
+            header.RaiseEvent(new DragStartedEventArgs(0, 0) { RoutedEvent = Thumb.DragStartedEvent });
+            header.RaiseEvent(new DragDeltaEventArgs(-84, 0) { RoutedEvent = Thumb.DragDeltaEvent });
+            Assert.Equal(Canvas.GetLeft(toolCard) + toolCard.Width + 8, Canvas.GetLeft(documentCard));
+            Assert.Equal(100, Canvas.GetTop(documentCard));
+            Assert.Empty(saved);
+            header.RaiseEvent(new DragCompletedEventArgs(-84, 0, false) { RoutedEvent = Thumb.DragCompletedEvent });
+            var firstSave = Assert.Single(saved);
+            Assert.Equal("documents", firstSave.Id);
+            Assert.Equal(428, firstSave.Layout.X);
+            Assert.Equal(420, firstSave.Layout.Width);
+            Assert.Equal(350, firstSave.Layout.Height);
+            Render(content, 1200, 800, "groups-preview-snapped-to-tools.png");
+
+            header.RaiseEvent(new DragStartedEventArgs(0, 0) { RoutedEvent = Thumb.DragStartedEvent });
+            header.RaiseEvent(new DragDeltaEventArgs(122, 0) { RoutedEvent = Thumb.DragDeltaEvent });
+            // A visible image group at x=700 would attract this card to x=554.
+            Assert.Equal(550, Canvas.GetLeft(documentCard));
+            header.RaiseEvent(new DragCompletedEventArgs(122, 0, false) { RoutedEvent = Thumb.DragCompletedEvent });
+            Assert.Equal(2, saved.Count);
+            Assert.Equal(550, saved[1].Layout.X);
+            Assert.Equal(100, saved[1].Layout.Y);
+            Assert.Equal(138, documentCard.Width);
+            Assert.Equal(160, documentCard.Height);
+            Assert.Equal(320, toolCard.Width);
+            Assert.Equal(240, toolCard.Height);
+        }
+        finally { window.Close(); }
+    });
+
+    [Fact]
     public Task GroupCardSurvivesReparentingAndStaysInsideBoundsWhenExpanded() => OnSta(() =>
     {
         var category = ConfigurationService.LoadDefaults().Categories.Single(category => category.Id == "documents");

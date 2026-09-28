@@ -1,5 +1,6 @@
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
@@ -11,6 +12,33 @@ namespace CabiDock.Tests;
 
 public sealed class GroupCollapseDelayTests
 {
+    [Fact]
+    public Task ToolsStayExpandedAfterHeaderClickMouseLeaveAndDataRefresh() => OnSta(() =>
+    {
+        var group = new GroupWindow(DesktopToolsGroup.Category, new GroupLayout { X = 20, Y = 30, Width = 460, Height = 380 });
+        try
+        {
+            DesktopTool[] tools = [new("001", "汗青", "Ready", "Open", ActivationUri: "toolkeeper://run/001")];
+            group.UpdateTools(tools, _ => { });
+            Assert.True(group.IsAlwaysExpanded);
+            Assert.True(group.IsExpanded);
+            Assert.Equal(460, group.Width);
+            Assert.Equal(380, group.Height);
+            var header = Descendants(group.CardContent).OfType<Thumb>().First();
+            header.RaiseEvent(new DragStartedEventArgs(0, 0) { RoutedEvent = Thumb.DragStartedEvent });
+            header.RaiseEvent(new DragCompletedEventArgs(0, 0, false) { RoutedEvent = Thumb.DragCompletedEvent });
+            Leave(group.CardContent);
+            Pump(3200);
+            Assert.True(group.IsExpanded);
+            group.Collapse();
+            group.UpdateTools([tools[0] with { ActionLabel = "開啟" }], _ => { });
+            Assert.True(group.IsExpanded);
+            Assert.Equal(460, group.Width);
+            Assert.Equal(380, group.Height);
+        }
+        finally { group.Close(); }
+    });
+
     [Fact]
     public Task LeavingWaitsThreeSecondsAndReenteringCancelsCollapse() => OnSta(() =>
     {

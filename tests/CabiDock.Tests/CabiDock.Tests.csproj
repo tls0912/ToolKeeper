@@ -14,6 +14,7 @@
     </PackageReference>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="../../src/CabiDock/CabiDock.csproj" />
+    <ProjectReference Include="../../src/ToolKeeper.Desktop/ToolKeeper.Desktop.csproj" />
+    <ProjectReference Include="../../src/ToolKeeper/ToolKeeper.csproj" />
   </ItemGroup>
 </Project>

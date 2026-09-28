@@ -17,6 +17,8 @@ public sealed class GroupPreviewWindow : Window
     private readonly List<Action> _unsubscribe = [];
     private int _front;
     private bool _disposed;
+    private IReadOnlyList<DesktopTool> _tools = [];
+    private Action<string>? _activateTool;
 
     public event Action<DesktopItem>? ItemOpenRequested;
     public event Action<DesktopItem, string>? ManualAssignmentRequested;
@@ -37,7 +39,7 @@ public sealed class GroupPreviewWindow : Window
         caption.Children.Add(new TextBlock { Text = "群組操作預覽", FontSize = 22, FontWeight = FontWeights.SemiBold });
         caption.Children.Add(new TextBlock
         {
-            Text = "單擊展開 · 點標題展開或收合 · 雙擊開啟項目 · 拖曳標題移動群組 · 拖曳項目改分類\n預覽時桌面接管暫停，原生圖示保留。可回到設定啟用桌面接管。",
+            Text = "分類：點標題展開或收合 · 雙擊開啟項目 · 拖曳標題移動並吸附（Shift 暫停吸附） · 拖曳項目改分類\n工具番固定展開。預覽時桌面接管暫停，原生圖示保留，可回設定啟用。",
             Margin = new Thickness(0, 8, 0, 0), Foreground = Brushes.DimGray, TextWrapping = TextWrapping.Wrap
         });
         DockPanel.SetDock(caption, Dock.Top);
@@ -53,6 +55,12 @@ public sealed class GroupPreviewWindow : Window
         Closed += (_, _) => DisposeGroups();
     }
 
+    public void SetTools(IReadOnlyList<DesktopTool> tools, Action<string> activateTool)
+    {
+        _tools = tools.ToArray();
+        _activateTool = activateTool;
+    }
+
     public void SetItems(CabiDockConfiguration configuration, CabiDockState state, IReadOnlyList<DesktopItem> items, bool rebuild = false)
     {
         if (_disposed) return;
@@ -62,18 +70,35 @@ public sealed class GroupPreviewWindow : Window
         var membership = state.Items.Where(item => byPath.ContainsKey(item.FullPath))
             .GroupBy(item => item.CategoryId).ToDictionary(group => group.Key, group => group.Select(item => byPath[item.FullPath]).ToList());
         // On the first layout, visible categories occupy the first slots. Saved positions win.
-        foreach (var category in configuration.Categories.OrderByDescending(category => membership.ContainsKey(category.Id)))
+        var categories = configuration.Categories.OrderByDescending(category => membership.ContainsKey(category.Id)).ToList();
+        if (_tools.Count > 0 || _groups.ContainsKey(DesktopToolsGroup.Id)) categories.Insert(0, DesktopToolsGroup.Category);
+        foreach (var category in categories)
         {
             var members = membership.GetValueOrDefault(category.Id) ?? [];
             if (!_groups.TryGetValue(category.Id, out var group))
             {
                 if (!state.Groups.TryGetValue(category.Id, out var layout))
                 {
-                    var index = _groups.Count;
-                    layout = new GroupLayout { X = 24 + index % 6 * 154, Y = 24 + index / 6 * 164 };
+                    var bounds = new Rect(0, 0, _canvas.ActualWidth > 0 ? _canvas.ActualWidth : Math.Max(1, Width - 40),
+                        _canvas.ActualHeight > 0 ? _canvas.ActualHeight : Math.Max(1, Height - 140));
+                    var occupied = _groups.Values.Where(other => other.CardContent.Visibility == Visibility.Visible)
+                        .Select(other => new Rect(other.Left, other.Top, other.Width, other.Height))
+                        .Concat(categories.Where(other => other.Id != category.Id && !_groups.ContainsKey(other.Id)
+                                && state.Groups.ContainsKey(other.Id) && (other.Id == DesktopToolsGroup.Id || membership.ContainsKey(other.Id)))
+                            .Select(other =>
+                            {
+                                var position = state.Groups[other.Id];
+                                return new Rect(position.X, position.Y, other.Id == DesktopToolsGroup.Id ? position.Width : 138,
+                                    other.Id == DesktopToolsGroup.Id ? position.Height : 160);
+                            }));
+                    layout = InitialGroupLayout.Create(bounds, category.Id == DesktopToolsGroup.Id, occupied);
                     state.Groups[category.Id] = layout;
                 }
                 group = new GroupWindow(category, layout);
+                var movingGroup = group;
+                group.SnapTargets = () => _groups.Values
+                    .Where(other => other != movingGroup && other.CardContent.Visibility == Visibility.Visible)
+                    .Select(other => new Rect(other.Left, other.Top, other.Width, other.Height)).ToArray();
                 _groups.Add(category.Id, group);
                 var card = group.CardContent;
                 group.Content = null;
@@ -97,15 +122,18 @@ public sealed class GroupPreviewWindow : Window
                 group.LayoutChanged += next => LayoutChanged?.Invoke(category.Id, next);
                 group.Expanded += (_, _) =>
                 {
-                    foreach (var other in _groups.Values.Where(other => other != group)) other.Collapse();
+                    if (!group.IsAlwaysExpanded)
+                        foreach (var other in _groups.Values.Where(other => other != group && !other.IsAlwaysExpanded)) other.Collapse();
                     Panel.SetZIndex(card, ++_front);
                 };
             }
-            group.CardContent.Visibility = members.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
+            var isTools = category.Id == DesktopToolsGroup.Id;
+            group.CardContent.Visibility = (isTools ? _tools.Count > 0 : members.Count > 0) ? Visibility.Visible : Visibility.Collapsed;
             group.CardContent.Opacity = configuration.GroupOpacity;
-            group.UpdateItems(members, configuration.Categories);
+            if (isTools) group.UpdateTools(_tools, id => _activateTool?.Invoke(id));
+            else group.UpdateItems(members, configuration.Categories);
         }
-        _empty.Visibility = membership.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
+        _empty.Visibility = membership.Count == 0 && _tools.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
         ClampGroups();
     }
 

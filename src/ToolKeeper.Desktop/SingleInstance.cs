@@ -3,15 +3,17 @@ using System.Text;
 
 namespace CabiDock;
 
-internal sealed class SingleInstance : IDisposable
+public sealed class SingleInstance : IDisposable
 {
     private readonly Mutex _mutex;
     private readonly EventWaitHandle _show;
     private readonly CancellationTokenSource _stop = new();
+    private bool _disposed;
     public bool IsPrimary { get; }
 
     public SingleInstance(string dataDirectory)
     {
+        dataDirectory = Path.TrimEndingDirectorySeparator(Path.GetFullPath(dataDirectory));
         var identity = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(dataDirectory.ToUpperInvariant())))[..24];
         _mutex = new Mutex(false, @"Local\CabiDock." + identity);
         try { IsPrimary = _mutex.WaitOne(0); }
@@ -37,6 +39,8 @@ internal sealed class SingleInstance : IDisposable
 
     public void Dispose()
     {
+        if (_disposed) return;
+        _disposed = true;
         _stop.Cancel();
         if (IsPrimary) _mutex.ReleaseMutex();
         _mutex.Dispose();

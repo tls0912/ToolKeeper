@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.IO.Pipes;
+using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.Json;
@@ -39,15 +40,16 @@ public sealed class DesktopRecoveryGuard : IDisposable
     }
 
     public static bool TryStart(nint iconWindow, out DesktopRecoveryGuard? guard, out string reason)
-        => TryStartCore(iconWindow, false, out guard, out reason);
+        => TryStartCore(iconWindow, false, null, out guard, out reason);
 
     // Synthetic-window integration tests must not contend with a running desktop guardian.
     // The isolated lease is permitted only for a window owned by this exact parent process;
     // both the launching process and the independent helper enforce that restriction.
-    internal static bool TryStartForOwnedWindow(nint iconWindow, out DesktopRecoveryGuard? guard, out string reason)
-        => TryStartCore(iconWindow, true, out guard, out reason);
+    internal static bool TryStartForOwnedWindow(nint iconWindow, string helperExecutablePath,
+        out DesktopRecoveryGuard? guard, out string reason)
+        => TryStartCore(iconWindow, true, helperExecutablePath, out guard, out reason);
 
-    private static bool TryStartCore(nint iconWindow, bool useOwnedWindowLease,
+    private static bool TryStartCore(nint iconWindow, bool useOwnedWindowLease, string? helperExecutablePath,
         out DesktopRecoveryGuard? guard, out string reason)
     {
         guard = null;
@@ -64,7 +66,7 @@ public sealed class DesktopRecoveryGuard : IDisposable
                 throw new InvalidOperationException("獨立復原保護僅可用於本程序擁有的測試視窗。");
             pipe = new NamedPipeServerStream(request.PipeName, PipeDirection.InOut, 1,
                 PipeTransmissionMode.Byte, PipeOptions.Asynchronous | PipeOptions.CurrentUserOnly);
-            guardian = Process.Start(CreateStartInfo(request))
+            guardian = Process.Start(CreateStartInfo(request, helperExecutablePath))
                 ?? throw new InvalidOperationException("無法啟動桌面復原程序。");
             using var timeout = new CancellationTokenSource(StartupTimeout);
             pipe.WaitForConnectionAsync(timeout.Token).GetAwaiter().GetResult();
@@ -198,23 +200,32 @@ public sealed class DesktopRecoveryGuard : IDisposable
         }
     }
 
-    private static ProcessStartInfo CreateStartInfo(RecoveryRequest request)
+    private static ProcessStartInfo CreateStartInfo(RecoveryRequest request, string? helperExecutablePath)
     {
-        var assemblyPath = typeof(DesktopRecoveryGuard).Assembly.Location;
-        var appHost = Path.ChangeExtension(assemblyPath, ".exe");
-        var currentHost = Environment.ProcessPath;
+        var start = CreateHostStartInfo(helperExecutablePath ?? Environment.ProcessPath,
+            Assembly.GetEntryAssembly()?.Location);
+        start.ArgumentList.Add(HelperArgument);
+        start.ArgumentList.Add(Convert.ToBase64String(JsonSerializer.SerializeToUtf8Bytes(request)));
+        return start;
+    }
+
+    // The entry executable owns helper dispatch. This library is never an executable target.
+    internal static ProcessStartInfo CreateHostStartInfo(string? currentHost, string? entryAssemblyPath)
+    {
+        if (string.IsNullOrWhiteSpace(currentHost)) throw new InvalidOperationException("無法識別桌面模組的宿主程式。");
         var usesDotnet = string.Equals(Path.GetFileNameWithoutExtension(currentHost), "dotnet", StringComparison.OrdinalIgnoreCase);
+        if (usesDotnet && (string.IsNullOrWhiteSpace(entryAssemblyPath)
+            || string.Equals(entryAssemblyPath, typeof(DesktopRecoveryGuard).Assembly.Location, StringComparison.OrdinalIgnoreCase)))
+            throw new InvalidOperationException("無法識別桌面模組的可執行進入點。");
         var start = new ProcessStartInfo
         {
-            FileName = usesDotnet ? currentHost! : File.Exists(appHost) ? appHost : "dotnet",
+            FileName = currentHost,
             UseShellExecute = false,
             CreateNoWindow = true,
             WindowStyle = ProcessWindowStyle.Hidden,
-            WorkingDirectory = Path.GetDirectoryName(assemblyPath)!
+            WorkingDirectory = Path.GetDirectoryName(usesDotnet ? entryAssemblyPath : currentHost)!
         };
-        if (usesDotnet || !File.Exists(appHost)) start.ArgumentList.Add(assemblyPath);
-        start.ArgumentList.Add(HelperArgument);
-        start.ArgumentList.Add(Convert.ToBase64String(JsonSerializer.SerializeToUtf8Bytes(request)));
+        if (usesDotnet) start.ArgumentList.Add(entryAssemblyPath!);
         return start;
     }
 

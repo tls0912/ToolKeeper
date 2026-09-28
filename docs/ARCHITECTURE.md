@@ -2,13 +2,13 @@
 
 ## 目標
 
-ToolKeeper 採用 **Monorepo + Standalone Products + Integrated Desktop Module**。
+ToolKeeper 採用 **Monorepo + Standalone Products + Hosted Tool Modules**。
 
-ToolKeeper 本體是平台與 **單一主執行入口**，負責工具目錄、Launcher、少量免費小工具，以及 CabiDock 桌面模組的生命週期與平台整合。
+ToolKeeper 本體是平台與 **單一主執行入口**，主視窗只保留工具列表，並管理 Launcher、宿主內工具視窗及 CabiDock 桌面模組的生命週期。
 
-正式工具原則上仍可獨立建置、獨立上架，例如 **001 — 汗青**、**003 — ConvAnvil** 與未來產品。**002 — CabiDock 是例外**：其產品能力納入 ToolKeeper，作為 Desktop Experience / Desktop Layer，不再要求使用者啟動第二個常駐主程式。
+只有單獨上架的產品才有自己的 EXE，目前為 **001 — 汗青**、**003 — ConvAnvil**。**002 — CabiDock**、**004 — Hash Checker**、**005 — Image → ICO** 在 `ToolKeeper.exe` 內執行，各有自己的工具視窗與目錄入口。產品編號與獨立視窗不代表需要另一個執行檔。
 
-目前 `src/CabiDock` 仍保留可獨立執行的 WPF App，供既有功能與 Explorer 桌面整合驗證；後續逐步將桌面掃描、分類、監看、Explorer 接管、桌面群組與 Recovery 整理為可由 ToolKeeper 引用的模組（例如 `ToolKeeper.Desktop`）。這是 **產品合體、程式模組化**，不是把 CabiDock 程式碼直接搬進 ToolKeeper 主視窗。
+2026-09-28 已將桌面掃描、分類、監看、Explorer 接管、群組與 Recovery 抽為 `src/ToolKeeper.Desktop` 類別庫，由 ToolKeeper 本體引用。桌面程式碼保留 `CabiDock` 命名空間，既有資料位置與格式不遷移。`src/CabiDock` 只留歷史路徑說明，開發薄殼與 `CabiDock.exe` 已退役，測試與診斷改用 ToolKeeper 宿主。整併後的真實桌面驗收仍待完成。
 
 ToolKeeper、CabiDock 現有設定介面與 ConvAnvil 使用 `ToolKeeper.UI` 共用視窗元件；汗青保留自訂視窗並使用其中可獨立採用的語言、主題／字體、偏好選單與「關於」元件。
 
@@ -36,9 +36,9 @@ ToolKeeper/
 │  │  ├─ MainWindow.xaml.cs
 │  │  ├─ app.manifest
 │  │  └─ MarkPad.csproj
-│  ├─ CabiDock/              # 過渡期：既有 002 實作與獨立驗證入口
-│  ├─ ToolKeeper/            # 最終單一主執行入口
-│  ├─ ToolKeeper.Desktop/    # 目標模組；由 CabiDock 桌面能力逐步整理而來
+│  ├─ CabiDock/              # 僅 README 指向桌面模組，無 App Project
+│  ├─ ToolKeeper/            # 單一主入口、平台生命週期與 Launcher
+│  ├─ ToolKeeper.Desktop/    # 已抽出的桌面模組，namespace CabiDock
 │  ├─ ToolKeeper.UI/
 │  └─ ConvAnvil/
 │
@@ -58,7 +58,7 @@ ToolKeeper/
 
 汗青、ConvAnvil 與未來獨立產品仍優先維持單一 App Project，不為低價小工具預先拆分大量業務層。
 
-CabiDock 是特殊案例：它已成為 ToolKeeper 的桌面能力，因此最終由 ToolKeeper 主程式管理生命週期，但桌面整合仍保持獨立模組邊界。**單一執行入口不等於單一 Project。**
+CabiDock 是特殊案例：它已成為 ToolKeeper 的桌面能力，由 ToolKeeper 主程式管理生命週期，桌面整合保持獨立模組邊界。**單一執行入口不等於單一 Project。**
 
 MarkPad 的產品邏輯維持在單一 App Project：
 
@@ -86,7 +86,7 @@ src/MarkPad/MarkPad.csproj
 
 > 先重複，再抽象；不要為想像中的未來抽象。
 
-2026-09-28 依實際共用需求，ToolKeeper、CabiDock 現有設定介面與 ConvAnvil 抽取 WPF 共用視窗至 `src/ToolKeeper.UI/ToolKeeper.UI.csproj`。後續 CabiDock 併入 ToolKeeper 後，共用 UI 與桌面業務模組仍分開：`ToolKeeper.UI` 管介面共用，CabiDock／`ToolKeeper.Desktop` 管桌面能力。
+2026-09-28 依實際共用需求，ToolKeeper、CabiDock 設定介面與 ConvAnvil 抽取 WPF 共用視窗至 `src/ToolKeeper.UI/ToolKeeper.UI.csproj`。本輪整併維持分工：`ToolKeeper.UI` 管介面共用，`ToolKeeper.Desktop` 管桌面能力。
 
 共用 `AppWindow` 負責：
 
@@ -96,7 +96,7 @@ src/MarkPad/MarkPad.csproj
 - 簡介右側保留可選的 `HeaderActions` 插槽供離線標示等內容；002 的產品操作放在自身 `Workspace`。
 - 剩餘 `Workspace` 區域，承載產品自己的功能介面。
 
-目前 ToolKeeper、CabiDock 設定視窗與 ConvAnvil 的主視窗使用 `AppWindow`。`Window.Content` 由共用視窗結構持有，產品內容指定給 `Workspace`。整併完成後，CabiDock 不再需要作為第二個產品主入口，但分類、桌面整合與 Recovery 等業務邏輯仍留在桌面模組；ToolKeeper 只負責組合、生命週期與平台入口。
+目前 ToolKeeper、CabiDock 設定視窗與 ConvAnvil 的主視窗使用 `AppWindow`。`Window.Content` 由共用視窗結構持有，產品內容指定給 `Workspace`。CabiDock 設定視窗由桌面模組持有，ToolKeeper 主視窗只派發產品啟動請求，包含 002 桌面設定；桌面啟停由設定視窗或系統匣提供，`PlatformController` 負責組合、生命週期與平台入口。
 
 同日新增可獨立採用的語言、主題／字體、偏好選單與「關於」元件，先接入汗青，再依使用者要求接入 `AppWindow` 及三個工具的功能區。汗青的 `MainWindow` 仍繼承 WPF `Window`，保留自訂標題列、文件分頁及既有操作入口；全品牌標題規則仍適用。
 
@@ -153,7 +153,7 @@ docs/products/001_MarkPad.md
 
 ## Future Products
 
-未來一般工具仍直接新增獨立 App：
+未來工具先決定是否單獨上架；只有單獨上架才新增獨立 App Project。內建工具由宿主管理，可有獨立視窗與清楚程式模組：
 
 ```text
 src/
@@ -162,11 +162,11 @@ src/
 ├─ ToolKeeper.UI/
 ├─ MarkPad/
 ├─ ConvAnvil/
-├─ Product004/
+├─ FutureStandaloneProduct/  # 僅在單獨上架時建立
 └─ ...
 ```
 
-一般產品仍以 Standalone App 為原則；**CabiDock 不再套用這條規則**，因為它已成為 ToolKeeper 平台的桌面層。
+002、004、005 都是宿主內的工具；001、003 保留各自業務與獨立 EXE。工具目錄一律保留各產品編號，不以是否獨立程序決定要不要顯示。
 
 ToolKeeper 與桌面模組的責任分界：
 
@@ -175,6 +175,20 @@ ToolKeeper 與桌面模組的責任分界：
 - **ToolKeeper.UI**：可共用的視窗、主題、語言、字體、偏好與 About UI。
 - **獨立工具**：自己的產品業務與獨立執行檔。
 
-「工具番」桌面群組是平台資料驅動的特殊群組，不依靠一般副檔名分類：工具安裝或可啟動後可直接出現在群組，讓未來大量工具不必各自在桌面留下傳統捷徑。
+「工具番」桌面群組是平台資料驅動的特殊群組，呈現 001 至 005，不依靠一般副檔名分類或傳統捷徑。它固定以大的展開模式顯示，不因點標題、滑鼠離開或展開其他分類而收合；可拖曳、調整大小與保存配置，仍受主螢幕工作區限制。一般七個分類維持點擊展開與離開三秒收合。
 
 ToolKeeper 本體已建立 WPF App Project；`FileHashService` 以串流一次計算三種 HASH，`IconConversionService` 使用 Windows WPF 影像解碼器與 ICO 封裝在本機轉檔。內建功能與目前實作範圍見 [實作與問題報告](TOOLKEEPER-IMPLEMENTATION.md)。
+
+## 已實作的平台整併
+
+- `ToolKeeper.App` 解析啟動參數、處理單一實例、診斷與恢復模式；`PlatformController` 持有主視窗、平台系統匣、產品目錄及 `DesktopModule`。
+- `DesktopModule` 提供 `Start`、`ShowSettings`、`SetEnabled`、`SetTools`、`PrepareExit` 與 `Dispose`；Shell／HWND、分類、監看與桌面資料保存都留在類別庫。
+- `HostWindowLifetime` 統一主視窗關閉／最小化隱藏至系統匣。設定視窗只隱藏；系統匣退出及登出先呼叫 `PrepareExit`，撤下群組、恢復原生圖示並允許視窗真正關閉。
+- 正式恢復助手由目前的 `ToolKeeper.exe --desktop-recovery` 私有模式啟動，獨立監控父程序與恢復原生桌面；它沒有自己的 EXE，也不是第二個產品入口。
+- `ProductCatalogService` 是主視窗與「工具番」桌面群組的共同資料來源，列出 001 汗青、002 CabiDock、003 ConvAnvil、004 Hash Checker、005 Image → ICO。002／004／005 由宿主開啟各自視窗；001／003 先檢查已知產品 protocol，再檢查受限本機路徑，有正式 Store ID 才提供取得。每十秒、主視窗啟用與系統匣開啟時刷新，啟動前再檢查一次。
+- 所有入口使用 `toolkeeper://run/001` 至 `toolkeeper://run/005`，由 ToolKeeper 驗證並派發。桌面模組只將 `DesktopTool.ActivationUri` 傳回宿主 callback，不解析產品、不直接啟動產品程序；已上架產品自己的 protocol 是宿主派發後的實際啟動方式。
+- 「工具番」群組不寫入七個分類的規則、不加入檔案分類紀錄，也不建立桌面捷徑；固定展開的群組配置保存於既有 `state.json`。初始化或更新工具列表沿用保存的展開尺寸。
+
+平台偏好預設位於 `%LOCALAPPDATA%\ToolKeeper\ToolKeeper\platform.json`，其中 `desktopEnabled` 在首次使用及無平台偏好的既有使用者預設為 `true`。主檔損毀先嘗試健康備份；無可用備份時預設停用並保留壞檔，介面顯示保存警告。桌面原有資料仍在 `%LOCALAPPDATA%\ToolKeeper\CabiDock`。
+
+`--data-directory` 指定桌面測試資料位置，並把平台與本體 UI 偏好隔離至其 `toolkeeper-host` 子目錄；`--desktop-directory` 只掃描指定目錄，停用真實 Explorer 桌面接管。這些隔離模式與離屏測試不能取代真實桌面、Explorer 重啟與異常恢復驗收。

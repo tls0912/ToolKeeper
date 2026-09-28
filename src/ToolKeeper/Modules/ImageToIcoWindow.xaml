@@ -1,0 +1,72 @@
+<ui:AppWindow x:Class="ToolKeeper.Modules.ImageToIcoWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:ui="clr-namespace:ToolKeeper.UI;assembly=ToolKeeper.UI"
+        MainName="Image → ICO" SubName="Icon Converter"
+        Width="760" Height="660" MinWidth="660" MinHeight="560">
+    <ui:AppWindow.Resources>
+        <ResourceDictionary><ResourceDictionary.MergedDictionaries>
+            <ResourceDictionary Source="/ToolKeeper;component/Modules/UtilityStyles.xaml" />
+        </ResourceDictionary.MergedDictionaries></ResourceDictionary>
+    </ui:AppWindow.Resources>
+    <ui:AppWindow.HeaderActions>
+        <Border VerticalAlignment="Center" Background="{DynamicResource HoverBrush}" CornerRadius="12" Padding="12,6">
+            <TextBlock Text="{DynamicResource ToolKeeper.Badge}" Foreground="{DynamicResource AccentBrush}" FontSize="12" />
+        </Border>
+    </ui:AppWindow.HeaderActions>
+    <ui:AppWindow.Workspace>
+        <Grid>
+            <Grid.RowDefinitions><RowDefinition Height="*" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
+            <Border x:Name="IconDropZone" Style="{StaticResource DropCard}" AllowDrop="True"
+                    PreviewDragEnter="IconDragOver" PreviewDragOver="IconDragOver" PreviewDragLeave="DropZoneDragLeave" PreviewDrop="IconDrop">
+                <Grid>
+                    <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="*" MinHeight="60" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
+                    <StackPanel>
+                        <DockPanel>
+                            <TextBlock DockPanel.Dock="Right" Text="005" Foreground="{DynamicResource MutedBrush}" FontSize="24" />
+                            <TextBlock Text="{DynamicResource ToolKeeper.IconTitle}" FontSize="20" FontWeight="SemiBold" />
+                        </DockPanel>
+                        <TextBlock Text="{DynamicResource ToolKeeper.IconDropHint}" Margin="0,8,0,4" />
+                        <TextBlock Text="{DynamicResource ToolKeeper.IconFormats}" Style="{StaticResource Muted}" />
+                        <DockPanel Margin="0,14,0,12">
+                            <Button x:Name="ChooseImagesButton" Content="{DynamicResource ToolKeeper.ChooseImages}" Click="ChooseImagesClick" DockPanel.Dock="Left" />
+                            <Button x:Name="CancelIconsButton" Content="{DynamicResource ToolKeeper.Cancel}" Click="CancelIconsClick" DockPanel.Dock="Right" Margin="8,0,0,0" Visibility="Collapsed" IsEnabled="False" />
+                            <TextBlock Text="{DynamicResource ToolKeeper.OriginalFolder}" Style="{StaticResource Muted}" VerticalAlignment="Center" Margin="10,0,0,0" />
+                        </DockPanel>
+                    </StackPanel>
+                    <Grid Grid.Row="1" Margin="0,0,0,12">
+                        <Border x:Name="IconEmptyState" Background="{DynamicResource WindowBackground}" CornerRadius="8" BorderBrush="{DynamicResource LineBrush}" BorderThickness="1" Padding="8">
+                            <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                                <TextBlock Text="ICO" FontSize="30" FontWeight="Light" Foreground="{DynamicResource AccentBrush}" HorizontalAlignment="Center" />
+                                <TextBlock Text="{DynamicResource ToolKeeper.IconEmpty}" Foreground="{DynamicResource MutedBrush}" Margin="0,8,0,0" HorizontalAlignment="Center" />
+                            </StackPanel>
+                        </Border>
+                        <ListBox x:Name="IconResults" Visibility="Collapsed" BorderThickness="0" Background="Transparent" Foreground="{DynamicResource TextBrush}"
+                                 ScrollViewer.HorizontalScrollBarVisibility="Disabled" HorizontalContentAlignment="Stretch" AutomationProperties.Name="{DynamicResource ToolKeeper.IconResults}">
+                            <ListBox.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Padding="10" Margin="0,0,0,6" Background="{DynamicResource WindowBackground}" CornerRadius="6">
+                                        <StackPanel>
+                                            <TextBlock Text="{Binding FileName}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" TextWrapping="NoWrap" ToolTip="{Binding SourcePath}" />
+                                            <TextBlock Text="{Binding Message}" Foreground="{DynamicResource MutedBrush}" FontSize="12" Margin="0,4,0,0" />
+                                            <TextBlock Text="{Binding OutputPath}" FontSize="11" Foreground="{DynamicResource AccentBrush}" Margin="0,4,0,0" TextTrimming="CharacterEllipsis" TextWrapping="NoWrap" ToolTip="{Binding OutputPath}" />
+                                            <Button Content="{DynamicResource ToolKeeper.ShowInFolder}" Click="ShowIconClick" HorizontalAlignment="Left" Margin="0,7,0,0" Padding="9,4" MinHeight="27" FontSize="12">
+                                                <Button.Style><Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}"><Style.Triggers><DataTrigger Binding="{Binding Success}" Value="False"><Setter Property="Visibility" Value="Collapsed" /></DataTrigger></Style.Triggers></Style></Button.Style>
+                                            </Button>
+                                        </StackPanel>
+                                    </Border>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+                    </Grid>
+                    <StackPanel Grid.Row="2">
+                        <TextBlock Text="{DynamicResource ToolKeeper.IconSizes}" Style="{StaticResource Muted}" />
+                        <TextBlock Text="{DynamicResource ToolKeeper.IconNames}" Style="{StaticResource Muted}" Margin="0,4,0,0" />
+                        <TextBlock x:Name="IconStatus" Text="{DynamicResource ToolKeeper.NoImages}" Foreground="{DynamicResource AccentBrush}" FontSize="12" Margin="0,10,0,0" AutomationProperties.LiveSetting="Polite" />
+                    </StackPanel>
+                </Grid>
+            </Border>
+            <TextBlock x:Name="PrivacyNotice" Grid.Row="1" Text="{DynamicResource ToolKeeper.Privacy}" Style="{StaticResource Muted}" Margin="2,8,0,0" FontSize="11" />
+        </Grid>
+    </ui:AppWindow.Workspace>
+</ui:AppWindow>
