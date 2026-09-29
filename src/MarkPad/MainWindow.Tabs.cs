@@ -4,6 +4,7 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using MarkPad.Models;
+using MarkPad.Theming;
 
 namespace MarkPad;
 
@@ -44,7 +45,7 @@ public partial class MainWindow
             var row = new DockPanel { LastChildFill = true };
             var close = new Button { Content = "×", Width = Math.Max(22, UiSize(22)), Height = Math.Max(24, UiSize(24)), Padding = new Thickness(0), Visibility = active ? Visibility.Visible : Visibility.Hidden, ToolTip = T("Close document", "關閉文件", "文書を閉じる") };
             DockPanel.SetDock(close, Dock.Right); row.Children.Add(close);
-            row.Children.Add(new TextBlock { Text = TabLabel(tab), TextTrimming = TextTrimming.CharacterEllipsis, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 0, 4, 0), FontWeight = active ? FontWeights.SemiBold : FontWeights.Normal });
+            row.Children.Add(new ChromeTextShadow(new TextBlock { Text = TabLabel(tab), TextTrimming = TextTrimming.CharacterEllipsis, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 0, 4, 0), FontWeight = active ? FontWeights.SemiBold : FontWeights.Normal }));
             var button = new Button { Content = row, Width = Math.Min(widths[tab], available), Height = Math.Max(34, UiSize(34)), Margin = new Thickness(1, UiSize(5), 1, 0), Padding = new Thickness(10, 2, 5, 2), Background = active ? B("ChromeTabBrush") : Brushes.Transparent, ToolTip = tab.FilePath ?? tab.DisplayName, AllowDrop = true };
             System.Windows.Automation.AutomationProperties.SetName(button, TabLabel(tab));
             close.Click += async (_, e) => { e.Handled = true; await GuardAsync(() => CloseDocumentAsync(tab)); };

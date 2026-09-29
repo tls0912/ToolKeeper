@@ -40,6 +40,23 @@ public sealed class SettingsServiceTests
     }
 
     [Theory]
+    [InlineData("[2, 5]", new int[] { 2, 5 })]
+    [InlineData("[6, 3, 3, 1, 0, 7, -1]", new int[] { 1, 3, 6 })]
+    [InlineData("[]", new int[] { })]
+    [InlineData("[0, 7, -1]", new int[] { })]
+    [InlineData("null", new int[] { 1, 2, 3, 4, 5, 6 })]
+    public void PdfOutlineLevelsNormalizeAndPersistWithoutRestoringDisabledLevels(string savedLevels, int[] expected)
+    {
+        using var directory = new TestDirectory();
+        File.WriteAllText(directory.FilePath("settings.json"), "{\"PdfOutlineLevels\":" + savedLevels + "}");
+
+        var service = new SettingsService(directory.PathName);
+        Assert.Equal(expected, service.Settings.PdfOutlineLevels);
+        service.Save();
+        Assert.Equal(expected, new SettingsService(directory.PathName).Settings.PdfOutlineLevels);
+    }
+
+    [Theory]
     [InlineData("System", "ja-JP", "ja")]
     [InlineData("System", "zh-TW", "zh-TW")]
     [InlineData("System", "zh-HK", "zh-TW")]
@@ -195,6 +212,7 @@ public sealed class SettingsServiceTests
         Assert.Equal(24, restored.PreviewFontSize);
         Assert.Equal("Consolas", restored.EditorFontFamily);
         Assert.Equal(18, restored.EditorFontSize);
+        Assert.Equal(new[] { 1, 2, 3, 4, 5, 6 }, restored.PdfOutlineLevels);
     }
 
     [Fact]
@@ -220,6 +238,7 @@ public sealed class SettingsServiceTests
         settings.Settings.WindowHeight = 720;
         settings.Settings.CodeLineNumbers = false;
         settings.Settings.EmojiShortcodes = false;
+        settings.Settings.PdfOutlineLevels = [];
         settings.AddRecent(directory.FilePath("recent.md"));
         settings.Reset();
 
@@ -249,6 +268,7 @@ public sealed class SettingsServiceTests
         Assert.False(settings.WindowMaximized);
         Assert.True(settings.CodeLineNumbers);
         Assert.True(settings.EmojiShortcodes);
+        Assert.Equal(new[] { 1, 2, 3, 4, 5, 6 }, settings.PdfOutlineLevels);
         Assert.Empty(settings.RecentFiles);
     }
 }

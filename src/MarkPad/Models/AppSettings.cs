@@ -22,6 +22,7 @@ public sealed class AppSettings
     public bool WindowMaximized { get; set; }
     public bool CodeLineNumbers { get; set; } = true;
     public bool EmojiShortcodes { get; set; } = true;
+    public int[] PdfOutlineLevels { get; set; } = [1, 2, 3, 4, 5, 6];
     public List<string> RecentFiles { get; set; } = [];
 
     public string ResolveLanguage(string systemLanguage) => UiLanguage.Resolve(Language, systemLanguage);

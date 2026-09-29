@@ -47,7 +47,7 @@ public partial class MainWindow
         var toggleLabel = _railExpanded ? T("Collapse sidebar", "收合工具列", "サイドバーを閉じる") : T("Expand sidebar", "展開工具列", "サイドバーを開く");
         var toggleRow = new StackPanel { Orientation = Orientation.Horizontal };
         toggleRow.Children.Add(new TextBlock { Text = _railExpanded ? "\uE76B" : "\uE700", FontFamily = new FontFamily("Segoe MDL2 Assets"), FontSize = 15, Width = 28, TextAlignment = TextAlignment.Center, VerticalAlignment = VerticalAlignment.Center });
-        if (_railExpanded) toggleRow.Children.Add(new TextBlock { Text = toggleLabel, Margin = new Thickness(8, 0, 0, 0), VerticalAlignment = VerticalAlignment.Center });
+        if (_railExpanded) toggleRow.Children.Add(new ChromeTextShadow(new TextBlock { Text = toggleLabel, Margin = new Thickness(8, 0, 0, 0), VerticalAlignment = VerticalAlignment.Center }));
         RailToggleButton.Content = toggleRow;
         RailToggleButton.ToolTip = _railExpanded ? null : toggleLabel;
         System.Windows.Automation.AutomationProperties.SetName(RailToggleButton, toggleLabel);
@@ -103,8 +103,8 @@ public partial class MainWindow
             group.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
             group.ColumnDefinitions.Add(new ColumnDefinition());
             Grid.SetColumn(rule, 1);
-            group.Children.Add(new TextBlock { Text = name, Foreground = B("MutedBrush"), FontSize = UiSize(11),
-                Padding = new Thickness(0, 0, 6, 0), HorizontalAlignment = HorizontalAlignment.Left, VerticalAlignment = VerticalAlignment.Center });
+            group.Children.Add(new ChromeTextShadow(new TextBlock { Text = name, Foreground = B("MutedBrush"), FontSize = UiSize(11),
+                Padding = new Thickness(0, 0, 6, 0), HorizontalAlignment = HorizontalAlignment.Left, VerticalAlignment = VerticalAlignment.Center }));
         }
         ActionPanel.Children.Add(group);
     }
@@ -126,7 +126,7 @@ public partial class MainWindow
                 var key = new TextBlock { Text = shortcut, FontSize = UiSize(10), Foreground = B("MutedBrush"), VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(4, 0, 0, 0) };
                 DockPanel.SetDock(key, Dock.Right); heading.Children.Add(key);
             }
-            heading.Children.Add(new TextBlock { Text = label, FontSize = UiSize(12), FontWeight = FontWeights.SemiBold, TextTrimming = TextTrimming.CharacterEllipsis });
+            heading.Children.Add(new ChromeTextShadow(new TextBlock { Text = label, FontSize = UiSize(12), FontWeight = FontWeights.SemiBold, TextTrimming = TextTrimming.CharacterEllipsis }));
             details.Children.Add(heading);
             details.Children.Add(new TextBlock { Text = description, FontSize = UiSize(11), LineHeight = UiSize(14), LineStackingStrategy = LineStackingStrategy.BlockLineHeight,
                 Foreground = B("MutedBrush"), TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 2, 0, 0) });
@@ -147,6 +147,7 @@ public partial class MainWindow
         _dark = UiTheme.IsDark(Settings.Theme);
         UiTheme.ApplyResources(Resources, Settings.Theme, _dark);
         BambooChrome.ApplyResources(Resources, IsInkTheme, _dark);
+        ChromeTextShadow.ApplyResources(Resources, _dark);
         InkLandscape.Visibility = InkTitleStroke.Visibility = IsInkTheme ? Visibility.Visible : Visibility.Collapsed;
         EmptyMonogram.Text = IsInkTheme ? "竹" : "M↓";
         EmptyMonogram.Foreground = IsInkTheme ? new SolidColorBrush(_dark ? Color.FromRgb(215, 155, 137) : Color.FromRgb(166, 75, 60)) : B("MutedBrush");
@@ -267,6 +268,19 @@ public partial class MainWindow
         var preview = Section(T("Preview", "預覽", "プレビュー"));
         preview.Items.Add(Item(T("Code block line numbers", "程式碼區塊行號", "コードブロックの行番号"), () => { Settings.CodeLineNumbers = !Settings.CodeLineNumbers; App.ApplyPreferences(); }, Settings.CodeLineNumbers));
         preview.Items.Add(Item(T("Convert emoji shortcodes", "轉換 Emoji 短碼", "絵文字ショートコードを変換"), () => { Settings.EmojiShortcodes = !Settings.EmojiShortcodes; App.ApplyPreferences(); }, Settings.EmojiShortcodes));
+        var pdfOutline = Section(T("PDF chapter outline", "PDF章節大綱", "PDF の章アウトライン"));
+        foreach (var level in Enumerable.Range(1, 6))
+        {
+            var choice = Item(T($"H{level} · Heading {level}", $"H{level} · 第 {level} 級標題", $"H{level} · 見出し {level}"), () =>
+            {
+                Settings.PdfOutlineLevels = Settings.PdfOutlineLevels.Contains(level)
+                    ? Settings.PdfOutlineLevels.Where(value => value != level).ToArray()
+                    : Settings.PdfOutlineLevels.Append(level).Order().ToArray();
+                App.Preferences.Save();
+            }, Settings.PdfOutlineLevels.Contains(level));
+            choice.StaysOpenOnClick = true;
+            pdfOutline.Items.Add(choice);
+        }
         menu.Items.Add(new Separator());
         menu.Items.Add(Item(T("Reset settings…", "重設設定…", "設定をリセット…"), () =>
         {

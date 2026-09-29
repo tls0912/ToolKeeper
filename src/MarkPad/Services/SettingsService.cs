@@ -65,6 +65,8 @@ public sealed class SettingsService
         Settings.EditorFontSize = ValidNumber(Settings.EditorFontSize, 8, 72, defaults.EditorFontSize);
         Settings.WindowWidth = ValidNumber(Settings.WindowWidth, 480, 10000, defaults.WindowWidth);
         Settings.WindowHeight = ValidNumber(Settings.WindowHeight, 0, 10000, defaults.WindowHeight);
+        Settings.PdfOutlineLevels = (Settings.PdfOutlineLevels ?? defaults.PdfOutlineLevels)
+            .Where(level => level is >= 1 and <= 6).Distinct().Order().ToArray();
         Settings.RecentFiles = (Settings.RecentFiles ?? []).Where(path => !string.IsNullOrWhiteSpace(path))
             .Distinct(StringComparer.OrdinalIgnoreCase).Take(20).ToList();
     }

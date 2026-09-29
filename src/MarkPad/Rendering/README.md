@@ -16,6 +16,7 @@ Markdown Preview 相關邏輯集中在這裡。
 - `FindAsync(text, matchCase, backwards, restart)`：literal 搜尋；空字串會清除標記。支援跨 inline formatting 搜尋。
 - `GetSelectionAsync()`、`GetScrollAsync()`、`CloseOverlayAsync()`、`GoToAnchorAsync()`。
 - `ScrollToPositionAsync(position)`：依小數原稿行號連續對齊編輯器；捲至頂端或底端時同步到另一側的文件邊界。
+- `ExportPdfAsync(markdown, filePath, options, outputPath, overwrite, outlineLevels)`：專用匯出頁產生 A4 白底 PDF，含可跳轉的章節書籤。`outlineLevels` 未指定時收錄 H1–H6，空集合關閉書籤；排除的標題仍完整印出。
 - `PreviewOptions`：暗色、閱讀字型、字級（8–72）、code 行號、emoji、語系、唯讀。後者停用 task checkbox。
 
 `MessageReceived` 以 `PreviewMessage` 傳回 `link`、`edit`、`task`、`copy`、`copy-markdown`、`copy-link`、`search`、`scroll`、`shortcut`、`overlay`、`ready`、`error`。`Line` 與搜尋 `Index` 為 1-based；沒有結果時 `Index=0`。搜尋 `Flag` 表示已循環，task `Flag` 表示勾選狀態，overlay `Flag` 表示開啟。scroll 的 `SourcePosition` 是視窗頂端對應的小數原稿行號，`ScrollProgress` 是 0–1 捲動比例，`Flag` 標示同步或恢復位置產生的事件，以防止回授。主視窗負責檔案操作、剪貼簿與外部瀏覽器。
@@ -33,5 +34,9 @@ Markdown HTML 先經 HtmlSanitizer 元素／屬性／URI allowlist；文件無�
 `Resources/Preview.css` 與 `Preview.js` 以 embedded resource 打包，沒有 CDN 或外部 JavaScript。程式碼使用本機輕量 tokenizer；支援常見語言的 keyword/string/number/comment，其餘語言保留原始文字。Preview 提供 heading fold/anchor、code copy、table 自身捲動、圖片放大與 Ctrl+wheel/拖曳、純文字／Markdown 複製與右鍵選單。
 
 可選的 `PreviewPane(browserDataFolder)` 讓 smoke test 使用獨立的 WebView2 profile，不接觸使用者資料。
+
+PDF 匯出透過 WebView2 的 CDP `Page.printToPDF` 產生 tagged PDF 與 document outline，再循序 `IO.read` 寫入同目錄暫存檔；完成後才替換目標，失敗保留原 PDF。沿用 A4、15 mm 邊界、白底、圖片及字型載入等待。標題名稱沿用清理後的純文字大綱；只在隔離的匯出頁將未收錄層級改為 `role=presentation`，不更動 Markdown 或閱讀頁。CDP 呼叫及串流讀取設有逾時，`IO.close` 在成功或失敗時都嘗試執行。
+
+「更多 → PDF章節大綱」可獨立勾選 H1–H6，預設全開。`AppSettings.PdfOutlineLevels` 保存選擇；讀取設定時過濾非法層級並去重、排序，空集合保留為全部關閉。設定僅影響後續 PDF 匯出。
 
 捲動回歸檢查：`dotnet test tests/MarkPad.Tests/MarkPad.Tests.csproj` 包含真實 WPF／WebView2 連動；標記為 `Category=WebView2` 的測試需要已安裝 Runtime 且允許啟動瀏覽器子程序。`node --test tests/MarkPad.Tests/PreviewScroll.test.cjs` 驗證預覽位置插值、文件邊界與延遲事件抑制。
