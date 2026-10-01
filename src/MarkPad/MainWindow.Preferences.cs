@@ -5,10 +5,8 @@ using System.Windows.Controls.Primitives;
 using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
-using System.Windows.Shell;
 using System.Windows.Threading;
 using Microsoft.Win32;
-using MarkPad.Theming;
 using ToolKeeper.UI;
 
 namespace MarkPad;
@@ -42,7 +40,8 @@ public partial class MainWindow
         // The old 44px layout slot clipped expanded labels and their mouse hit targets.
         RailColumn.Width = new GridLength(Rail.Width);
         // The full-screen title reveal must not cover the always-available sidebar toggle.
-        TitleBar.Margin = TopReveal.Margin = new Thickness(_fullScreen ? Rail.Width : 0, 0, 0, 0);
+        _frame.CaptionLeftInset = _fullScreen ? Rail.Width : 0;
+        StatusToast.Margin = new Thickness(20, _fullScreen ? UiTitleHeight + 24 : 24, 20, 0);
         ActionScrollViewer.VerticalScrollBarVisibility = _railExpanded ? ScrollBarVisibility.Auto : ScrollBarVisibility.Hidden;
         var toggleLabel = _railExpanded ? T("Collapse sidebar", "收合工具列", "サイドバーを閉じる") : T("Expand sidebar", "展開工具列", "サイドバーを開く");
         var toggleRow = new StackPanel { Orientation = Orientation.Horizontal };
@@ -143,25 +142,14 @@ public partial class MainWindow
     public void ApplyPreferences()
     {
         if (_disposed) return;
-        ApplyUiTypography();
         _dark = UiTheme.IsDark(Settings.Theme);
-        UiTheme.ApplyResources(Resources, Settings.Theme, _dark);
-        BambooChrome.ApplyResources(Resources, IsInkTheme, _dark);
-        ChromeTextShadow.ApplyResources(Resources, _dark);
-        InkLandscape.Visibility = InkTitleStroke.Visibility = IsInkTheme ? Visibility.Visible : Visibility.Collapsed;
+        UiAppearance.ApplyResources(Resources, Settings.Theme, UiLanguage, Settings.UiFontFamily, Settings.UiFontSize,
+            Settings.InterfaceTextShadowEnabled, Settings.InterfaceTextShadowThickness);
+        ApplyUiTypography();
+        _frame.ApplyLanguage(UiLanguage);
+        InkLandscape.Visibility = IsInkTheme ? Visibility.Visible : Visibility.Collapsed;
         EmptyMonogram.Text = IsInkTheme ? "竹" : "M↓";
         EmptyMonogram.Foreground = IsInkTheme ? new SolidColorBrush(_dark ? Color.FromRgb(215, 155, 137) : Color.FromRgb(166, 75, 60)) : B("MutedBrush");
-        if (IsInkTheme)
-        {
-            var accent = ((SolidColorBrush)B("AccentBrush")).Color;
-            InkTitleStroke.Background = new LinearGradientBrush(new GradientStopCollection
-            {
-                new(Color.FromArgb(0, accent.R, accent.G, accent.B), 0),
-                new(Color.FromArgb(153, accent.R, accent.G, accent.B), 0.22),
-                new(Color.FromArgb(64, accent.R, accent.G, accent.B), 0.85),
-                new(Color.FromArgb(0, accent.R, accent.G, accent.B), 1)
-            }, new Point(0, 0), new Point(1, 0));
-        }
         foreach (var view in _documentViews.Values)
         {
             view.Editor.ApplyOptions(_dark, EditorFontName, Settings.EditorFontSize, IsInkTheme);
@@ -181,9 +169,6 @@ public partial class MainWindow
         CloseSearchButton.ToolTip = T("Close search", "關閉搜尋", "検索を閉じる");
         PreviousSearchButton.ToolTip = T("Previous  ·  Shift+F3", "上一個  ·  Shift+F3", "前へ  ·  Shift+F3");
         NextSearchButton.ToolTip = T("Next  ·  F3", "下一個  ·  F3", "次へ  ·  F3");
-        MinimizeButton.ToolTip = T("Minimize", "最小化", "最小化");
-        MaximizeButton.ToolTip = T("Maximize / restore", "最大化／還原", "最大化／元に戻す");
-        WindowCloseButton.ToolTip = T("Close window", "關閉視窗", "ウィンドウを閉じる");
         OverflowButton.ToolTip = T("Documents", "文件分頁", "文書一覧");
 
         RefreshEditorToolbar(); BuildActions(); BuildTabs(); UpdateStatus();
@@ -355,12 +340,12 @@ public partial class MainWindow
 
     private void SetupFullScreen()
     {
-        TopReveal.MouseEnter += (_, _) => RevealFullScreenTitle();
+        _frame.CaptionRevealRequested += (_, _) => RevealFullScreenTitle();
         _fullScreenTimer.Tick += (_, _) =>
         {
             if (!_fullScreen) { _fullScreenTimer.Stop(); return; }
-            if (TitleBar.IsMouseOver || _flyout?.IsOpen == true) return;
-            TitleBar.Visibility = Visibility.Collapsed;
+            if (_frame.IsCaptionMouseOver || _flyout?.IsOpen == true) return;
+            _frame.IsCaptionVisible = false;
             _fullScreenTimer.Stop();
         };
     }
@@ -368,7 +353,7 @@ public partial class MainWindow
     private void RevealFullScreenTitle()
     {
         if (!_fullScreen) return;
-        TitleBar.Visibility = Visibility.Visible;
+        _frame.IsCaptionVisible = true;
         _fullScreenTimer.Stop(); _fullScreenTimer.Start();
     }
 
@@ -379,27 +364,20 @@ public partial class MainWindow
             _beforeFullScreenState = WindowState;
             _beforeFullScreen = WindowState == WindowState.Normal ? new Rect(Left, Top, Width, Height) : RestoreBounds;
             _fullScreen = true;
+            _frame.IsFullScreen = true;
             WindowState = WindowState.Normal;
             var bounds = MonitorWorkArea.Get(this, full: true);
             Left = bounds.Left; Top = bounds.Top; Width = bounds.Width; Height = bounds.Height;
             ResizeMode = ResizeMode.NoResize;
-            WindowChrome.SetWindowChrome(this, new WindowChrome { CaptionHeight = 0, ResizeBorderThickness = new Thickness(0), GlassFrameThickness = new Thickness(0) });
-            TitleRow.Height = new GridLength(0);
-            TitleBar.Height = UiTitleHeight; TitleBar.VerticalAlignment = VerticalAlignment.Top; Grid.SetRowSpan(TitleBar, 2);
-            TitleBar.Visibility = Visibility.Collapsed;
             Rail.Visibility = Visibility.Visible;
-            TopReveal.Visibility = Visibility.Visible;
         }
         else
         {
             _fullScreen = false; _fullScreenTimer.Stop();
             ResizeMode = ResizeMode.CanResize;
-            WindowChrome.SetWindowChrome(this, new WindowChrome { CaptionHeight = UiTitleHeight, ResizeBorderThickness = new Thickness(6), GlassFrameThickness = new Thickness(0), CornerRadius = new CornerRadius(4), UseAeroCaptionButtons = false });
+            _frame.IsFullScreen = false;
             Left = _beforeFullScreen.Left; Top = _beforeFullScreen.Top; Width = _beforeFullScreen.Width; Height = _beforeFullScreen.Height; WindowState = _beforeFullScreenState;
-            TitleRow.Height = new GridLength(UiTitleHeight);
-            TitleBar.Height = double.NaN; TitleBar.VerticalAlignment = VerticalAlignment.Stretch; Grid.SetRowSpan(TitleBar, 1);
-            TitleBar.Visibility = Rail.Visibility = Visibility.Visible;
-            TopReveal.Visibility = Visibility.Collapsed;
+            Rail.Visibility = Visibility.Visible;
         }
         BuildActions();
     }

@@ -1,51 +1,20 @@
 <Window x:Class="MarkPad.MainWindow"
  xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
- xmlns:theming="clr-namespace:MarkPad.Theming"
- xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
+ xmlns:ui="clr-namespace:ToolKeeper.UI;assembly=ToolKeeper.UI"
  Title="汗青 - Markdown Writer" Icon="Assets/MarkPad.ico" Width="900" Height="720" MinWidth="640" MinHeight="420"
  WindowStyle="None" ResizeMode="CanResize" WindowStartupLocation="CenterScreen"
  Background="{DynamicResource ChromeBackgroundBrush}" Foreground="{DynamicResource TextBrush}"
  FontFamily="Segoe UI, Microsoft JhengHei UI" FontSize="13" AllowDrop="True">
- <shell:WindowChrome.WindowChrome>
-  <shell:WindowChrome CaptionHeight="40" ResizeBorderThickness="6" CornerRadius="4" GlassFrameThickness="0" UseAeroCaptionButtons="False" />
- </shell:WindowChrome.WindowChrome>
  <Window.Resources>
   <ResourceDictionary>
    <ResourceDictionary.MergedDictionaries>
     <ResourceDictionary Source="/ToolKeeper.UI;component/Resources/UiStyles.xaml" />
-    <ResourceDictionary Source="Resources/ChromeTextStyles.xaml" />
    </ResourceDictionary.MergedDictionaries>
-   <!-- Only the custom title bar needs caption-area button hit testing. -->
-   <Style TargetType="Button" BasedOn="{StaticResource UiButtonStyle}">
-    <Setter Property="shell:WindowChrome.IsHitTestVisibleInChrome" Value="True" />
-    <Setter Property="ContentTemplateSelector" Value="{StaticResource ChromeButtonTextSelector}" />
-   </Style>
   </ResourceDictionary>
  </Window.Resources>
- <Border BorderBrush="{DynamicResource LineBrush}" BorderThickness="1">
-  <Grid x:Name="RootGrid">
-   <Grid.RowDefinitions><RowDefinition x:Name="TitleRow" Height="40" /><RowDefinition Height="*" /></Grid.RowDefinitions>
-   <Border x:Name="TitleBar" Panel.ZIndex="30" Background="{DynamicResource ChromeTitleBrush}" BorderBrush="{DynamicResource LineBrush}" BorderThickness="0,0,0,1">
-    <Grid>
-     <Grid.ColumnDefinitions><ColumnDefinition x:Name="BrandColumn" Width="Auto" /><ColumnDefinition Width="*" /><ColumnDefinition Width="32" /><ColumnDefinition Width="126" /></Grid.ColumnDefinitions>
-     <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="14,0,12,0">
-      <Image Source="Assets/MarkPad.ico" Width="18" Height="18" Margin="0,0,7,0" RenderOptions.BitmapScalingMode="HighQuality" />
-      <theming:ChromeTextShadow><TextBlock x:Name="WindowTitleText" Text="{Binding Title, RelativeSource={RelativeSource AncestorType=Window}}" FontWeight="SemiBold" VerticalAlignment="Center" /></theming:ChromeTextShadow>
-     </StackPanel>
-     <Grid x:Name="TabsArea" Grid.Column="1" ClipToBounds="True" shell:WindowChrome.IsHitTestVisibleInChrome="True"><StackPanel x:Name="TabsPanel" Orientation="Horizontal" /></Grid>
-     <Button x:Name="OverflowButton" Grid.Column="2" Content="⌄" Padding="4" ToolTip="Documents" />
-     <UniformGrid Grid.Column="3" Rows="1">
-      <Button x:Name="MinimizeButton" Content="&#xE921;" FontFamily="Segoe MDL2 Assets" Padding="0" ToolTip="Minimize" />
-      <Button x:Name="MaximizeButton" Content="&#xE922;" FontFamily="Segoe MDL2 Assets" Padding="0" ToolTip="Maximize" />
-      <Button x:Name="WindowCloseButton" Content="&#xE8BB;" FontFamily="Segoe MDL2 Assets" Padding="0" ToolTip="Close" />
-     </UniformGrid>
-     <Border x:Name="InkTitleStroke" Visibility="Collapsed" Height="2" Width="78" HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="13,0,0,0" IsHitTestVisible="False">
-      <Border.Background><LinearGradientBrush StartPoint="0,0" EndPoint="1,0"><GradientStop Color="#00456B61" Offset="0" /><GradientStop Color="#99456B61" Offset="0.22" /><GradientStop Color="#40456B61" Offset="0.85" /><GradientStop Color="#00456B61" Offset="1" /></LinearGradientBrush></Border.Background>
-     </Border>
-    </Grid>
-   </Border>
-   <Grid Grid.Row="1">
+ <Grid x:Name="RootGrid">
+   <Grid>
     <Grid.ColumnDefinitions><ColumnDefinition x:Name="RailColumn" Width="44" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
     <Border x:Name="ContentFrame" Grid.Column="1" Margin="12" CornerRadius="4" BorderBrush="{DynamicResource LineBrush}" BorderThickness="1" Background="{DynamicResource PaperBackgroundBrush}">
      <Grid ClipToBounds="True">
@@ -66,7 +35,7 @@
        </Viewbox>
        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Margin="24">
         <Border BorderBrush="{DynamicResource LineBrush}" BorderThickness="1" CornerRadius="8" Width="56" Height="64" Margin="0,0,0,20"><TextBlock x:Name="EmptyMonogram" Text="M↓" FontSize="23" FontWeight="SemiBold" Foreground="{DynamicResource MutedBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" /></Border>
-        <theming:ChromeTextShadow><TextBlock x:Name="EmptyLabel" Text="Drop or open Markdown" FontSize="{DynamicResource UiHeadingFontSize}" HorizontalAlignment="Center" TextWrapping="Wrap" /></theming:ChromeTextShadow>
+        <ui:ChromeTextShadow><TextBlock x:Name="EmptyLabel" Text="Drop or open Markdown" FontSize="{DynamicResource UiHeadingFontSize}" HorizontalAlignment="Center" TextWrapping="Wrap" /></ui:ChromeTextShadow>
         <Button x:Name="EmptyOpenButton" Content="Open a document  ·  Ctrl+O" Foreground="{DynamicResource AccentBrush}" Margin="0,12,0,0" />
        </StackPanel>
       </Grid>
@@ -108,8 +77,6 @@
      </DockPanel>
     </Border>
    </Grid>
-   <Border x:Name="StatusToast" Grid.RowSpan="2" Visibility="Collapsed" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="20,64,20,0" Padding="14,9" Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource LineBrush}" BorderThickness="1" CornerRadius="4" Panel.ZIndex="40"><TextBlock x:Name="StatusLabel" TextWrapping="Wrap" MaxWidth="520" /></Border>
-   <Border x:Name="TopReveal" Grid.RowSpan="2" Height="6" Background="Transparent" VerticalAlignment="Top" Panel.ZIndex="50" Visibility="Collapsed" />
+   <Border x:Name="StatusToast" Visibility="Collapsed" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="20,24,20,0" Padding="14,9" Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource LineBrush}" BorderThickness="1" CornerRadius="4" Panel.ZIndex="40"><TextBlock x:Name="StatusLabel" TextWrapping="Wrap" MaxWidth="520" /></Border>
   </Grid>
- </Border>
 </Window>

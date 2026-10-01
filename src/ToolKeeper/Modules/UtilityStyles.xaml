@@ -52,7 +52,7 @@
             <Setter Property="AutomationProperties.HelpText" Value="{DynamicResource ToolKeeper.HashHelp}" />
         </Style>
         <Style x:Key="DropCard" TargetType="Border">
-            <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
+            <Setter Property="Background" Value="{DynamicResource PaperBackgroundBrush}" />
             <Setter Property="BorderBrush" Value="{DynamicResource LineBrush}" />
             <Setter Property="BorderThickness" Value="1" />
             <Setter Property="CornerRadius" Value="12" />

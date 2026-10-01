@@ -14,11 +14,16 @@ using MarkPad.Editing;
 using MarkPad.Models;
 using MarkPad.Rendering;
 using MarkPad.Services;
+using ToolKeeper.UI;
 
 namespace MarkPad;
 
 public partial class MainWindow : Window
 {
+    private readonly WindowFrame _frame;
+    private readonly Grid TabsArea = new() { Name = "TabsArea", ClipToBounds = true };
+    private readonly StackPanel TabsPanel = new() { Name = "TabsPanel", Orientation = Orientation.Horizontal };
+    private readonly Button OverflowButton = new() { Name = "OverflowButton", Content = "⌄", Width = 32, Padding = new Thickness(4) };
     public List<DocumentTab> Documents { get; } = [];
     private DocumentTab? _current;
     private readonly DispatcherTimer _renderTimer = new() { Interval = TimeSpan.FromMilliseconds(300) };
@@ -40,6 +45,11 @@ public partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
+        var workspace = (UIElement)Content;
+        Content = null;
+        TabsArea.Children.Add(TabsPanel);
+        _frame = new WindowFrame(this) { Workspace = workspace, CaptionContent = TabsArea, CaptionActions = OverflowButton };
+        Content = _frame;
         if (Settings.RememberWindowSize && Settings.WindowHeight > 0)
         {
             Width = Math.Clamp(Settings.WindowWidth, MinWidth, Math.Max(MinWidth, SystemParameters.WorkArea.Width));
@@ -76,9 +86,6 @@ public partial class MainWindow : Window
         ContentFrame.SizeChanged += (_, _) => SearchPanel.MaxWidth = Math.Max(0,
             ContentFrame.ActualWidth - ContentFrame.BorderThickness.Left - ContentFrame.BorderThickness.Right
             - SearchPanel.Margin.Left - SearchPanel.Margin.Right);
-        MinimizeButton.Click += (_, _) => WindowState = WindowState.Minimized;
-        MaximizeButton.Click += (_, _) => WindowState = WindowState == WindowState.Maximized ? WindowState.Normal : WindowState.Maximized;
-        WindowCloseButton.Click += (_, _) => Close();
         EmptyOpenButton.Click += async (_, _) => await GuardAsync(OpenDialogAsync);
         OverflowButton.Click += (_, _) => ShowTabList();
         SetupSearch(); SetupRail(); SetupFullScreen(); SetupEditorToolbar();

@@ -32,7 +32,7 @@ public sealed class UiSmokeTests
             var content = HostWindowContent(window);
             Render(content, 940, 790, "settings-default.png");
             AssertSettingsHeaderLayout(window, content);
-            Render(content, 740, 620, "settings-compact.png");
+            Render(content, 740, 660, "settings-compact.png");
             AssertSettingsHeaderLayout(window, content);
             var previews = 0;
             var desktopToggles = 0;
@@ -46,7 +46,7 @@ public sealed class UiSmokeTests
             Assert.Equal(1, desktopToggles);
             var save = Descendants<Button>(content).Single(button => Equals(button.Content, "儲存並套用"));
             var point = save.TransformToAncestor(content).Transform(new Point());
-            Assert.InRange(point.Y + save.ActualHeight, 1, 621);
+            Assert.InRange(point.Y + save.ActualHeight, 1, 661);
             var saves = 0;
             window.SaveRequested += (_, _) => saves++;
             window.Categories.Add(new SettingsWindow.CategoryEditor(new CategoryDefinition
@@ -70,7 +70,7 @@ public sealed class UiSmokeTests
         try
         {
             var content = HostWindowContent(window);
-            Layout(content, 740, 620);
+            Layout(content, 740, 660);
             var grids = Descendants<DataGrid>(content).ToArray();
             var categories = grids[0];
             var rules = grids[1];
@@ -83,7 +83,7 @@ public sealed class UiSmokeTests
             category.Name = "尚未儲存的名稱";
             categories.SelectedItem = category;
             categories.ScrollIntoView(category);
-            Layout(content, 740, 620);
+            Layout(content, 740, 660);
             var editor = Descendants<TextBox>(categories).Single(box => ReferenceEquals(box.DataContext, category)
                 && System.Windows.Data.BindingOperations.GetBinding(box, TextBox.TextProperty)?.Path.Path == "ExtensionText");
             editor.Text = "md, test";
@@ -104,7 +104,7 @@ public sealed class UiSmokeTests
             {
                 window.SelectedLanguage = language;
                 window.SelectedTheme = theme;
-                Layout(content, 740, 620);
+                Layout(content, 740, 660);
                 Assert.Same(source, categories.ItemsSource);
                 Assert.Same(ruleSource, rules.ItemsSource);
                 Assert.Same(category, categories.SelectedItem);
@@ -125,8 +125,8 @@ public sealed class UiSmokeTests
                 Assert.Equal(((SolidColorBrush)window.Resources["TextBrush"]).Color,
                     Assert.IsType<SolidColorBrush>(editor.Foreground).Color);
                 var save = Descendants<Button>(content).Single(button => Equals(button.Content, saveLabel));
-                Assert.InRange(Bounds(save, content).Bottom, 1, 621);
-                Render(content, 740, 620, $"settings-{language}-{theme}.png");
+                Assert.InRange(Bounds(save, content).Bottom, 1, 661);
+                Render(content, 740, 660, $"settings-{language}-{theme}.png");
             }
             var saved = 0;
             window.SaveRequested += (_, args) =>
@@ -313,9 +313,45 @@ public sealed class UiSmokeTests
         finally { group.Close(); }
     });
 
+    [Fact]
+    public Task ReparentedGroupChangesThemeWithoutRebuildingItemsOrChangingItsLayout() => OnSta(() =>
+    {
+        var category = ConfigurationService.LoadDefaults().Categories.Single(value => value.Id == "documents");
+        var group = new GroupWindow(category, new GroupLayout { X = 20, Y = 30, Width = 420, Height = 350 });
+        try
+        {
+            group.UpdateItems([new DesktopItem(@"C:\CabiDock-preview\draft.md", false)], [category]);
+            group.Expand();
+            var card = Assert.IsType<Border>(group.CardContent);
+            group.Content = null;
+            var host = new Border { Child = card };
+            Layout(host, 420, 350);
+            var itemLabel = Descendants<TextBlock>(card).Single(text => text.Text == "draft.md");
+            var body = card.Child;
+            var bounds = new Rect(group.Left, group.Top, group.Width, group.Height);
+            var layoutChanges = 0;
+            group.LayoutChanged += _ => layoutChanges++;
+            foreach (var theme in new[] { "Ink", "InkDark", "Light", "Dark", "Ink" })
+            {
+                group.SetTheme(theme);
+                Layout(host, 420, 350);
+                if (UiTheme.IsInk(theme)) Assert.IsType<DrawingBrush>(card.Background);
+                else Assert.IsType<SolidColorBrush>(card.Background);
+                if (UiTheme.IsInk(theme)) Render(host, 420, 350, $"bamboo-group-{theme}.png");
+                Assert.Same(card.Resources["TextBrush"], TextElement.GetForeground(card));
+                Assert.Same(body, card.Child);
+                Assert.Same(itemLabel, Descendants<TextBlock>(card).Single(text => text.Text == "draft.md"));
+                Assert.Same(host, VisualTreeHelper.GetParent(card));
+                Assert.True(group.IsExpanded);
+                Assert.Equal(bounds, new Rect(group.Left, group.Top, group.Width, group.Height));
+            }
+            Assert.Equal(0, layoutChanges);
+        }
+        finally { group.Close(); }
+    });
     private static void AssertSettingsHeaderLayout(SettingsWindow window, FrameworkElement content)
     {
-        var title = Descendants<TextBlock>(content).Single(text => text.Text == "CabiDock");
+        var title = Descendants<TextBlock>(content).Single(text => text.Name == "WindowTitleText" && text.Text == window.Title);
         var description = Descendants<TextBlock>(content)
             .Single(text => text.Text == "桌面檔案自動分組，平時收起，需要時點開。");
         var titleBounds = Bounds(title, content);
@@ -326,7 +362,7 @@ public sealed class UiSmokeTests
         var actionsBounds = Bounds(actions, content);
         var workspaceBounds = Bounds(workspace, content);
         Assert.True(titleBounds.Height > 0);
-        Assert.InRange(titleBounds.Top, 0, 0.5);
+        Assert.InRange(titleBounds.Top, 1, 40);
         Assert.True(descriptionBounds.Height > 0);
         Assert.True(titleBounds.Bottom <= descriptionBounds.Top + 1);
         Assert.False(titleBounds.IntersectsWith(actionsBounds));
@@ -356,7 +392,7 @@ public sealed class UiSmokeTests
         host.Resources = window.Resources;
         if (window is AppWindow)
         {
-            host.SetResourceReference(Border.BackgroundProperty, "WindowBackground");
+            host.SetResourceReference(Border.BackgroundProperty, "ChromeBackgroundBrush");
             host.SetResourceReference(TextElement.FontFamilyProperty, "UiFontFamily");
             host.SetResourceReference(TextElement.FontSizeProperty, "UiFontSize");
             host.SetResourceReference(TextElement.ForegroundProperty, "TextBrush");

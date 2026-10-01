@@ -4,7 +4,6 @@ using System.Windows.Interop;
 using System.Windows.Media;
 using MarkPad.Models;
 using MarkPad.Services;
-using MarkPad.Theming;
 using ToolKeeper.UI;
 
 namespace MarkPad;
@@ -24,12 +23,13 @@ public sealed class StartupLicenseWindow : Window, IStartupLicenseDialogs
         WindowStartupLocation = WindowStartupLocation.CenterScreen;
         FontFamily = new FontFamily(UiTypography.ResolveInterfaceFont(settings.UiFontFamily, _language, UiTheme.IsInk(settings.Theme)));
         FontSize = settings.UiFontSize;
-        UiTheme.ApplyResources(Resources, settings.Theme);
-        BambooChrome.ApplyResources(Resources, UiTheme.IsInk(settings.Theme), UiTheme.IsDark(settings.Theme));
+        UiAppearance.ApplyResources(Resources, settings.Theme, _language, settings.UiFontFamily, settings.UiFontSize,
+            settings.InterfaceTextShadowEnabled, settings.InterfaceTextShadowThickness);
         Background = (Brush)Resources["PaperBackgroundBrush"];
         Foreground = (Brush)Resources["TextBrush"];
-        Content = new Border
+        var workspace = new Border
         {
+            Background = (Brush)Resources["PaperBackgroundBrush"],
             BorderBrush = (Brush)Resources["ChromeBackgroundBrush"], BorderThickness = new Thickness(8),
             Child = new TextBlock
             {
@@ -37,6 +37,10 @@ public sealed class StartupLicenseWindow : Window, IStartupLicenseDialogs
                 Text = T("Checking your Microsoft Store license…", "正在檢查 Microsoft Store 授權…", "Microsoft Store のライセンスを確認しています…")
             }
         };
+        var frame = new WindowFrame(this) { Workspace = workspace };
+        frame.ApplyMetrics(settings.UiFontSize);
+        frame.ApplyLanguage(_language);
+        Content = frame;
     }
 
     public async Task<bool> CheckAsync(StoreLicenseService service)

@@ -13,7 +13,7 @@ using ICSharpCode.AvalonEdit.Editing;
 using ICSharpCode.AvalonEdit.Indentation;
 using ICSharpCode.AvalonEdit.Rendering;
 using MarkPad.Models;
-using MarkPad.Theming;
+using ToolKeeper.UI;
 
 namespace MarkPad.Editing;
 

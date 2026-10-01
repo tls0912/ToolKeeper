@@ -51,7 +51,7 @@ public sealed class GroupWindow : Window
     public event EventHandler? Expanded;
     public event Action? InteractionEnded;
 
-    public GroupWindow(CategoryDefinition category, GroupLayout layout)
+    public GroupWindow(CategoryDefinition category, GroupLayout layout, string theme = "Light")
     {
         _category = category;
         Title = category.Name;
@@ -66,14 +66,18 @@ public sealed class GroupWindow : Window
         Top = double.IsFinite(layout.Y) ? layout.Y : 20;
         _expandedWidth = double.IsFinite(layout.Width) ? Math.Max(260, layout.Width) : 360;
         _expandedHeight = double.IsFinite(layout.Height) ? Math.Max(210, layout.Height) : 320;
-        ViewTheme.Apply(this);
+        ViewTheme.Apply(this, theme);
 
         _card = new Controls.Border
         {
-            Background = ViewTheme.Brush("#F7FAFA"), BorderBrush = ViewTheme.Brush("#BDD3D0"),
+            Resources = Resources,
             BorderThickness = new Thickness(1), CornerRadius = new CornerRadius(12),
             SnapsToDevicePixels = true, AllowDrop = true, ClipToBounds = true
         };
+
+        _card.SetResourceReference(Controls.Border.BackgroundProperty, "DesktopCardBrush");
+        _card.SetResourceReference(Controls.Border.BorderBrushProperty, "DesktopCardLineBrush");
+        _card.SetResourceReference(System.Windows.Documents.TextElement.ForegroundProperty, "TextBrush");
 
         _collapseTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(3) };
         _collapseTimer.Tick += (_, _) =>
@@ -92,13 +96,13 @@ public sealed class GroupWindow : Window
         _card.Child = grid;
         var header = _header = new Primitives.Thumb { Cursor = Cursors.SizeAll, ToolTip = "拖曳以移動並吸附；按住 Shift 暫停吸附；點擊展開或收合" };
         var headerBorder = new FrameworkElementFactory(typeof(Controls.Border));
-        headerBorder.SetValue(Controls.Border.BackgroundProperty, ViewTheme.Brush("#EAF2F1"));
+        headerBorder.SetResourceReference(Controls.Border.BackgroundProperty, "DesktopHeaderBrush");
         headerBorder.SetValue(Controls.Border.PaddingProperty, new Thickness(12, 0, 12, 0));
         var headerText = new FrameworkElementFactory(typeof(Controls.TextBlock));
         headerText.SetValue(Controls.TextBlock.TextProperty, category.Name);
         headerText.SetValue(Controls.TextBlock.TextTrimmingProperty, TextTrimming.CharacterEllipsis);
         headerText.SetValue(Controls.TextBlock.FontWeightProperty, FontWeights.SemiBold);
-        headerText.SetValue(Controls.TextBlock.ForegroundProperty, ViewTheme.Ink);
+        headerText.SetResourceReference(Controls.TextBlock.ForegroundProperty, "TextBrush");
         headerText.SetValue(VerticalAlignmentProperty, VerticalAlignment.Center);
         headerBorder.AppendChild(headerText);
         header.Template = new Controls.ControlTemplate(typeof(Primitives.Thumb)) { VisualTree = headerBorder };
@@ -119,10 +123,12 @@ public sealed class GroupWindow : Window
         };
         grid.Children.Add(header);
         _body = new Controls.Grid { Margin = new Thickness(8, 7, 8, 0) };
+        _body.SetResourceReference(Controls.Panel.BackgroundProperty, "DesktopContentBrush");
         Controls.Grid.SetRow(_body, 1);
         grid.Children.Add(_body);
         var footer = new Controls.Grid { Margin = new Thickness(10, 0, 8, 4) };
         _count = ViewTheme.Text("0 個項目", 11, ViewTheme.Muted);
+        _count.SetResourceReference(Controls.TextBlock.ForegroundProperty, "MutedBrush");
         footer.Children.Add(_count);
         _resize = new Primitives.Thumb
         {
@@ -132,7 +138,7 @@ public sealed class GroupWindow : Window
         };
         var resizeText = new FrameworkElementFactory(typeof(Controls.TextBlock));
         resizeText.SetValue(Controls.TextBlock.TextProperty, "◢");
-        resizeText.SetValue(Controls.TextBlock.ForegroundProperty, ViewTheme.Muted);
+        resizeText.SetResourceReference(Controls.TextBlock.ForegroundProperty, "MutedBrush");
         _resize.Template = new Controls.ControlTemplate(typeof(Primitives.Thumb)) { VisualTree = resizeText };
         _resize.DragStarted += (_, _) => BeginOperation();
         _resize.DragDelta += (_, e) =>
@@ -183,6 +189,8 @@ public sealed class GroupWindow : Window
         Closed += (_, _) => { _collapseTimer.Stop(); _hoverTimer.Stop(); };
         RenderBody();
     }
+
+    public void SetTheme(string theme) => ViewTheme.ApplyResources(Resources, theme);
 
     public void UpdateItems(IEnumerable<DesktopItem> items, IEnumerable<CategoryDefinition> categories)
     {
@@ -288,7 +296,9 @@ public sealed class GroupWindow : Window
             var content = new Controls.StackPanel();
             content.Children.Add(new Controls.TextBlock { Text = tool.Name, FontWeight = FontWeights.SemiBold });
             content.Children.Add(new Controls.TextBlock { Text = tool.Description, TextWrapping = TextWrapping.Wrap, FontSize = 11 });
-            content.Children.Add(new Controls.TextBlock { Text = tool.ActionLabel, FontSize = 11, Foreground = ViewTheme.Accent });
+            var action = new Controls.TextBlock { Text = tool.ActionLabel, FontSize = 11 };
+            action.SetResourceReference(Controls.TextBlock.ForegroundProperty, "AccentBrush");
+            content.Children.Add(action);
             var button = new Controls.Button
             {
                 Content = content, IsEnabled = tool.CanActivate && !string.IsNullOrWhiteSpace(tool.ActivationUri),
@@ -325,7 +335,7 @@ public sealed class GroupWindow : Window
             MaxHeight = 38, Margin = new Thickness(0, 6, 0, 0)
         });
         tile.Child = stack;
-        tile.MouseEnter += (_, _) => tile.Background = ViewTheme.Brush("#E5EFED");
+        tile.MouseEnter += (_, _) => tile.SetResourceReference(Controls.Border.BackgroundProperty, "HoverBrush");
         tile.MouseLeave += (_, _) => tile.Background = Brushes.Transparent;
         tile.MouseLeftButtonDown += (_, e) =>
         {
@@ -401,11 +411,13 @@ public sealed class GroupWindow : Window
     {
         var source = _icons.Get(item);
         if (source is not null) return new Controls.Image { Source = source, Width = size, Height = size, Stretch = Stretch.Uniform };
-        return new Controls.TextBlock
+        var fallback = new Controls.TextBlock
         {
-            Text = item.IsDirectory ? "▣" : "▤", Foreground = ViewTheme.Accent,
+            Text = item.IsDirectory ? "▣" : "▤",
             FontSize = size, TextAlignment = TextAlignment.Center, Height = size + 4
         };
+        fallback.SetResourceReference(Controls.TextBlock.ForegroundProperty, "AccentBrush");
+        return fallback;
     }
 
     private void CardDragEnter(object sender, System.Windows.DragEventArgs e)

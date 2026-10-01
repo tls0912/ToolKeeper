@@ -10,7 +10,7 @@ ToolKeeper 本體是平台與 **單一主執行入口**，主視窗只保留工�
 
 2026-09-28 已將桌面掃描、分類、監看、Explorer 接管、群組與 Recovery 抽為 `src/ToolKeeper.Desktop` 類別庫，由 ToolKeeper 本體引用。桌面程式碼保留 `CabiDock` 命名空間，既有資料位置與格式不遷移。`src/CabiDock` 只留歷史路徑說明，開發薄殼與 `CabiDock.exe` 已退役，測試與診斷改用 ToolKeeper 宿主。整併後的真實桌面驗收仍待完成。
 
-ToolKeeper、CabiDock 現有設定介面與 ConvAnvil 使用 `ToolKeeper.UI` 共用視窗元件；汗青保留自訂視窗並使用其中可獨立採用的語言、主題／字體、偏好選單與「關於」元件。
+ToolKeeper 本體、CabiDock 設定介面、ConvAnvil、004 Hash Checker 與 005 Image → ICO 使用 `ToolKeeper.UI` 共用視窗元件；汗青保留自訂視窗並使用其中可獨立採用的語言、主題／字體、竹材／紙紋、偏好選單與「關於」元件。
 
 ## Repository Structure
 
@@ -86,27 +86,26 @@ src/MarkPad/MarkPad.csproj
 
 > 先重複，再抽象；不要為想像中的未來抽象。
 
-2026-09-28 依實際共用需求，ToolKeeper、CabiDock 設定介面與 ConvAnvil 抽取 WPF 共用視窗至 `src/ToolKeeper.UI/ToolKeeper.UI.csproj`。本輪整併維持分工：`ToolKeeper.UI` 管介面共用，`ToolKeeper.Desktop` 管桌面能力。
+2026-09-28 先將標準工具的 `AppWindow` 抽至 `src/ToolKeeper.UI/ToolKeeper.UI.csproj`。2026-10-01 依全系列共用介面的需求，進一步將汗青的外框、標題列、視窗操作、文字陰影與外觀套用抽入同一類別庫；汗青和一般工具使用同一骨架，只保留不同的產品布局。
 
-共用 `AppWindow` 負責：
+| 共用來源 | 責任 | 產品提供 |
+| --- | --- | --- |
+| `WindowFrame` | 自訂標題列、完整 `Window.Title`、圖示、視窗操作、外框、caption 高度及全螢幕標題列顯隱 | 所屬 `Window`、caption 內容與操作插槽、工作區 |
+| `UiAppearance` | 依視窗資源範圍一次套用調色盤、竹材／紙紋、介面字型及文字陰影 | 主題、解析後語言、字型／尺寸、陰影偏好 |
+| `AppWindow` | 使用 `WindowFrame` 的一般工具布局：簡介、風格／語言／關於、可選 `HeaderActions`、`Workspace` | 產品名稱、副標題、簡介、功能內容、偏好檔路徑 |
+| `UiStyles`、`ChromeTextShadow`、`PreferenceMenus`、`AboutContent` | 共用基本樣式、文字描邊、選單選項及關於內容 | 文案、產品資訊、選擇回呼與布局中的入口位置 |
 
-- 原生視窗標題列，以 `MainName - SubName` 組成視窗 `Title`。
-- 內容左上方 30 DIP 主標題及下方 14 DIP 產品簡介；標題靠上排列，上方不留空白列或額外上邊距。簡介由產品個別提供，與 `SubName` 分開。
-- 主標題同一行右側提供「風格、語言、關於」；風格／語言選單控制整個工具視窗，關於使用宿主產品的版本與作者。
-- 簡介右側保留可選的 `HeaderActions` 插槽供離線標示等內容；002 的產品操作放在自身 `Workspace`。
-- 剩餘 `Workspace` 區域，承載產品自己的功能介面。
+`WindowFrame` 以組合方式使用，避免要求文件工具繼承一般工具的偏好儲存與標頭布局。ToolKeeper 本體、CabiDock 設定、ConvAnvil、004 和 005 透過 `AppWindow` 使用它；汗青在自己的 `Window` 中使用同一 `WindowFrame`，將文件分頁放入 caption 插槽，側欄、編輯器及預覽放入工作區。產品不再複製標題列或另繪視窗操作鈕，也不再同時顯示一個 30 DIP 的重複產品標題。
 
-目前 ToolKeeper、CabiDock 設定視窗與 ConvAnvil 的主視窗使用 `AppWindow`。`Window.Content` 由共用視窗結構持有，產品內容指定給 `Workspace`。CabiDock 設定視窗由桌面模組持有，ToolKeeper 主視窗只派發產品啟動請求，包含 002 桌面設定；桌面啟停由設定視窗或系統匣提供，`PlatformController` 負責組合、生命週期與平台入口。
+汗青的授權檢查、CabiDock 的群組預覽及重新命名視窗也使用同一骨架；不可縮放的對話框只保留關閉鈕。關閉鈕呼叫所屬視窗的正常 `Close()` 流程，因此汗青的未儲存文件確認、ToolKeeper 隱藏至系統匣及 CabiDock 設定視窗的隱藏邏輯，仍由產品既有 `Closing` 處理。共用骨架使用 WPF `WindowChrome` 處理 caption 與調整尺寸，最大化套用螢幕工作區；汗青自行管理全螢幕的文件布局、螢幕範圍與還原狀態。
 
-同日新增可獨立採用的語言、主題／字體、偏好選單與「關於」元件，先接入汗青，再依使用者要求接入 `AppWindow` 及三個工具的功能區。汗青的 `MainWindow` 仍繼承 WPF `Window`，保留自訂標題列、文件分頁及既有操作入口；全品牌標題規則仍適用。
+共用模組不建立跨工具 settings 或全域偏好狀態，也不變更汗青既有 JSON 欄位與設定目錄。`AppWindow.PreferencesPath` 由產品指定；`AppWindowPreferences` 只保存風格及原始語言選項，與產品業務設定分開，只有同一路徑的視窗會同步。ToolKeeper／ConvAnvil 使用各自產品目錄下的 `ui.json`，CabiDock 使用既有（包含 `--data-directory`）資料目錄下的 `ui-preferences.json`。`UiPreferencesChanged` 通知產品原位翻譯功能區，動態資源更新顏色；不重建輸入、表格或轉換結果。
 
-新增元件以宿主明確接入為原則：
+`UiAppearance.ApplyResources` 只修改呼叫者傳入的 `ResourceDictionary`。原始 `System` 語言與主題選項由產品保存；系統偏好事件、儲存錯誤回報及跨視窗通知仍由原宿主管理。`AboutInfo` 使用產品自己的名稱、版本及作者。汗青的閱讀／編輯字型、AvalonEdit、WebView2、文件與復原服務留在汗青。接入範例與資源名稱見 [ToolKeeper.UI 開發指南](../src/ToolKeeper.UI/README.md)。
 
-- 視窗自行合併 `Resources/UiStyles.xaml`，`UiTheme.ApplyResources` 與 `UiTypography.ApplyResources` 只修改傳入的資源範圍。產品專屬視窗裝飾、AvalonEdit／WebView2 套用及系統主題事件仍由產品處理。
-- `UiLanguage.Resolve` 將設定解析為顯示語言；原始 `System` 選項仍由產品保存。`PreferenceMenus` 將選擇值交給宿主 callback，由宿主保存設定、回報錯誤及更新自身視窗。
-- 主程式提供 `AboutInfo` 的產品名稱、版本、作者與已翻譯的簡介／品牌文字。`AboutContent` 只建立內容，Popup／Window、尺寸與焦點由宿主承載。
+本體與 001–005 共用 `BambooChrome` 與 `PaperTexture`。`Ink` 保留淺色去皮竹材，`InkDark` 保留深綠竹皮及竹節；材質以凍結的 WPF `DrawingBrush`、固定 DIP 尺寸拼貼，視窗尺寸不改變紋理比例；一般 `Light`／`Dark`／`System` 回到純色資源。共用 caption 也採用同一竹紋，不再留下系統繪製的獨立純色標題列。HTML 預覽的紙紋仍由汗青渲染器負責。
 
-共用模組不建立跨工具 settings 或全域偏好狀態，也不變更汗青既有 JSON 欄位與設定目錄。`AppWindow.PreferencesPath` 由產品指定；`AppWindowPreferences` 只保存風格及原始語言選項，與產品業務設定分開，只有同一路徑的視窗會同步。ToolKeeper／ConvAnvil 使用各自產品目錄下的 `ui.json`，CabiDock 使用既有（包含 `--data-directory`）資料目錄下的 `ui-preferences.json`。`UiPreferencesChanged` 通知產品原位翻譯功能區，動態資源更新顏色；不重建輸入、表格或轉換結果。接入範例與資源名稱見 [ToolKeeper.UI 開發指南](../src/ToolKeeper.UI/README.md)。
+`ToolKeeper.UI` 管介面共用，`ToolKeeper.Desktop` 管桌面能力。CabiDock 嵌入 Explorer 的桌面群組不是一般應用程式視窗，保留自己的群組布局與互動，接入共用材質，不加上最小化／最大化／關閉列。一般分類及「工具番」群組的外框與標題均使用同一材質，預覽與桌面群組一致；桌面接管、分類、復原及群組互動留在 `ToolKeeper.Desktop`。
 
 ### 3. MarkPad 內部分工
 

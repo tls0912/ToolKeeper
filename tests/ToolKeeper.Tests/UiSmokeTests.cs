@@ -317,7 +317,7 @@ public sealed class UiSmokeTests
         try
         {
             Assert.Equal("Example - Utility", window.Title);
-            Assert.Equal(WindowStyle.SingleBorderWindow, window.WindowStyle);
+            Assert.Equal(WindowStyle.None, window.WindowStyle);
             Assert.Equal(ResizeMode.CanResize, window.ResizeMode);
             Assert.Same(context, content.DataContext);
             Assert.Same(context, action.DataContext);
@@ -327,7 +327,7 @@ public sealed class UiSmokeTests
             window.Description = "Updated description";
             Assert.Equal("Renamed - Updated utility", window.Title);
             var host = HostWindowContent(window);
-            Assert.Contains(VisualDescendants<TextBlock>(host), text => text.Text == "Renamed");
+            Assert.Contains(VisualDescendants<TextBlock>(host), text => text.Text == "Renamed - Updated utility");
             Assert.Contains(VisualDescendants<TextBlock>(host), text => text.Text == "Updated description");
             Assert.DoesNotContain(VisualDescendants<TextBlock>(host), text => text.Text == "First description");
 
@@ -375,8 +375,8 @@ public sealed class UiSmokeTests
                 Assert.Equal(12, expected.SelectionLength);
                 Assert.True(Get<Button>(hash, "CopyHashesButton").IsEnabled);
                 Assert.Equal("abc.txt", Get<TextBlock>(hash, "HashFileName").Text);
-                Assert.Equal(hash.FindResource("SurfaceBrush"), Get<Border>(hash, "HashDropZone").Background);
-                Assert.Equal(icon.FindResource("SurfaceBrush"), Get<Border>(icon, "IconDropZone").Background);
+                Assert.Equal(hash.FindResource("PaperBackgroundBrush"), Get<Border>(hash, "HashDropZone").Background);
+                Assert.Equal(icon.FindResource("PaperBackgroundBrush"), Get<Border>(icon, "IconDropZone").Background);
                 Assert.Equal(hash.FindResource("TextBrush"), expected.Foreground);
                 Assert.Equal(hash.FindResource("SuccessBrush"), Get<TextBlock>(hash, "HashComparison").Foreground);
                 Assert.Equal(UiLanguage.Text(language, "Choose images", "選擇圖片", "画像を選択"), Get<Button>(icon, "ChooseImagesButton").Content);
@@ -455,7 +455,7 @@ public sealed class UiSmokeTests
                     product.ActivationUri)).ToArray());
             window.SetPlatformStatus("Example status: an application could not be opened. Try again after checking its installation.");
             var host = HostWindowContent(window);
-            foreach (var (width, height, suffix) in new[] { (820, 620, "default"), (704, 460, "minimum-client") })
+            foreach (var (width, height, suffix) in new[] { (820, 620, "default"), (720, 500, "minimum-client") })
             {
                 Render(host, width, height, $"launcher-{language}-{theme}-{suffix}.png");
                 AssertCommonShell(host, window);
@@ -583,7 +583,7 @@ public sealed class UiSmokeTests
 
     private static void RenderModuleAtBothSizes(FrameworkElement host, AppWindow window, string state)
     {
-        foreach (var (width, height, suffix) in new[] { (760, 660, "default"), (644, 520, "minimum-client") })
+        foreach (var (width, height, suffix) in new[] { (760, 660, "default"), (660, 560, "minimum-client") })
         {
             Render(host, width, height, $"{state}-{suffix}.png");
             AssertCommonShell(host, window);
@@ -619,13 +619,13 @@ public sealed class UiSmokeTests
 
     private static void AssertCommonShell(FrameworkElement host, AppWindow window)
     {
-        var heading = VisualDescendants<TextBlock>(host).Single(text => text.Name == "ProductHeading");
+        var heading = VisualDescendants<TextBlock>(host).Single(text => text.Name == "WindowTitleText");
         var description = VisualDescendants<TextBlock>(host).Single(text => text.Name == "ProductDescription");
-        Assert.Equal(window.MainName, heading.Text);
+        Assert.Equal(window.Title, heading.Text);
         Assert.Equal(window.Description, description.Text);
         var headingBounds = Bounds(heading, host);
         var descriptionBounds = Bounds(description, host);
-        Assert.InRange(headingBounds.Top, 0, 0.5);
+        Assert.InRange(headingBounds.Top, 1, 40);
         Assert.True(headingBounds.Bottom <= descriptionBounds.Top);
         var workspaceBounds = Bounds(Assert.IsAssignableFrom<FrameworkElement>(window.Workspace), host);
         Assert.True(workspaceBounds.Top >= descriptionBounds.Bottom);

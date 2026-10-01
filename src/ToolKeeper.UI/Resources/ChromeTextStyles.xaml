@@ -1,7 +1,9 @@
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-                    xmlns:theming="clr-namespace:MarkPad.Theming">
+                    xmlns:sys="clr-namespace:System;assembly=System.Runtime"
+                    xmlns:theming="clr-namespace:ToolKeeper.UI">
  <SolidColorBrush x:Key="ChromeTextShadowBrush" Color="#28000000" />
+ <sys:Int32 x:Key="ChromeTextShadowThickness">1</sys:Int32>
  <DataTemplate x:Key="ChromeButtonTextTemplate">
   <theming:ChromeTextShadow><TextBlock Text="{Binding}" /></theming:ChromeTextShadow>
  </DataTemplate>

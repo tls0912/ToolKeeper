@@ -63,6 +63,8 @@ public sealed class SettingsService
         Settings.UiFontSize = ValidNumber(Settings.UiFontSize, 10, 20, defaults.UiFontSize);
         Settings.PreviewFontSize = ValidNumber(Settings.PreviewFontSize, 8, 72, defaults.PreviewFontSize);
         Settings.EditorFontSize = ValidNumber(Settings.EditorFontSize, 8, 72, defaults.EditorFontSize);
+        if (Settings.InterfaceTextShadowThickness is < 1 or > 4)
+            Settings.InterfaceTextShadowThickness = defaults.InterfaceTextShadowThickness;
         Settings.WindowWidth = ValidNumber(Settings.WindowWidth, 480, 10000, defaults.WindowWidth);
         Settings.WindowHeight = ValidNumber(Settings.WindowHeight, 0, 10000, defaults.WindowHeight);
         Settings.PdfOutlineLevels = (Settings.PdfOutlineLevels ?? defaults.PdfOutlineLevels)

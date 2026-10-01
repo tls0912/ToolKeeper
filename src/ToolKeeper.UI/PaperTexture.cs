@@ -1,10 +1,10 @@
 using System.Windows;
 using System.Windows.Media;
 
-namespace MarkPad.Theming;
+namespace ToolKeeper.UI;
 
 /// <summary>Sparse paper fibers for native ink-theme reading surfaces.</summary>
-internal static class PaperTexture
+public static class PaperTexture
 {
     private static readonly Lazy<DrawingBrush> Light = new(() => Draw(false));
     private static readonly Lazy<DrawingBrush> Dark = new(() => Draw(true));
