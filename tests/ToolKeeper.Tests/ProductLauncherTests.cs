@@ -34,6 +34,7 @@ public sealed class ProductLauncherTests
     [InlineData("002")]
     [InlineData("004")]
     [InlineData("005")]
+    [InlineData("006")]
     public void BuiltInModuleActivatesInHostWithoutStartingAProcess(string id)
     {
         var environment = new ProductTestEnvironment();
@@ -56,6 +57,7 @@ public sealed class ProductLauncherTests
     [InlineData("002")]
     [InlineData("004")]
     [InlineData("005")]
+    [InlineData("006")]
     public void BuiltInModuleWithoutHostCallbackReportsUnavailableInsteadOfShellOpeningItsUri(string id)
     {
         var environment = new ProductTestEnvironment();
@@ -118,7 +120,7 @@ public sealed class ProductLauncherTests
 
     [Theory]
     [InlineData("003")]
-    [InlineData("006")]
+    [InlineData("999")]
     [InlineData("unknown")]
     public void UnavailableAndUnknownProductsNeverStartAProcess(string id)
     {

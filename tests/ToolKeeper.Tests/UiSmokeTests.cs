@@ -443,7 +443,7 @@ public sealed class UiSmokeTests
     [InlineData("en", "Dark")]
     [InlineData("ja", "InkDark")]
     [InlineData("zh-TW", "Ink")]
-    public Task LauncherShowsFiveModuleEntriesAtMinimumSize(string language, string theme) => OnSta(() =>
+    public Task LauncherShowsAllModuleEntriesAtMinimumSize(string language, string theme) => OnSta(() =>
     {
         var window = new MainWindow { PreferencesPath = null, ShowActivated = false, ShowInTaskbar = false, SelectedTheme = theme, SelectedLanguage = language };
         try
@@ -462,11 +462,11 @@ public sealed class UiSmokeTests
                 foreach (var name in new[] { "PlatformStatus", "ToolList" })
                     AssertVisibleBounds(Get<FrameworkElement>(window, name), host, width, height);
                 var products = Get<ItemsControl>(window, "Products");
-                Assert.Equal(new[] { "001", "002", "003", "004", "005" }, products.Items.Cast<object>().Select(item => ReadProperty<string>(item, "Id")));
+                Assert.Equal(new[] { "001", "002", "003", "004", "005", "006" }, products.Items.Cast<object>().Select(item => ReadProperty<string>(item, "Id")));
                 var scroller = VisualDescendants<ScrollViewer>(Get<Border>(window, "ToolList")).First();
                 scroller.ScrollToBottom();
                 host.UpdateLayout();
-                var last = Assert.IsAssignableFrom<FrameworkElement>(products.ItemContainerGenerator.ContainerFromIndex(4));
+                var last = Assert.IsAssignableFrom<FrameworkElement>(products.ItemContainerGenerator.ContainerFromIndex(products.Items.Count - 1));
                 Assert.True(Bounds(last, host).Bottom <= Bounds(scroller, host).Bottom + 1);
                 Assert.All(VisualDescendants<Button>(products), action => Assert.True(action.IsEnabled));
                 scroller.ScrollToTop();

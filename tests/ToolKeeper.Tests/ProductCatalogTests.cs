@@ -10,10 +10,10 @@ public sealed class ProductCatalogTests
     [Fact]
     public void DefinesAllModulesWithStableIdsKindsAndVerifiedStoreIdentity()
     {
-        Assert.Equal(["001", "002", "003", "004", "005"], ProductCatalogService.Definitions.Select(product => product.Id));
+        Assert.Equal(["001", "002", "003", "004", "005", "006"], ProductCatalogService.Definitions.Select(product => product.Id));
         Assert.Equal(["001", "003"], ProductCatalogService.Definitions
             .Where(product => product.ModuleKind == ModuleKind.Standalone).Select(product => product.Id));
-        Assert.Equal(["002", "004", "005"], ProductCatalogService.Definitions
+        Assert.Equal(["002", "004", "005", "006"], ProductCatalogService.Definitions
             .Where(product => product.ModuleKind == ModuleKind.BuiltIn).Select(product => product.Id));
         var hanqing = ProductCatalogService.Definitions[0];
         Assert.Equal("汗青", hanqing.Name);
@@ -28,6 +28,7 @@ public sealed class ProductCatalogTests
     [InlineData("002", "CabiDock")]
     [InlineData("004", "Hash Checker")]
     [InlineData("005", "Image → ICO")]
+    [InlineData("006", "HistoLens")]
     public void BuiltInModulesAreAvailableWithoutInstallationOrRegistryProbes(string id, string name)
     {
         var environment = new ProductTestEnvironment();
@@ -55,18 +56,38 @@ public sealed class ProductCatalogTests
         var statuses = environment.Catalog.Refresh();
 
         Assert.Equal(["toolkeeper://run/001", "toolkeeper://run/002", "toolkeeper://run/003",
-            "toolkeeper://run/004", "toolkeeper://run/005"], statuses.Select(status => status.ActivationUri));
+            "toolkeeper://run/004", "toolkeeper://run/005", "toolkeeper://run/006"], statuses.Select(status => status.ActivationUri));
         Assert.All(statuses, status => Assert.Equal(status.Product.ActivationUri, status.ActivationUri));
     }
 
     [Fact]
     public void ExistingDefinitionConstructorDefaultsToStandalone()
     {
-        var product = new ProductDefinition("006", "Example", "Example", "範例", "例",
+        var product = new ProductDefinition("999", "Example", "Example", "範例", "例",
             "Example.exe", "Example", "net10.0-windows", null, null);
 
         Assert.Equal(ModuleKind.Standalone, product.ModuleKind);
-        Assert.Equal("toolkeeper://run/006", product.ActivationUri);
+        Assert.Equal("toolkeeper://run/999", product.ActivationUri);
+    }
+
+    [Fact]
+    public void HistoLensIsExplicitlyASyntheticDataPreviewWithoutStandaloneOrStoreClaims()
+    {
+        var histolens = Assert.Single(ProductCatalogService.Definitions, product => product.Id == "006");
+
+        Assert.Equal("HistoLens", histolens.Name);
+        Assert.Contains("development preview", histolens.DescriptionEnglish);
+        Assert.Contains("synthetic data", histolens.DescriptionEnglish);
+        Assert.Contains("開發預覽", histolens.DescriptionChinese);
+        Assert.Contains("合成資料", histolens.DescriptionChinese);
+        Assert.Contains("開発プレビュー", histolens.DescriptionJapanese);
+        Assert.Contains("合成データ", histolens.DescriptionJapanese);
+        Assert.Equal(ModuleKind.BuiltIn, histolens.ModuleKind);
+        Assert.Empty(histolens.ExecutableName);
+        Assert.Empty(histolens.ProjectName);
+        Assert.Empty(histolens.TargetFramework);
+        Assert.Null(histolens.ProtocolScheme);
+        Assert.Null(histolens.StoreId);
     }
 
     [Fact]
@@ -188,7 +209,7 @@ public sealed class ProductCatalogTests
     }
 
     [Theory]
-    [InlineData("006")]
+    [InlineData("999")]
     [InlineData("../ConvAnvil.exe")]
     [InlineData("https://example.com")]
     public void UnknownIdsDoNotProbeAnything(string id)
