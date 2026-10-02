@@ -144,7 +144,7 @@ ToolKeeper 本體負責：
 - 載入並管理 CabiDock 桌面模組，提供桌面分類、桌面群組與 Explorer 整合。
 - 在桌面提供「工具番」專屬群組，集中呈現已安裝或可啟動的工具番產品。
 
-ToolKeeper 不負責下載模組、管理授權、內購或自行安裝獨立工具；安裝與更新由 Microsoft Store 處理。
+ToolKeeper 不負責下載模組、管理授權、內購或自行安裝獨立工具。獨立產品可依產品規格由 Microsoft Store、工具番官方網站或其他正式發行通路安裝與更新；ToolKeeper 只保存正式取得入口，不自行充當 Installer。
 
 **2026-09-28 整併實作：** `ToolKeeper.exe` 已引用 `ToolKeeper.Desktop`，由本體管理桌面模組、各工具視窗與系統匣。主視窗只保留工具列表，桌面設定由 002 列表入口或系統匣開啟。產品目錄與「工具番」桌面群組列出 001 至 005，以 `toolkeeper://run/<三位產品編號>` 統一派發。002 開啟桌面設定；004、005 各自開啟 Hash Checker 與 Image → ICO 視窗。CabiDock 的開發薄殼 EXE 已退役。整併後的實機驗收仍待完成，細節見 [本體實作報告](TOOLKEEPER-IMPLEMENTATION.md)。
 
@@ -194,12 +194,16 @@ CabiDock 的桌面程式碼仍保持清楚模組邊界，不直接散落於 Tool
 例如：
 
 ```text
-Microsoft Store
+正式發行通路
 │
-├─ ToolKeeper          免費（工具目錄、Launcher 與免費小工具）
-├─ MarkPad             獨立產品
-├─ ConvAnvil           獨立產品
-└─ 其他工具            依個別產品規劃
+├─ Microsoft Store
+│   ├─ ToolKeeper      免費（工具目錄、Launcher 與免費小工具）
+│   ├─ 汗青            獨立產品
+│   ├─ ConvAnvil       獨立產品
+│   └─ TransLamp       免費獨立產品
+│
+└─ 工具番官方網站
+    └─ 依個別產品需要提供正式下載／Offline Kit
 ```
 
 ToolKeeper 本體提供目錄、啟動入口與 002／004／005 內建工具，各工具有自己的視窗；001／003 等單獨上架的產品才獨立使用與發行，不為內建工具另建 EXE。
@@ -258,38 +262,127 @@ ToolKeeper 透過 CabiDock 桌面模組提供一個特殊的 **「工具番」�
 
 ## 6. ToolKeeper 啟動工具的方式
 
-所有使用者入口先使用 `toolkeeper://run/<三位產品編號>`，目前涵蓋 `001` 至 `005`，由 ToolKeeper 本體驗證並派發。002／004／005 在同一宿主開啟各自視窗，不建立新工具程序。001／003 才進入下列獨立產品啟動判斷；產品自己的 protocol 是派發後的啟動方式，不取代工具番入口。
+### 6.1 平台入口與產品入口分離
 
-宿主派發到獨立產品時，產品 protocol 例如：
-
-```text
-toolkeeper-<product>:
-```
-
-ToolKeeper 點擊某項獨立產品時重新偵測，依序選擇：
+所有 ToolKeeper 使用者入口統一使用：
 
 ```text
-已知 URI Handler 可用 → 開啟 App
-   否則
-已知本機路徑有完整 App → 開啟 App
-   否則
-已有正式 Store 商品 ID → 開啟 Microsoft Store 商品頁
-   否則
-顯示「未提供」，停用入口
+toolkeeper://run/<三位產品編號>
 ```
 
-目前汗青沿用 `toolkeeper-markpad:` 與既有正式 Store ID `9NHF764PXW9C`；ConvAnvil 尚無正式 protocol／Store ID，僅提供可確認的本機版本啟動。偵測不搜尋任意磁碟、不自動安裝、不替產品註冊 protocol，也不建立推測的商店網址。
+例如：
+
+```text
+toolkeeper://run/001
+toolkeeper://run/003
+toolkeeper://run/007
+```
+
+這是 **ToolKeeper 平台內部的產品路由**。
+
+- 宿主內工具：由 ToolKeeper 直接開啟對應視窗。
+- 獨立產品：ToolKeeper 再派發到該產品自己的 Activation Contract。
+
+因此：
+
+> **ToolKeeper 認產品編號；不把產品的安裝方式或實體 EXE 路徑當成平台 Contract。**
+
+### 6.2 獨立產品 Activation Contract
+
+每個獨立產品在規格中定義一個穩定的 Activation URI／啟動 Contract。
+
+既有產品可以沿用既有 Protocol；新產品不要求為了統一外觀而破壞相容性。
+
+例如：
+
+```text
+001 → toolkeeper-markpad:
+007 → translamp://open
+```
+
+`ProductCatalogService` 保存產品編號、Activation URI、正式 Store Product ID、官方網站取得入口與必要的相容 fallback 資訊。
+
+不同安裝通路只要仍是同一個產品，就應盡量提供同一個 Activation Contract。
+
+### 6.3 獨立產品啟動順序
+
+ToolKeeper 點擊獨立產品時重新偵測，依序：
+
+```text
+產品 Activation URI 可用
+   ↓ 是
+啟動產品
+   ↓ 否
+受控 App Registration／已知相容安裝資訊可用
+   ↓ 是
+啟動產品
+   ↓ 否
+判定尚未安裝
+   ↓
+提供該產品已登記的正式取得方式
+   ├─ Microsoft Store
+   └─ 官方網站／Offline Kit（若產品有提供）
+```
+
+原則：
+
+- 不搜尋任意磁碟。
+- 不猜測未知 EXE 路徑。
+- 不替獨立產品註冊 Protocol。
+- 不自行下載或安裝產品。
+- 不建立推測的商店或網站網址。
+- 只有產品規格／Catalog 明確登記的正式通路才可顯示。
+
+### 6.4 多發行通路視為同一產品
+
+獨立產品可以同時有：
+
+- Microsoft Store 版。
+- 官網安裝版。
+- Offline Kit。
+- 其他未來正式發行形式。
+
+但只要產品編號相同，ToolKeeper 就把它們視為同一個邏輯產品。
+
+例如 007 TransLamp：
+
+```text
+                   007 TransLamp
+                       │
+          ┌────────────┴────────────┐
+          │                         │
+   Microsoft Store             ToolKeeper 官網
+          │                      Offline Kit
+          └────────────┬────────────┘
+                       │
+                 translamp://open
+                       │
+                       ▼
+                  TransLamp App
+```
+
+ToolKeeper 不需要知道使用者目前安裝的是哪個發行通路。
+
+若兩個發行通路會註冊相同 URI Handler，該產品的 Installer／安裝流程應防止衝突或提供遷移；**這是產品發行責任，不是 ToolKeeper Launcher 的責任。**
+
+### 6.5 ToolKeeper 不管理獨立產品商業狀態
 
 ToolKeeper 不需要管理：
 
 - License
 - DRM
 - 付款
-- 更新
-- 安裝
-- 登入
+- 產品帳號
+- 產品更新
+- Installer
+- Offline Kit 內容
+- 語言包／模型包
 
-這些全部交給 Microsoft Store 與各獨立 App。
+這些由獨立產品及其正式發行通路負責。
+
+ToolKeeper 的責任只有：
+
+> **知道有哪些產品、知道它是否可啟動、能正確啟動，以及未安裝時把使用者帶到正式取得入口。**
 
 ---
 
