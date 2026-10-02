@@ -6,7 +6,7 @@ ToolKeeper 採用 **Monorepo + Standalone Products + Hosted Tool Modules**。
 
 ToolKeeper 本體是平台與 **單一主執行入口**，主視窗只保留工具列表，並管理 Launcher、宿主內工具視窗及 CabiDock 桌面模組的生命週期。
 
-只有單獨上架的產品才有自己的 EXE，目前為 **001 — 汗青**、**003 — ConvAnvil**。**002 — CabiDock**、**004 — Hash Checker**、**005 — Image → ICO** 在 `ToolKeeper.exe` 內執行，各有自己的工具視窗與目錄入口。產品編號與獨立視窗不代表需要另一個執行檔。
+只有單獨發行的產品才有自己的 EXE；目前已實作為 **001 — 汗青**、**003 — ConvAnvil**，規劃中的 **007 — TransLamp** 也採獨立產品。**002 — CabiDock**、**004 — Hash Checker**、**005 — Image → ICO** 在 `ToolKeeper.exe` 內執行，各有自己的工具視窗與目錄入口。產品編號與獨立視窗不代表需要另一個執行檔。
 
 2026-09-28 已將桌面掃描、分類、監看、Explorer 接管、群組與 Recovery 抽為 `src/ToolKeeper.Desktop` 類別庫，由 ToolKeeper 本體引用。桌面程式碼保留 `CabiDock` 命名空間，既有資料位置與格式不遷移。`src/CabiDock` 只留歷史路徑說明，開發薄殼與 `CabiDock.exe` 已退役，測試與診斷改用 ToolKeeper 宿主。整併後的真實桌面驗收仍待完成。
 
@@ -150,6 +150,66 @@ docs/products/001_MarkPad.md
 
 若架構設計與「簡單、順手、快速開啟」衝突，優先簡化架構。
 
+### 6. 獨立產品啟動 Contract 與發行通路解耦
+
+ToolKeeper 對獨立產品採兩層 URI：
+
+```text
+ToolKeeper 平台入口
+toolkeeper://run/<ProductId>
+        │
+        ▼
+ProductCatalogService
+        │
+        ▼
+產品自己的 Activation Contract
+```
+
+平台入口固定依產品編號派發；產品 Activation Contract 由各產品規格定義，不要求所有產品使用相同 scheme，也不因改變發行通路而改變 ProductId。
+
+例如：
+
+```text
+toolkeeper://run/007
+        ↓
+translamp://open
+```
+
+這使 Launcher 與實體安裝方式解耦：
+
+```text
+Store MSIX ───────┐
+                  ├─ 同一 ProductId / Activation Contract
+Website Installer ┤
+                  │
+Offline Kit ──────┘
+```
+
+`ProductCatalogService` 對獨立產品的最小資料模型應能表達：
+
+- `ProductId`
+- 顯示名稱與副標題
+- `ActivationUri`
+- 可選 Store Product ID
+- 可選官方網站取得 URI
+- 可選、受控的相容 fallback（例如 App Paths／既有已知安裝位置）
+- 是否為宿主內工具或獨立產品
+
+Launcher 流程：
+
+1. 收到 `toolkeeper://run/<ProductId>`。
+2. 若為宿主內工具，直接由宿主開啟對應視窗。
+3. 若為獨立產品，先嘗試已登記的 `ActivationUri`。
+4. Activation 不可用時，只檢查 Catalog 明確允許的相容 fallback。
+5. 仍不可用即視為未安裝，顯示該產品已登記的 Store／官網取得入口。
+6. 不掃描任意磁碟、不猜 EXE、不代替 Installer 註冊 Protocol。
+
+同一產品若有 Store 與官網／Offline Kit 等多種安裝方式，應由產品 Installer 防止同一台電腦同時存在會爭用相同 URI Handler 的兩個發行實例，或提供明確遷移。ToolKeeper 不解析發行通路，只解析 ProductId 與 Activation Contract。
+
+這個規則的目標是：
+
+> **Launcher 啟動的是產品，不是某一種安裝包。**
+
 ## Future Products
 
 未來工具先決定是否單獨上架；只有單獨上架才新增獨立 App Project。內建工具由宿主管理，可有獨立視窗與清楚程式模組：
@@ -184,7 +244,7 @@ ToolKeeper 本體已建立 WPF App Project；`FileHashService` 以串流一次�
 - `DesktopModule` 提供 `Start`、`ShowSettings`、`SetEnabled`、`SetTools`、`PrepareExit` 與 `Dispose`；Shell／HWND、分類、監看與桌面資料保存都留在類別庫。
 - `HostWindowLifetime` 統一主視窗關閉／最小化隱藏至系統匣。設定視窗只隱藏；系統匣退出及登出先呼叫 `PrepareExit`，撤下群組、恢復原生圖示並允許視窗真正關閉。
 - 正式恢復助手由目前的 `ToolKeeper.exe --desktop-recovery` 私有模式啟動，獨立監控父程序與恢復原生桌面；它沒有自己的 EXE，也不是第二個產品入口。
-- `ProductCatalogService` 是主視窗與「工具番」桌面群組的共同資料來源，列出 001 汗青、002 CabiDock、003 ConvAnvil、004 Hash Checker、005 Image → ICO。002／004／005 由宿主開啟各自視窗；001／003 先檢查已知產品 protocol，再檢查受限本機路徑，有正式 Store ID 才提供取得。每十秒、主視窗啟用與系統匣開啟時刷新，啟動前再檢查一次。
+- `ProductCatalogService` 是主視窗與「工具番」桌面群組的共同資料來源；目前實作列出 001 汗青、002 CabiDock、003 ConvAnvil、004 Hash Checker、005 Image → ICO，未來依產品規格加入 006、007 等產品。002／004／005 由宿主開啟各自視窗；獨立產品依 Catalog 的 Activation Contract 啟動，再以受控相容資訊 fallback；未安裝時只提供 Catalog 已登記的正式 Store／官網取得入口。每十秒、主視窗啟用與系統匣開啟時刷新，啟動前再檢查一次。
 - 所有入口使用 `toolkeeper://run/001` 至 `toolkeeper://run/005`，由 ToolKeeper 驗證並派發。桌面模組只將 `DesktopTool.ActivationUri` 傳回宿主 callback，不解析產品、不直接啟動產品程序；已上架產品自己的 protocol 是宿主派發後的實際啟動方式。
 - 「工具番」群組不寫入七個分類的規則、不加入檔案分類紀錄，也不建立桌面捷徑；固定展開的群組配置保存於既有 `state.json`。初始化或更新工具列表沿用保存的展開尺寸。
 
