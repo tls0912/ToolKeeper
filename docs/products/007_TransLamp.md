@@ -1,6 +1,6 @@
 # 007｜TransLamp — Offline Language Translator
 
-更新日期：2026-10-02。規格版本：0.2。產品狀態：規劃中，尚未 Freeze、尚未實作。
+更新日期：2026-10-02。規格版本：0.3。產品狀態：規劃中，尚未 Freeze、尚未實作。
 
 > 沒有網路時，至少先把看不懂的文字照亮。
 
@@ -38,6 +38,10 @@ TransLamp 是 ToolKeeper（工具番）旗下的離線應急翻譯工具。它�
 | 其他語言 | 不預先全部安裝，需要時才下載／安裝語言包 |
 | 硬體方向 | 以一般 Windows PC 的 CPU 執行為主，不把獨立 GPU 當必要條件 |
 | 產品原則 | 小、直接、離線、低硬體門檻，不發展成大型文件翻譯平台 |
+| 商業定位 | 免費福利工具，同時作為 ToolKeeper／工具番的品牌曝光入口 |
+| 產品型態 | 獨立產品，可不安裝 ToolKeeper 單獨使用 |
+| 發行通路 | Microsoft Store + 工具番官方網站／Offline Kit 雙通路 |
+| ToolKeeper 關係 | ToolKeeper 提供產品卡片與啟動入口；TransLamp 本身保持獨立執行 |
 
 正式視窗標題：
 
@@ -889,7 +893,170 @@ PoC 只需要：
 
 ---
 
-## 23. 產品一句話原則
+## 23. 發行、安裝與 ToolKeeper 啟動架構
+
+### 23.1 免費產品與雙通路發行
+
+TransLamp 已確認採 **免費產品** 定位。
+
+目的包含：
+
+- 提供真正有用的離線福利工具。
+- 降低 Air-gapped 使用者的取得門檻。
+- 避免為低價產品建立額外離線授權系統。
+- 讓 TransLamp 成為使用者接觸 ToolKeeper／工具番品牌的入口之一。
+
+正式發行保留兩條通路：
+
+```text
+一般使用者
+   ↓
+Microsoft Store
+   ↓
+TransLamp
+
+封閉網路／不能使用 Store 的環境
+   ↓
+工具番官方網站
+   ↓
+TransLamp Offline Kit
+   ↓
+USB／內網媒體
+   ↓
+目標 PC
+```
+
+Store 版與官網／Offline Kit 版是**同一個邏輯產品**，不得分裂成兩套產品規格或兩套業務程式。
+
+兩種發行方式可以有不同封裝、簽章與安裝流程，但應共用同一套 TransLamp 核心程式與產品資料格式。
+
+### 23.2 Offline Kit
+
+官網應提供可搬移至封閉環境的完整離線安裝資料。
+
+Offline Kit 的實際封裝尚未 Freeze，但目標是：
+
+- 目標 PC 不需要 Internet。
+- 安裝過程不臨時下載 Runtime。
+- 可選擇直接包含預設中文 ⇄ English 語言包。
+- 必要 Runtime、Dependency、License／Notice 可一起取得。
+- 安裝後可直接進行基本離線翻譯。
+
+是否採 MSIX、安裝程式或其他 Windows 封裝方式，須在 PoC 與 Store 發布流程確認後 Freeze；產品需求只要求「可完整離線部署」，不提前綁死單一 Installer 技術。
+
+### 23.3 TransLamp 是獨立產品
+
+TransLamp 不內嵌於 `ToolKeeper.exe`。
+
+```text
+ToolKeeper.exe
+   │
+   └─ 007 TransLamp
+         │
+         └─ 啟動獨立 TransLamp App
+```
+
+TransLamp：
+
+- 可單獨安裝。
+- 可單獨執行。
+- 可獨立上架 Microsoft Store。
+- 可由官方網站提供 Offline Kit。
+- 沒有 ToolKeeper 也必須能完整使用。
+- ToolKeeper 只提供產品發現與啟動入口，不持有 TransLamp 的翻譯核心或語言模型。
+
+### 23.4 統一 Activation Contract
+
+ToolKeeper 內部仍使用全平台統一入口：
+
+```text
+toolkeeper://run/007
+```
+
+這個 URI 代表「執行產品 007」，不是 TransLamp 自己的 Windows 註冊 Protocol。
+
+ToolKeeper 派發到 007 後，TransLamp 對外提供穩定的產品啟動 Contract：
+
+```text
+translamp://open
+```
+
+未來若有實際需求，可在不破壞 `open` 的前提下擴充，例如：
+
+```text
+translamp://languages
+```
+
+V1 不需要為了預想功能先增加更多 URI。
+
+核心原則：
+
+> **ToolKeeper 認產品，不認安裝路徑。**
+
+ToolKeeper 不應把某一個 `C:\Program Files\...`、MSIX 安裝目錄或使用者 AppData 路徑當作 007 的主要啟動 Contract。
+
+### 23.5 啟動解析順序
+
+ToolKeeper 點擊 007 時：
+
+```text
+toolkeeper://run/007
+      ↓
+ProductCatalogService / Launcher
+      ↓
+1. 嘗試 TransLamp Activation URI
+      │
+      ├─ 成功 → 結束
+      │
+      └─ 不可用
+      ↓
+2. 檢查受控的 Win32 App Registration／已知相容安裝資訊
+      │
+      ├─ 成功 → 啟動
+      │
+      └─ 不可用
+      ↓
+3. 判定未安裝
+      ↓
+顯示取得方式
+   ├─ Microsoft Store
+   └─ 工具番官方網站／Offline Kit
+```
+
+第二層 fallback 只處理明確定義的相容／遷移情境，例如 Windows `App Paths` 或產品規格允許的已知位置；不得掃描整顆磁碟猜測 `TransLamp.exe`。
+
+ToolKeeper 不負責：
+
+- 安裝 TransLamp。
+- 下載 Offline Kit。
+- 解壓語言模型。
+- 註冊 TransLamp Protocol。
+- 管理 TransLamp 更新。
+- 管理 TransLamp 授權。
+
+它只負責發現、啟動，以及在未安裝時提供正式取得入口。
+
+### 23.6 不同安裝通路的共存規則
+
+Store 版與官網／Offline Kit 版必須使用同一個邏輯 Product ID 與同一個 Activation Contract。
+
+因兩個安裝實例同時註冊相同 Protocol 可能造成 Windows Handler 衝突，正式 Installer／安裝流程應避免同一台 PC 同時存在兩個 TransLamp 發行版本。
+
+原則：
+
+- 安裝前偵測另一發行通路是否已存在。
+- 已存在時優先提示使用現有版本、更新或遷移。
+- 不讓兩套 TransLamp 同時爭用 `translamp:`。
+- ToolKeeper 不需要知道目前安裝的是 Store 版還是官網版。
+- 對 ToolKeeper 而言，它們都只是產品 `007`。
+
+驗收標準：
+
+> **同一個 ToolKeeper「開啟」按鈕，無論 TransLamp 是從 Microsoft Store 或工具番官網安裝，都能啟動同一個產品。**
+
+---
+
+## 24. 產品一句話原則
 
 TransLamp 不是要成為「另一個 DeepL」。
 
