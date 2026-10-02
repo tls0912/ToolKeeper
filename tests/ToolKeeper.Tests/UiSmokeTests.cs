@@ -462,7 +462,7 @@ public sealed class UiSmokeTests
                 foreach (var name in new[] { "PlatformStatus", "ToolList" })
                     AssertVisibleBounds(Get<FrameworkElement>(window, name), host, width, height);
                 var products = Get<ItemsControl>(window, "Products");
-                Assert.Equal(new[] { "001", "002", "003", "004", "005", "006" }, products.Items.Cast<object>().Select(item => ReadProperty<string>(item, "Id")));
+                Assert.Equal(new[] { "001", "002", "003", "004", "005", "006", "007" }, products.Items.Cast<object>().Select(item => ReadProperty<string>(item, "Id")));
                 var scroller = VisualDescendants<ScrollViewer>(Get<Border>(window, "ToolList")).First();
                 scroller.ScrollToBottom();
                 host.UpdateLayout();

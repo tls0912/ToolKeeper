@@ -13,6 +13,7 @@ public sealed class UriActivationTests
     [InlineData("004")]
     [InlineData("005")]
     [InlineData("006")]
+    [InlineData("007")]
     public void EveryCatalogEntryHasAnUnambiguousUri(string id)
     {
         var uri = ToolActivationUri.ForProduct(id);
@@ -38,6 +39,9 @@ public sealed class UriActivationTests
     [InlineData("toolkeeper://run/999")]
     [InlineData("toolkeeper://run/006?symbol=2330")]
     [InlineData("toolkeeper://run/006/../004")]
+    [InlineData("toolkeeper://run/007?text=private")]
+    [InlineData("toolkeeper://run/007/../004")]
+    [InlineData("translamp://open")]
     [InlineData("toolkeeper://run/4")]
     [InlineData("toolkeeper://run/004/")]
     [InlineData("toolkeeper://run//004")]

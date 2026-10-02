@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <Version>0.1.0</Version>
+    <Description>Offline Language Translator</Description>
+    <TransLampResourceDirectory Condition="'$(TransLampResourceDirectory)' == ''">$(MSBuildThisFileDirectory)..\..\artifacts\translamp</TransLampResourceDirectory>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../ToolKeeper.UI/ToolKeeper.UI.csproj" />
+    <None Update="LanguagePacks/**/*.tlpack" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <None Update="Runtime/**/*" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
+  <!-- Prepared resources stay out of source control; ordinary development builds become usable from ToolKeeper. -->
+  <ItemGroup Condition="Exists('$(TransLampResourceDirectory)/Runtime/python.exe')">
+    <Content Include="$(TransLampResourceDirectory)/Runtime/**/*" Exclude="$(TransLampResourceDirectory)/Runtime/**/__pycache__/**">
+      <Link>Runtime/%(RecursiveDir)%(Filename)%(Extension)</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>Never</CopyToPublishDirectory>
+    </Content>
+    <Content Include="$(TransLampResourceDirectory)/LanguagePacks/*.tlpack">
+      <Link>LanguagePacks/%(Filename)%(Extension)</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>Never</CopyToPublishDirectory>
+    </Content>
+  </ItemGroup>
+</Project>

@@ -1,0 +1,204 @@
+"""One-request, CPU-only offline translation worker for TransLamp.
+
+Run with the bundled interpreter: Runtime/python.exe -I Runtime/translate.py.
+stdin and stdout contain UTF-8 JSON lines. Only the last stdout line is a result;
+earlier lines may contain progress. User text is never written to logs or files.
+"""
+
+from __future__ import annotations
+
+import json
+import os
+from pathlib import Path
+import re
+import sys
+from typing import Any
+
+RUNTIME_ID = "ctranslate2-sentencepiece-v1"
+MAX_TEXT_CHARACTERS = 20_000
+MAX_REQUEST_BYTES = 1_048_576
+MAX_SOURCE_TOKENS = 256
+MAX_TARGET_TOKENS = 768
+
+
+class TranslationError(Exception):
+    """An error whose message is safe to show without disclosing source text."""
+
+
+def deny_network(event: str, _arguments: tuple[Any, ...]) -> None:
+    # No dependency may turn a translation request into a network operation.
+    if event in {"socket.connect", "socket.connect_ex", "socket.getaddrinfo", "socket.bind"}:
+        raise TranslationError("離線翻譯程序禁止網路連線。")
+
+
+def emit(message: dict[str, Any]) -> None:
+    sys.stdout.write(json.dumps(message, ensure_ascii=False, separators=(",", ":")) + "\n")
+    sys.stdout.flush()
+
+
+def read_request(stream: Any) -> dict[str, Any]:
+    raw = stream.readline(MAX_REQUEST_BYTES + 1)
+    if not raw or len(raw) > MAX_REQUEST_BYTES:
+        raise TranslationError("翻譯請求為空或超過大小限制。")
+    try:
+        request = json.loads(raw.decode("utf-8-sig"))
+    except (UnicodeDecodeError, json.JSONDecodeError) as error:
+        raise TranslationError("翻譯請求不是有效的 UTF-8 JSON。") from error
+    if not isinstance(request, dict):
+        raise TranslationError("翻譯請求格式不正確。")
+    text = request.get("text")
+    if not isinstance(text, str) or not text.strip():
+        raise TranslationError("請先輸入要翻譯的文字。")
+    if len(text) > MAX_TEXT_CHARACTERS:
+        raise TranslationError("每次最多可翻譯 20,000 個字元，請分次翻譯。")
+    if "\x00" in text or any(0xD800 <= ord(char) <= 0xDFFF for char in text):
+        raise TranslationError("輸入包含不支援的文字編碼。")
+    direction = (request.get("sourceLanguage"), request.get("targetLanguage"))
+    if direction not in {("en", "zh"), ("zh", "en")}:
+        raise TranslationError("目前支援中文與 English 之間的雙向翻譯。")
+    if not isinstance(request.get("modelPath"), str) or not request["modelPath"]:
+        raise TranslationError("尚未選擇可用的語言包。")
+    return request
+
+
+def validate_model(request: dict[str, Any]) -> Path:
+    root = Path(request["modelPath"])
+    if not root.is_absolute() or not root.is_dir():
+        raise TranslationError("找不到已安裝的語言包，請重新匯入。")
+    try:
+        manifest_path = root / "manifest.json"
+        if manifest_path.stat().st_size > 1_048_576:
+            raise TranslationError("語言包資訊超過大小限制。")
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8-sig"))
+    except (OSError, ValueError) as error:
+        raise TranslationError("語言包資訊損壞，請重新匯入。") from error
+    if not isinstance(manifest, dict) or manifest.get("schemaVersion") != 1:
+        raise TranslationError("不支援這個語言包格式版本。")
+    if manifest.get("runtime") != RUNTIME_ID:
+        raise TranslationError("語言包需要不同的翻譯引擎版本。")
+    if (manifest.get("sourceLanguage"), manifest.get("targetLanguage")) != (
+        request["sourceLanguage"], request["targetLanguage"]
+    ):
+        raise TranslationError("語言包方向與目前選擇不一致。")
+    for relative in ("model/model.bin", "model/config.json", "sentencepiece.model", "LICENSE", "NOTICE"):
+        path = root / relative
+        if not path.is_file() or path.stat().st_size == 0:
+            raise TranslationError("語言包不完整，請重新匯入。")
+    return root
+
+
+def token_chunks(tokens: list[str], limit: int = MAX_SOURCE_TOKENS) -> list[list[str]]:
+    """Bound model input without truncation, preferring SentencePiece word starts."""
+    if limit < 1:
+        raise ValueError("The token limit must be positive.")
+    chunks: list[list[str]] = []
+    start = 0
+    while start < len(tokens):
+        end = min(start + limit, len(tokens))
+        if end < len(tokens):
+            # Chinese with no spaces is split only at tokenizer boundaries. A
+            # pathological single long identifier may also require that fallback.
+            boundaries = [index for index in range(start + 1, end + 1) if tokens[index].startswith("▁")]
+            if boundaries:
+                end = boundaries[-1]
+        chunks.append(tokens[start:end])
+        start = end
+    return chunks
+
+
+def make_plan(text: str, tokenizer: Any) -> list[Any]:
+    """Keep line breaks and indentation, split sentences then bounded token runs."""
+    plan: list[Any] = []
+    for line in re.split(r"(\r\n|\r|\n)", text):
+        if not line or line.isspace():
+            plan.append(line)
+            continue
+        prefix = line[:len(line) - len(line.lstrip())]
+        suffix = line[len(line.rstrip()):]
+        segments: list[list[str]] = []
+        # Do not split decimals, paths or host names at an internal full stop.
+        for sentence in re.split(r"(?<=[。！？])|(?<=[.!?])(?=[ \t])", line.strip()):
+            sentence = sentence.strip()
+            if sentence:
+                segments.extend(token_chunks(tokenizer.encode(sentence, out_type=str)))
+        if not segments:
+            raise TranslationError("輸入無法轉換為翻譯模型可讀取的文字。")
+        plan.append((prefix, segments, suffix))
+    return plan
+
+
+def translate(request: dict[str, Any], progress: Any = emit) -> str:
+    root = validate_model(request)
+    try:
+        # Imports happen only after input and package validation. No package
+        # manager, model downloader, network client or global Python is used.
+        import ctranslate2
+        import sentencepiece
+    except (ImportError, OSError) as error:
+        raise TranslationError("翻譯引擎無法載入。請重新取得完整 Offline Kit 與必要執行元件。") from error
+
+    tokenizer = sentencepiece.SentencePieceProcessor(model_file=str(root / "sentencepiece.model"))
+    plan = make_plan(request["text"], tokenizer)
+    total = sum(len(item[1]) for item in plan if isinstance(item, tuple))
+    if total == 0:
+        raise TranslationError("請先輸入要翻譯的文字。")
+    translator = ctranslate2.Translator(
+        str(root / "model"), device="cpu", compute_type="int8",
+        inter_threads=1, intra_threads=min(4, max(1, os.cpu_count() or 1)),
+    )
+    completed = 0
+    progress({"progress": completed, "total": total})
+    output: list[str] = []
+    joiner = " " if request["targetLanguage"] == "en" else ""
+    for item in plan:
+        if isinstance(item, str):
+            output.append(item)
+            continue
+        prefix, segments, suffix = item
+        translated: list[str] = []
+        for tokens in segments:
+            result = translator.translate_batch(
+                [tokens], beam_size=2, max_input_length=0,
+                max_decoding_length=MAX_TARGET_TOKENS, return_end_token=True,
+                replace_unknowns=True,
+            )[0]
+            hypothesis = result.hypotheses[0]
+            # Never label a hard-cut model result as a complete translation.
+            if not hypothesis or hypothesis[-1] != "</s>":
+                raise TranslationError("模型未能完整翻譯其中一段，請縮短該段文字後重試。")
+            # Argos' converted OPUS vocabularies can retain a literal space
+            # marker after SentencePiece decoding. Preserve ordinary underscores
+            # in technical identifiers; normalize only the tokenizer marker.
+            value = tokenizer.decode(hypothesis[:-1]).replace("▁", " ").strip()
+            if request["targetLanguage"] == "zh":
+                value = re.sub(r" +([，。！？：；、])", r"\1", value)
+            if not value:
+                raise TranslationError("模型回傳空白結果，請調整文字後重試。")
+            translated.append(value)
+            completed += 1
+            progress({"progress": completed, "total": total})
+        output.append(prefix + joiner.join(translated) + suffix)
+    return "".join(output)
+
+
+def main() -> int:
+    sys.stdout.reconfigure(encoding="utf-8", errors="strict", newline="\n")
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+    sys.dont_write_bytecode = True
+    sys.addaudithook(deny_network)
+    try:
+        request = read_request(sys.stdin.buffer)
+        emit({"text": translate(request)})
+        return 0
+    except TranslationError as error:
+        emit({"error": str(error)})
+        return 1
+    except Exception:
+        # Native/tokenizer exceptions can contain user text or local paths.
+        # Do not send those details to stdout, stderr, telemetry, or a file.
+        emit({"error": "本機翻譯失敗。請確認語言包完整，或縮短文字後重試。"})
+        return 1
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

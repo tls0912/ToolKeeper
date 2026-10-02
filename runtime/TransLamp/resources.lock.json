@@ -1,0 +1,97 @@
+{
+  "schemaVersion": 1,
+  "runtime": "ctranslate2-sentencepiece-v1",
+  "platform": "windows-x64",
+  "verifiedDate": "2026-10-03",
+  "integrityNote": "Wheel SHA256 values are published by PyPI. Python and Argos hashes are the baselines measured after downloading the stated official HTTPS resources. Hashes ensure repeatability and do not replace publisher signatures or release review.",
+  "assets": [
+    {
+      "id": "python",
+      "kind": "python",
+      "version": "3.12.10",
+      "fileName": "python-3.12.10-embed-amd64.zip",
+      "url": "https://www.python.org/ftp/python/3.12.10/python-3.12.10-embed-amd64.zip",
+      "size": 11133606,
+      "sha256": "4acbed6dd1c744b0376e3b1cf57ce906f9dc9e95e68824584c8099a63025a3c3",
+      "license": "PSF-2.0"
+    },
+    {
+      "id": "ctranslate2",
+      "kind": "wheel",
+      "version": "4.8.2",
+      "fileName": "ctranslate2-4.8.2-cp312-cp312-win_amd64.whl",
+      "url": "https://files.pythonhosted.org/packages/4e/23/e3b5322ff7368fcbed181ea4c209149416e7940b5b04971d5ee4084afe1a/ctranslate2-4.8.2-cp312-cp312-win_amd64.whl",
+      "size": 19222069,
+      "sha256": "d94421d565d0de61c032998f737a18942b0f2bef40c0424b1846ec6f67300105",
+      "license": "MIT"
+    },
+    {
+      "id": "sentencepiece",
+      "kind": "wheel",
+      "version": "0.2.2",
+      "fileName": "sentencepiece-0.2.2-cp312-cp312-win_amd64.whl",
+      "url": "https://files.pythonhosted.org/packages/8d/11/753fca2e6b109be3ab7867abf357dfe48677fe726ae5a5363d0b54ca9450/sentencepiece-0.2.2-cp312-cp312-win_amd64.whl",
+      "size": 1248030,
+      "sha256": "7c6e7bf684dc12145bfa685d3060beaea55139134ba848289bee514ed42e7383",
+      "license": "Apache-2.0"
+    },
+    {
+      "id": "numpy",
+      "kind": "wheel",
+      "version": "2.5.3",
+      "fileName": "numpy-2.5.3-cp312-cp312-win_amd64.whl",
+      "url": "https://files.pythonhosted.org/packages/3c/a1/accf6d4f0c80c5d9ba9735d6b1550e444180599f34dec69ca01360f717ad/numpy-2.5.3-cp312-cp312-win_amd64.whl",
+      "size": 12567828,
+      "sha256": "0a59a421a32580a009e8a1751345bf829631b990dc1794b80514ab722b435def",
+      "license": "BSD-3-Clause AND 0BSD AND MIT AND Zlib AND CC0-1.0"
+    },
+    {
+      "id": "pyyaml",
+      "kind": "wheel",
+      "version": "6.0.3",
+      "fileName": "pyyaml-6.0.3-cp312-cp312-win_amd64.whl",
+      "url": "https://files.pythonhosted.org/packages/86/bf/899e81e4cce32febab4fb42bb97dcdf66bc135272882d1987881a4b519e9/pyyaml-6.0.3-cp312-cp312-win_amd64.whl",
+      "size": 154003,
+      "sha256": "5fcd34e47f6e0b794d17de1b4ff496c00986e1c83f7ab2fb8fcfe9616ff7477b",
+      "license": "MIT"
+    },
+    {
+      "id": "microsoft-vc-redist-x64",
+      "kind": "prerequisite",
+      "version": "14.44.35211.0",
+      "fileName": "VC_redist.x64.exe",
+      "url": "https://download.visualstudio.microsoft.com/download/pr/bd1c8d9d-ba95-4eee-bc6e-df1fcc876373/CC0FF0EB1DC3F5188AE6300FAEF32BF5BEEBA4BDD6E8E445A9184072096B713B/VC_redist.x64.exe",
+      "size": 25635768,
+      "sha256": "cc0ff0eb1dc3f5188ae6300faef32bf5beeba4bdd6e8e445a9184072096b713b",
+      "license": "Microsoft Visual C++ Redistributable license terms (embedded in the signed installer)"
+    },
+    {
+      "id": "en-zh",
+      "kind": "model",
+      "version": "1.9",
+      "fileName": "translate-en_zh-1_9.argosmodel",
+      "url": "https://argos-net.com/v1/translate-en_zh-1_9.argosmodel",
+      "size": 70743021,
+      "sha256": "433e7c4f034d87fbe2353161e05f18646d7999452f801a4e1f0378522b9850ab",
+      "license": "CC-BY-4.0 AND MIT",
+      "sourceLanguage": "en",
+      "targetLanguage": "zh",
+      "displayName": "English → 中文",
+      "archiveRoot": "translate-en_zh-1_9"
+    },
+    {
+      "id": "zh-en",
+      "kind": "model",
+      "version": "1.9",
+      "fileName": "translate-zh_en-1_9.argosmodel",
+      "url": "https://argos-net.com/v1/translate-zh_en-1_9.argosmodel",
+      "size": 74481402,
+      "sha256": "62e7af5a3a48b530e47b7b3e5c78c2de79073ecd815750d2bf3ab35b4a67da2d",
+      "license": "CC-BY-4.0 AND MIT",
+      "sourceLanguage": "zh",
+      "targetLanguage": "en",
+      "displayName": "中文 → English",
+      "archiveRoot": "translate-zh_en-1_9"
+    }
+  ]
+}

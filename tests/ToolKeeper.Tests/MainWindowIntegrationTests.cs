@@ -21,7 +21,7 @@ public sealed class MainWindowIntegrationTests
             var originalSource = products.ItemsSource;
             var host = HostWindowContent(window);
             Layout(host);
-            Assert.Equal(6, products.Items.Count);
+            Assert.Equal(7, products.Items.Count);
             Assert.All(ProductButtons(products), button =>
             {
                 Assert.False(button.IsEnabled);
