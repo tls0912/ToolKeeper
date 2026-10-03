@@ -63,6 +63,53 @@ def extract_wheel(archive_path: Path, destination: Path) -> None:
                 shutil.copyfileobj(source, output)
 
 
+def clean_runtime_bytecode(runtime: Path) -> None:
+    """Discard only regenerable Python caches; never adopt them as release input."""
+    if runtime.is_symlink() or runtime.is_junction():
+        raise ValueError("Runtime cannot be a link or junction.")
+    root = runtime.resolve(strict=True)
+    for cache in runtime.rglob("__pycache__"):
+        if cache.is_symlink() or cache.is_junction() or not cache.resolve().is_relative_to(root):
+            raise ValueError("Unsafe runtime bytecode cache path.")
+        entries = list(cache.iterdir())
+        if any(not entry.is_file() or entry.is_symlink() or entry.suffix != ".pyc" for entry in entries):
+            raise ValueError("Runtime bytecode cache contains unexpected content.")
+        for entry in entries:
+            entry.unlink()
+        cache.rmdir()
+
+
+def inventory_runtime(runtime: Path, expected: set[str]) -> list[dict]:
+    """Do not legitimize leftover binaries by adding them to a new inventory."""
+    actual: dict[str, Path] = {}
+    for path in runtime.rglob("*"):
+        if path.is_symlink() or path.is_junction():
+            raise ValueError("Runtime inventory cannot contain links or junctions.")
+        if path.is_file():
+            relative = path.relative_to(runtime).as_posix()
+            if "__pycache__" in path.relative_to(runtime).parts:
+                raise ValueError("Runtime has untracked bytecode; prepare into a clean resource directory.")
+            actual[relative] = path
+    if set(actual) != expected:
+        missing, unexpected = sorted(expected - set(actual)), sorted(set(actual) - expected)
+        raise ValueError(f"Runtime inventory differs from pinned inputs. Missing: {missing}; unexpected: {unexpected}")
+    return [{"path": name, "size": actual[name].stat().st_size, "sha256": sha256(actual[name])}
+            for name in sorted(actual)]
+
+
+def expected_runtime_files(lock: dict, cache: Path, source_root: Path) -> set[str]:
+    expected = {"translate.py", "resources.lock.json", "python312._pth", "THIRD-PARTY-NOTICES.md"}
+    expected.update("Licenses/" + path.relative_to(source_root / "licenses").as_posix()
+                    for path in (source_root / "licenses").rglob("*") if path.is_file())
+    for asset in lock["assets"]:
+        if asset["kind"] not in {"python", "wheel"}:
+            continue
+        prefix = "Lib/site-packages/" if asset["kind"] == "wheel" else ""
+        with zipfile.ZipFile(cache / asset["fileName"]) as archive:
+            expected.update(prefix + member.filename for member in archive.infolist() if not member.is_dir())
+    return expected
+
+
 def build_pack(asset: dict, cache: Path, output: Path, source_root: Path) -> dict:
     package_root = output / "Models" / asset["id"]
     package_root.mkdir(parents=True, exist_ok=True)
@@ -143,7 +190,9 @@ def build_pack(asset: dict, cache: Path, output: Path, source_root: Path) -> dic
             with (package_root / relative).open("rb") as source, archive.open(info, "w") as destination:
                 shutil.copyfileobj(source, destination)
     temporary.replace(pack)
-    return {"id": asset["id"], "file": pack.name, "size": pack.stat().st_size, "sha256": sha256(pack), "installedSize": sum(file["size"] for file in files) + manifest_path.stat().st_size}
+    return {"id": asset["id"], "file": pack.name, "packageVersion": PACKAGE_VERSION,
+            "modelVersion": asset["version"], "size": pack.stat().st_size, "sha256": sha256(pack),
+            "installedSize": sum(file["size"] for file in files) + manifest_path.stat().st_size}
 
 
 def build(output: Path, source_root: Path) -> dict:
@@ -187,9 +236,17 @@ def build(output: Path, source_root: Path) -> dict:
         "inside each .tlpack. Keep those LICENSE and NOTICE files with the model.\n"
     )
     (runtime / "THIRD-PARTY-NOTICES.md").write_text(notices, encoding="utf-8", newline="\n")
+    clean_runtime_bytecode(runtime)
+    runtime_files = inventory_runtime(runtime, expected_runtime_files(lock, cache, source_root))
     result = {
+        "schemaVersion": 2,
         "runtime": lock["runtime"], "platform": lock["platform"],
-        "runtimeSize": sum(path.stat().st_size for path in runtime.rglob("*") if path.is_file()),
+        "resourcesLockSha256": sha256(source_root / "resources.lock.json"),
+        "workerSha256": sha256(source_root / "translate.py"),
+        "runtimeFiles": runtime_files,
+        "runtimeSize": sum(item["size"] for item in runtime_files),
+        "prerequisites": [{"file": asset["fileName"], "size": asset["size"], "sha256": asset["sha256"]}
+                          for asset in lock["assets"] if asset["kind"] == "prerequisite"],
         "languagePacks": packs,
         "sources": lock["assets"],
     }

@@ -12,9 +12,10 @@ public partial class App : Application
         try
         {
             var options = LaunchOptions.Parse(e.Args);
+            var engine = new TranslationEngine(options.RuntimeDirectory);
             var window = new MainWindow(
-                new LanguagePackService(options.DataDirectory is null ? null : Path.Combine(options.DataDirectory, "LanguagePacks")),
-                new TranslationEngine(options.RuntimeDirectory));
+                new LanguagePackService(options.DataDirectory is null ? null : Path.Combine(options.DataDirectory, "LanguagePacks"), engine.ValidatePackAsync),
+                engine);
             MainWindow = window;
             window.Show();
         }

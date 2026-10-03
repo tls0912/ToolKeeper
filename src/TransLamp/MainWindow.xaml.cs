@@ -14,6 +14,7 @@ public partial class MainWindow : AppWindow
     private readonly TranslationEngine _engine;
     private readonly string _bundledDirectory;
     private IReadOnlyList<InstalledLanguagePack> _packs = [];
+    private IReadOnlyList<TranslationLiteralDifference> _qualityDifferences = [];
     private CancellationTokenSource? _operation;
     private bool _initialized, _closed, _updatingLanguages, _loaded;
     private long _inputRevision;
@@ -24,8 +25,8 @@ public partial class MainWindow : AppWindow
 
     public MainWindow(LanguagePackService? packService, TranslationEngine? engine, string? bundledDirectory = null)
     {
-        _packService = packService ?? new LanguagePackService();
         _engine = engine ?? new TranslationEngine();
+        _packService = packService ?? new LanguagePackService(validator: _engine.ValidatePackAsync);
         _bundledDirectory = bundledDirectory ?? Path.Combine(AppContext.BaseDirectory, "LanguagePacks");
         InitializeComponent();
         PreferencesPath = Path.Combine(Path.GetDirectoryName(_packService.RootDirectory)!, "ui.json");
@@ -67,6 +68,7 @@ public partial class MainWindow : AppWindow
         UpdateCounts();
         UpdatePackList();
         UpdateAvailability();
+        RenderQualityWarning();
         RenderStatus();
     }
 
@@ -74,21 +76,36 @@ public partial class MainWindow : AppWindow
     {
         if (_loaded) return;
         _loaded = true;
+        await PrepareBundledPacksAsync();
+        if (!_closed) SourceText.Focus();
+    }
+
+    private async Task PrepareBundledPacksAsync()
+    {
         var bundledDirectory = _bundledDirectory;
         if (Directory.Exists(bundledDirectory))
         {
             await RunOperationAsync(async token =>
             {
                 SetStatus(() => T("Preparing bundled language packs…", "正在準備隨附語言包…", "同梱の言語パックを準備しています…"));
-                var count = await _packService.InstallBundledAsync(bundledDirectory, null, token);
+                var result = await _packService.InstallBundledWithResultAsync(bundledDirectory, null, token);
                 if (!CanUpdate(token)) return;
                 RefreshPacks();
-                SetStatus(() => count > 0
-                    ? T($"Prepared {count} language pack(s). Ready for offline translation.", $"已準備 {count} 個語言包，可開始離線翻譯。", $"言語パックを {count} 個準備しました。オフライン翻訳を開始できます。")
-                    : T("Installed language packs are ready.", "已安裝的語言包已就緒。", "インストール済みの言語パックは準備できています。"));
+                if (result.Failures.Count > 0)
+                    SetStatus(() => T(
+                        $"Prepared {result.InstalledCount} language pack(s); {result.Failures.Count} failed. Check the available direction above and reimport failed packs.",
+                        $"已準備 {result.InstalledCount} 個語言包，{result.Failures.Count} 個失敗。請查看上方方向的可用狀態，並重新取得及匯入失敗的語言包。",
+                        $"言語パック {result.InstalledCount} 個を準備、{result.Failures.Count} 個は失敗しました。上の翻訳方向の状態を確認し、失敗したパックを再取得してインポートしてください。"), true);
+                else if (!_engine.IsAvailable)
+                    SetStatus(() => T("Language packs checked, but the offline engine is missing. Use a complete TransLamp Offline Kit.", "已檢查語言包，但缺少離線引擎，請使用完整 TransLamp Offline Kit。", "言語パックを確認しましたが、オフラインエンジンがありません。完全な TransLamp Offline Kit を使用してください。"), true);
+                else if (_packs.Count == 0)
+                    SetStatus(() => T("No language packs installed. Import a compatible .tlpack file to translate.", "尚未安裝語言包，請匯入相容的 .tlpack 檔案後翻譯。", "言語パックがありません。互換性のある .tlpack ファイルをインポートしてください。"));
+                else
+                    SetStatus(() => result.InstalledCount > 0
+                        ? T($"Prepared {result.InstalledCount} language pack(s). Installed directions are available for offline translation.", $"已準備 {result.InstalledCount} 個語言包，可使用已安裝的方向離線翻譯。", $"言語パックを {result.InstalledCount} 個準備しました。インストール済みの方向でオフライン翻訳できます。")
+                        : T("Installed language packs are ready.", "已安裝的語言包已就緒。", "インストール済みの言語パックは準備できています。"));
             });
         }
-        if (!_closed) SourceText.Focus();
     }
 
     private void DirectionChanged(object sender, SelectionChangedEventArgs e)
@@ -119,6 +136,10 @@ public partial class MainWindow : AppWindow
         InvalidateResult();
         UpdateCounts();
         UpdateAvailability();
+        if (!IsBusy)
+            SetStatus(() => string.IsNullOrWhiteSpace(SourceText.Text)
+                ? T("Enter some text to translate.", "請先輸入要翻譯的文字。", "翻訳するテキストを入力してください。")
+                : T("Source text changed. Translate again to get a new result.", "原文已變更，請重新翻譯。", "原文が変更されました。もう一度翻訳してください。"));
     }
 
     private void TargetTextChanged(object sender, TextChangedEventArgs e)
@@ -130,6 +151,7 @@ public partial class MainWindow : AppWindow
     {
         _inputRevision++;
         if (TargetText.Text.Length != 0) TargetText.Clear();
+        ClearQualityWarning();
         CopyButton.IsEnabled = false;
     }
 
@@ -147,7 +169,7 @@ public partial class MainWindow : AppWindow
     {
         if (_closed) return;
         try { _packs = _packService.GetInstalledPacks(); }
-        catch (Exception error) when (error is IOException or UnauthorizedAccessException)
+        catch (Exception error) when (error is IOException or UnauthorizedAccessException or TransLampException or System.Text.Json.JsonException)
         {
             _packs = [];
             SetStatus(() => FriendlyError(error), true);
@@ -212,6 +234,7 @@ public partial class MainWindow : AppWindow
         var pack = CurrentPack!;
         var text = SourceText.Text;
         var revision = _inputRevision;
+        ClearQualityWarning();
         TargetText.Clear();
         await RunOperationAsync(async token =>
         {
@@ -226,9 +249,29 @@ public partial class MainWindow : AppWindow
             });
             var result = await _engine.TranslateAsync(text, pack, progress, token);
             if (!CanUpdate(token) || revision != _inputRevision) return;
-            TargetText.Text = result;
-            SetStatus(() => T("Translation complete. Verify names, numbers and technical terms against the source.", "翻譯完成。請對照原文確認名稱、數字與技術術語。", "翻訳が完了しました。固有名詞、数値、専門用語を原文と照合してください。"));
+            ApplyTranslationResult(text, result);
         });
+    }
+
+    private void ApplyTranslationResult(string source, string translation)
+    {
+        TargetText.Text = translation;
+        _qualityDifferences = TranslationQualityCheck.FindChanges(source, translation);
+        RenderQualityWarning();
+        SetStatus(() => T("Translation complete. Verify names, numbers and technical terms against the source.", "翻譯完成。請對照原文確認名稱、數字與技術術語。", "翻訳が完了しました。固有名詞、数値、専門用語を原文と照合してください。"));
+    }
+
+    private void ClearQualityWarning()
+    {
+        _qualityDifferences = [];
+        RenderQualityWarning();
+    }
+
+    private void RenderQualityWarning()
+    {
+        QualityWarning.Visibility = _qualityDifferences.Count == 0 ? Visibility.Collapsed : Visibility.Visible;
+        QualityWarningText.Text = _qualityDifferences.Count == 0 ? "" : Resources["Lamp.LiteralWarning"] + " " +
+            string.Join(" · ", _qualityDifferences.Select(difference => $"{difference.Literal} ({difference.TranslationOccurrences}/{difference.SourceOccurrences})"));
     }
 
     private async void ImportClick(object sender, RoutedEventArgs e)
@@ -247,7 +290,7 @@ public partial class MainWindow : AppWindow
         if (_closed || IsBusy) return;
         await RunOperationAsync(async token =>
         {
-            SetStatus(() => T("Validating and importing language pack…", "正在驗證及匯入語言包…", "言語パックを検証・インポートしています…"));
+            SetStatus(() => T("Checking files and loading the model before import…", "正在檢查檔案並驗證模型載入，完成後匯入…", "インポート前にファイルとモデルの読み込みを検証しています…"));
             var pack = await _packService.ImportAsync(path, null, token);
             if (!CanUpdate(token)) return;
             RefreshPacks();
@@ -317,6 +360,10 @@ public partial class MainWindow : AppWindow
             "runtime-missing" or "runtime-start" => T("The offline translation engine is missing or cannot start. Use a complete TransLamp Offline Kit.", "離線翻譯引擎缺漏或無法啟動，請使用完整 TransLamp Offline Kit。", "オフライン翻訳エンジンがないか、起動できません。完全な TransLamp Offline Kit を使用してください。"),
             "invalid-pack" => T("The language pack is damaged or has an unsupported format. Get a complete .tlpack file and import it again.", "語言包損壞或格式不相容，請重新取得完整 .tlpack 檔案後再匯入。", "言語パックが破損しているか、未対応の形式です。完全な .tlpack ファイルを取得し、再インポートしてください。"),
             "incompatible-runtime" => T("This language pack requires a different engine version. Use a compatible pack or update the Offline Kit.", "此語言包需要不同版本的引擎，請使用相容語言包或更新 Offline Kit。", "この言語パックには別のエンジンバージョンが必要です。互換性のあるパックを使用するか、Offline Kit を更新してください。"),
+            "unsupported-direction" => T("This language direction is not supported. Choose Chinese ⇄ English and a matching language pack.", "尚未支援此翻譯方向，請選擇中文 ⇄ English 及對應語言包。", "この翻訳方向は未対応です。中国語 ⇄ English と対応する言語パックを選択してください。"),
+            "invalid-model" => T("Language pack validation failed: the offline engine cannot load this model. Obtain a compatible, complete pack and import it again.", "語言包載入驗證失敗：離線引擎無法載入此模型。請重新取得相容且完整的語言包後匯入。", "言語パックの読み込み検証に失敗しました。オフラインエンジンでこのモデルを読み込めません。互換性のある完全なパックを取得し、再インポートしてください。"),
+            "validation-timeout" => T("Language pack validation took too long and was stopped. Retry with a complete, compatible pack.", "語言包驗證時間過長，已停止。請使用完整且相容的語言包重試。", "言語パックの検証に時間がかかったため停止しました。完全で互換性のあるパックで再試行してください。"),
+            "pack-recovery-failed" => T("The language pack operation could not finish. Existing data has been retained. Close other TransLamp windows and try again.", "語言包作業無法完成，原有資料已保留。請關閉其他 TransLamp 視窗後重試。", "言語パックの操作を完了できませんでした。既存のデータは保持されています。他の TransLamp ウィンドウを閉じて再試行してください。"),
             "checksum-mismatch" => T("Language pack integrity verification failed. Obtain the complete pack again and reimport it.", "語言包完整性驗證失敗，請重新取得完整語言包後再匯入。", "言語パックの整合性を確認できませんでした。完全なパックを再取得してインポートしてください。"),
             "pack-busy" => T("Another TransLamp window is using or changing the language pack. Try again after it finishes.", "另一個 TransLamp 視窗正在使用或管理語言包，請等候完成後重試。", "別の TransLamp ウィンドウが言語パックを使用または変更しています。完了してから再試行してください。"),
             "translation-timeout" => T("Translation took too long and was stopped. Try translating a shorter passage.", "翻譯時間過長，已停止作業。請減少文字後重試。", "翻訳に時間がかかったため停止しました。短い文章で再試行してください。"),
@@ -415,6 +462,17 @@ public partial class MainWindow : AppWindow
         _closed = true;
         _operation?.Cancel();
         base.OnClosed(e);
+    }
+
+    protected override void OnActivated(EventArgs e)
+    {
+        base.OnActivated(e);
+        if (_initialized && !_closed && !IsBusy) RefreshPacks();
+    }
+
+    private void PacksExpanded(object sender, RoutedEventArgs e)
+    {
+        if (_initialized && !_closed && !IsBusy) RefreshPacks();
     }
 
     private sealed record LanguageOption(string Code, string Label);

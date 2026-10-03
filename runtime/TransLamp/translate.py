@@ -19,6 +19,12 @@ MAX_TEXT_CHARACTERS = 20_000
 MAX_REQUEST_BYTES = 1_048_576
 MAX_SOURCE_TOKENS = 256
 MAX_TARGET_TOKENS = 768
+TECHNICAL_SPANS = re.compile(
+    r'`[^`\r\n]+`|"(?:[A-Za-z]:[\\/]|\\\\)[^"\r\n]+"'
+    r"|https?://[^\s<>\"']+|(?:[A-Za-z]:[\\/]|\\\\)[^\s<>\"']+"
+    r"|(?<![A-Za-z0-9_])\d+(?:[.,]\d+)+"
+)
+ABBREVIATION = re.compile(r"(?:^|\s)(?:Dr|Mr|Mrs|Ms|Prof|Sr|Jr|vs|e\.g|i\.e)\.$", re.IGNORECASE)
 
 
 class TranslationError(Exception):
@@ -46,15 +52,19 @@ def read_request(stream: Any) -> dict[str, Any]:
         raise TranslationError("翻譯請求不是有效的 UTF-8 JSON。") from error
     if not isinstance(request, dict):
         raise TranslationError("翻譯請求格式不正確。")
-    text = request.get("text")
-    if not isinstance(text, str) or not text.strip():
-        raise TranslationError("請先輸入要翻譯的文字。")
-    if len(text) > MAX_TEXT_CHARACTERS:
-        raise TranslationError("每次最多可翻譯 20,000 個字元，請分次翻譯。")
-    if "\x00" in text or any(0xD800 <= ord(char) <= 0xDFFF for char in text):
-        raise TranslationError("輸入包含不支援的文字編碼。")
+    action = request.get("action", "translate")
+    if action not in ("translate", "validate"):
+        raise TranslationError("不支援這個翻譯引擎操作。")
+    if action == "translate":
+        text = request.get("text")
+        if not isinstance(text, str) or not text.strip():
+            raise TranslationError("請先輸入要翻譯的文字。")
+        if len(text) > MAX_TEXT_CHARACTERS:
+            raise TranslationError("每次最多可翻譯 20,000 個字元，請分次翻譯。")
+        if "\x00" in text or any(0xD800 <= ord(char) <= 0xDFFF for char in text):
+            raise TranslationError("輸入包含不支援的文字編碼。")
     direction = (request.get("sourceLanguage"), request.get("targetLanguage"))
-    if direction not in {("en", "zh"), ("zh", "en")}:
+    if direction not in (("en", "zh"), ("zh", "en")):
         raise TranslationError("目前支援中文與 English 之間的雙向翻譯。")
     if not isinstance(request.get("modelPath"), str) or not request["modelPath"]:
         raise TranslationError("尚未選擇可用的語言包。")
@@ -87,10 +97,65 @@ def validate_model(request: dict[str, Any]) -> Path:
     return root
 
 
+def protected_spans(text: str) -> list[tuple[int, int]]:
+    """Locate technical text whose internal punctuation is not a clause break."""
+    return [(match.start(), match.start() + len(match.group().rstrip(".,!?;:，。！？；：")))
+            for match in TECHNICAL_SPANS.finditer(text)]
+
+
+def split_sentences(text: str) -> list[str]:
+    """Keep common titles, numbered instructions and technical punctuation together."""
+    spans = protected_spans(text)
+    sentences: list[str] = []
+    start = 0
+    for match in re.finditer(r"(?<=[。！？])|(?<=[.!?])(?=[ \t])", text):
+        end = match.end()
+        if any(left < end < right for left, right in spans):
+            continue
+        current = text[start:end].strip()
+        if text[end - 1] == "." and (
+            ABBREVIATION.search(current) or re.fullmatch(r"(?:\d{1,4}|[A-Za-z])\.", current)
+        ):
+            continue
+        if current:
+            sentences.append(current)
+        start = end
+    if text[start:].strip():
+        sentences.append(text[start:].strip())
+    return sentences
+
+
 def token_chunks(tokens: list[str], limit: int = MAX_SOURCE_TOKENS) -> list[list[str]]:
-    """Bound model input without truncation, preferring SentencePiece word starts."""
+    """Keep all tokens, preferring clauses in long sentences before word boundaries."""
     if limit < 1:
         raise ValueError("The token limit must be positive.")
+    if len(tokens) <= limit:
+        return [tokens] if tokens else []
+
+    # SentencePiece's space marker is one character, so these offsets also map
+    # to the original token boundaries. Only use this view to choose boundaries;
+    # the model receives the exact original tokens, without re-tokenization.
+    spans = protected_spans("".join(tokens).replace("▁", " "))
+    semicolons: list[int] = []
+    commas: list[int] = []
+    offset = 0
+    for index, token in enumerate(tokens, start=1):
+        offset += len(token)
+        if not any(left < offset < right for left, right in spans):
+            if token.endswith((";", "；")) and index < len(tokens):
+                semicolons.append(index)
+            elif token.endswith((",", "，")):
+                commas.append(index)
+    if semicolons:
+        # A sentence already exceeds the model budget: use its explicit clauses
+        # rather than placing several independent instructions into one long run.
+        chunks: list[list[str]] = []
+        start = 0
+        for end in [*semicolons, len(tokens)]:
+            chunks.extend(token_chunks(tokens[start:end], limit))
+            start = end
+        return chunks
+
     chunks: list[list[str]] = []
     start = 0
     while start < len(tokens):
@@ -98,7 +163,9 @@ def token_chunks(tokens: list[str], limit: int = MAX_SOURCE_TOKENS) -> list[list
         if end < len(tokens):
             # Chinese with no spaces is split only at tokenizer boundaries. A
             # pathological single long identifier may also require that fallback.
-            boundaries = [index for index in range(start + 1, end + 1) if tokens[index].startswith("▁")]
+            boundaries = [index for index in commas if start < index <= end]
+            if not boundaries:
+                boundaries = [index for index in range(start + 1, end + 1) if tokens[index].startswith("▁")]
             if boundaries:
                 end = boundaries[-1]
         chunks.append(tokens[start:end])
@@ -116,19 +183,16 @@ def make_plan(text: str, tokenizer: Any) -> list[Any]:
         prefix = line[:len(line) - len(line.lstrip())]
         suffix = line[len(line.rstrip()):]
         segments: list[list[str]] = []
-        # Do not split decimals, paths or host names at an internal full stop.
-        for sentence in re.split(r"(?<=[。！？])|(?<=[.!?])(?=[ \t])", line.strip()):
-            sentence = sentence.strip()
-            if sentence:
-                segments.extend(token_chunks(tokenizer.encode(sentence, out_type=str)))
+        for sentence in split_sentences(line.strip()):
+            segments.extend(token_chunks(tokenizer.encode(sentence, out_type=str)))
         if not segments:
             raise TranslationError("輸入無法轉換為翻譯模型可讀取的文字。")
         plan.append((prefix, segments, suffix))
     return plan
 
 
-def translate(request: dict[str, Any], progress: Any = emit) -> str:
-    root = validate_model(request)
+def load_engine(root: Path) -> tuple[Any, Any]:
+    """Load both native model components for translation and package preflight."""
     try:
         # Imports happen only after input and package validation. No package
         # manager, model downloader, network client or global Python is used.
@@ -138,14 +202,19 @@ def translate(request: dict[str, Any], progress: Any = emit) -> str:
         raise TranslationError("翻譯引擎無法載入。請重新取得完整 Offline Kit 與必要執行元件。") from error
 
     tokenizer = sentencepiece.SentencePieceProcessor(model_file=str(root / "sentencepiece.model"))
-    plan = make_plan(request["text"], tokenizer)
-    total = sum(len(item[1]) for item in plan if isinstance(item, tuple))
-    if total == 0:
-        raise TranslationError("請先輸入要翻譯的文字。")
     translator = ctranslate2.Translator(
         str(root / "model"), device="cpu", compute_type="int8",
         inter_threads=1, intra_threads=min(4, max(1, os.cpu_count() or 1)),
     )
+    return tokenizer, translator
+
+
+def translate(request: dict[str, Any], progress: Any = emit) -> str:
+    tokenizer, translator = load_engine(validate_model(request))
+    plan = make_plan(request["text"], tokenizer)
+    total = sum(len(item[1]) for item in plan if isinstance(item, tuple))
+    if total == 0:
+        raise TranslationError("請先輸入要翻譯的文字。")
     completed = 0
     progress({"progress": completed, "total": total})
     output: list[str] = []
@@ -186,9 +255,14 @@ def main() -> int:
     sys.stderr.reconfigure(encoding="utf-8", errors="replace")
     sys.dont_write_bytecode = True
     sys.addaudithook(deny_network)
+    request: dict[str, Any] | None = None
     try:
         request = read_request(sys.stdin.buffer)
-        emit({"text": translate(request)})
+        if request.get("action") == "validate":
+            load_engine(validate_model(request))
+            emit({"validated": True})
+        else:
+            emit({"text": translate(request)})
         return 0
     except TranslationError as error:
         emit({"error": str(error)})
@@ -196,7 +270,10 @@ def main() -> int:
     except Exception:
         # Native/tokenizer exceptions can contain user text or local paths.
         # Do not send those details to stdout, stderr, telemetry, or a file.
-        emit({"error": "本機翻譯失敗。請確認語言包完整，或縮短文字後重試。"})
+        message = ("語言包無法載入。請確認模型與翻譯引擎相容。"
+                   if request is not None and request.get("action") == "validate"
+                   else "本機翻譯失敗。請確認語言包完整，或縮短文字後重試。")
+        emit({"error": message})
         return 1
 
 

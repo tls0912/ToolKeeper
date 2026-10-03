@@ -11,7 +11,13 @@ namespace TransLamp.Tests;
 public sealed class LanguagePackTests : IDisposable
 {
     private readonly string _directory = Path.Combine(Path.GetTempPath(), "TransLamp.Tests", Guid.NewGuid().ToString("N"));
-    private LanguagePackService Service => new(Path.Combine(_directory, "installed"));
+    // Structural fixtures intentionally contain no usable translation model. Only these tests bypass CPU loading.
+    private LanguagePackService Service => new(Path.Combine(_directory, "installed"), AcceptStructuralFixture);
+    private static Task AcceptStructuralFixture(InstalledLanguagePack pack, CancellationToken token)
+    {
+        token.ThrowIfCancellationRequested();
+        return Task.CompletedTask;
+    }
 
     [Fact]
     public async Task InstalledPackWorksAfterOriginalArchiveIsRemoved()
@@ -172,6 +178,286 @@ public sealed class LanguagePackTests : IDisposable
         await Assert.ThrowsAnyAsync<OperationCanceledException>(() => Service.ImportAsync(MakePack(), progress, cancellation.Token));
         Assert.Empty(Service.GetInstalledPacks());
         Assert.Empty(Directory.GetDirectories(Service.RootDirectory, ".install-*"));
+    }
+
+    [Theory]
+    [InlineData("invalid-model")]
+    [InlineData("validation-timeout")]
+    public async Task ModelValidationFailurePreservesPreviousVersionAndRemovalState(string failureCode)
+    {
+        await Service.ImportAsync(MakePack());
+        var called = false;
+        var service = new LanguagePackService(Service.RootDirectory, (pack, token) =>
+        {
+            called = true;
+            Assert.StartsWith(".install-", Path.GetFileName(pack.DirectoryPath));
+            Assert.True(File.Exists(Path.Combine(pack.DirectoryPath, "manifest.json")));
+            Assert.True(File.Exists(Path.Combine(pack.DirectoryPath, "model/model.bin")));
+            return Task.FromException(new TransLampException(failureCode, "Fixture model loader rejected the package."));
+        });
+        var error = await Assert.ThrowsAsync<TransLampException>(() => service.ImportAsync(
+            MakePack(manifest => manifest with { PackageVersion = "2.0.0" })));
+        Assert.Equal(failureCode, error.Code);
+        Assert.True(called);
+        Assert.Equal("1.0.0", Assert.Single(Service.GetInstalledPacks()).Manifest.PackageVersion);
+        await LanguagePackService.VerifyAsync(Service.Find("en", "zh")!);
+        AssertNoPendingTransaction();
+
+        Service.Remove("en-zh");
+        await Assert.ThrowsAsync<TransLampException>(() => service.ImportAsync(MakePack()));
+        Assert.True(File.Exists(Path.Combine(Service.RootDirectory, ".removed-en-zh")));
+        Assert.Empty(Service.GetInstalledPacks());
+        AssertNoPendingTransaction();
+    }
+
+    [Fact]
+    public async Task MissingRuntimeNeverBypassesValidationOfReplacement()
+    {
+        await Service.ImportAsync(MakePack());
+        var engine = new TranslationEngine(Path.Combine(_directory, "missing-runtime"));
+        var service = new LanguagePackService(Service.RootDirectory, engine.ValidatePackAsync);
+        var error = await Assert.ThrowsAsync<TransLampException>(() => service.ImportAsync(
+            MakePack(manifest => manifest with { PackageVersion = "2.0.0" })));
+        Assert.Equal("runtime-missing", error.Code);
+        Assert.Equal("1.0.0", Assert.Single(Service.GetInstalledPacks()).Manifest.PackageVersion);
+        AssertNoPendingTransaction();
+    }
+
+    [Fact]
+    public async Task CancellationWhileLoadingModelPreservesPreviousVersionAndReleasesLock()
+    {
+        await Service.ImportAsync(MakePack());
+        using var cancel = new CancellationTokenSource();
+        var started = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var service = new LanguagePackService(Service.RootDirectory, async (pack, token) =>
+        {
+            started.SetResult();
+            await Task.Delay(Timeout.Infinite, token);
+        });
+        var installing = service.ImportAsync(MakePack(manifest => manifest with { PackageVersion = "2.0.0" }), cancellationToken: cancel.Token);
+        await started.Task.WaitAsync(TimeSpan.FromSeconds(10));
+        cancel.Cancel();
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => installing);
+        Assert.Equal("1.0.0", Assert.Single(Service.GetInstalledPacks()).Manifest.PackageVersion);
+        await Service.ImportAsync(MakePack(manifest => manifest with { PackageVersion = "3.0.0" }));
+        Assert.Equal("3.0.0", Assert.Single(Service.GetInstalledPacks()).Manifest.PackageVersion);
+        AssertNoPendingTransaction();
+    }
+
+    [Theory]
+    [InlineData("ja", "en")]
+    [InlineData("en", "ja")]
+    [InlineData("en", "zh-hant")]
+    public async Task RejectsDirectionsUnsupportedByBundledRuntime(string source, string target)
+    {
+        var error = await Assert.ThrowsAsync<TransLampException>(() => Service.ImportAsync(MakePack(manifest => manifest with
+        { Id = source + "-" + target, SourceLanguage = source, TargetLanguage = target })));
+        Assert.Equal("unsupported-direction", error.Code);
+        Assert.Empty(Service.GetInstalledPacks());
+    }
+
+    [Fact]
+    public async Task LockedFileDuringRemovalNeverLeavesAPartiallyVisiblePack()
+    {
+        var pack = await Service.ImportAsync(MakePack());
+        var before = Directory.GetFiles(pack.DirectoryPath, "*", SearchOption.AllDirectories).Order().ToArray();
+        using (var held = new FileStream(Path.Combine(pack.DirectoryPath, "model/model.bin"), FileMode.Open, FileAccess.Read, FileShare.Read))
+        {
+            var error = Record.Exception(() => Service.Remove(pack.Manifest.Id));
+            if (error is not null)
+            {
+                Assert.True(error is IOException or UnauthorizedAccessException, error.ToString());
+                Assert.Equal(before, Directory.GetFiles(pack.DirectoryPath, "*", SearchOption.AllDirectories).Order());
+                await LanguagePackService.VerifyAsync(pack);
+                Assert.False(File.Exists(Path.Combine(Service.RootDirectory, ".removed-en-zh")));
+            }
+            else
+            {
+                Assert.False(Directory.Exists(pack.DirectoryPath));
+                Assert.True(File.Exists(Path.Combine(Service.RootDirectory, ".removed-en-zh")));
+            }
+            Assert.Empty(Directory.GetFiles(Service.RootDirectory, ".transaction-*.json"));
+        }
+        // A later operation retries any deferred physical deletion.
+        Service.Remove(pack.Manifest.Id);
+        Assert.Empty(Service.GetInstalledPacks());
+        Assert.Empty(Directory.GetDirectories(Service.RootDirectory, ".removing-*"));
+    }
+
+    [Fact]
+    public async Task RemovalMetadataFailureRollsBackWithoutDeletingPayload()
+    {
+        var pack = await Service.ImportAsync(MakePack());
+        Directory.CreateDirectory(Path.Combine(Service.RootDirectory, ".removed-en-zh"));
+        var error = Record.Exception(() => Service.Remove(pack.Manifest.Id));
+        Assert.True(error is IOException or UnauthorizedAccessException, error?.ToString());
+        await LanguagePackService.VerifyAsync(pack);
+        Assert.Single(Service.GetInstalledPacks());
+        AssertNoPendingTransaction();
+        Assert.Empty(Directory.GetDirectories(Service.RootDirectory, ".removing-*"));
+    }
+
+    [Fact]
+    public async Task FailureAfterReplacementMoveRestoresPreviousVersion()
+    {
+        var original = await Service.ImportAsync(MakePack());
+        var marker = Path.Combine(Service.RootDirectory, ".removed-en-zh");
+        File.WriteAllText(marker, "retained removal marker");
+        using (var held = new FileStream(marker, FileMode.Open, FileAccess.Read, FileShare.Read))
+        {
+            await Assert.ThrowsAsync<IOException>(() => Service.ImportAsync(MakePack(manifest => manifest with { PackageVersion = "2.0.0" })));
+            Assert.Equal("1.0.0", Assert.Single(Service.GetInstalledPacks()).Manifest.PackageVersion);
+            await LanguagePackService.VerifyAsync(original);
+        }
+        Assert.Equal("retained removal marker", File.ReadAllText(marker));
+        AssertNoPendingTransaction();
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task InterruptedReplacementRestoresPreviousVersionBeforeBundledPreparation(bool promoted)
+    {
+        var old = await Service.ImportAsync(MakePack(manifest => manifest with { PackageVersion = "9.0.0" }));
+        var donor = new LanguagePackService(Path.Combine(_directory, "donor"), AcceptStructuralFixture);
+        var newer = await donor.ImportAsync(MakePack(manifest => manifest with { PackageVersion = "10.0.0" }));
+        var stagingName = ".install-" + Guid.NewGuid().ToString("N");
+        var backupName = ".previous-en-zh-" + Guid.NewGuid().ToString("N");
+        Directory.Move(newer.DirectoryPath, Path.Combine(Service.RootDirectory, stagingName));
+        WriteJournal("install", stagingName, backupName, hadPrevious: true, hadRemovedMarker: false);
+        Directory.Move(old.DirectoryPath, Path.Combine(Service.RootDirectory, backupName));
+        if (promoted) Directory.Move(Path.Combine(Service.RootDirectory, stagingName), old.DirectoryPath);
+
+        var bundles = Path.Combine(_directory, "bundled");
+        Directory.CreateDirectory(bundles);
+        File.Copy(MakePack(), Path.Combine(bundles, "older.tlpack"));
+        var restarted = new LanguagePackService(Service.RootDirectory, AcceptStructuralFixture);
+        Assert.Equal(0, (await restarted.InstallBundledWithResultAsync(bundles)).InstalledCount);
+        Assert.Equal("9.0.0", Assert.Single(restarted.GetInstalledPacks()).Manifest.PackageVersion);
+        await LanguagePackService.VerifyAsync(restarted.Find("en", "zh")!);
+        AssertNoPendingTransaction();
+    }
+
+    [Fact]
+    public async Task InterruptedFirstImportRestoresExplicitRemovalIntent()
+    {
+        var pack = await Service.ImportAsync(MakePack());
+        // Simulate a new import after explicit removal: promotion happened, but journal was not committed.
+        var stagingName = ".install-" + Guid.NewGuid().ToString("N");
+        WriteJournal("install", stagingName, ".previous-en-zh-" + Guid.NewGuid().ToString("N"),
+            hadPrevious: false, hadRemovedMarker: true);
+        var restarted = new LanguagePackService(Service.RootDirectory, AcceptStructuralFixture);
+        Assert.Empty(restarted.GetInstalledPacks());
+        Assert.False(Directory.Exists(pack.DirectoryPath));
+        Assert.True(File.Exists(Path.Combine(Service.RootDirectory, ".removed-en-zh")));
+        Assert.Equal(0, await restarted.InstallBundledAsync(Path.Combine(_directory, "archives")));
+        AssertNoPendingTransaction();
+    }
+
+    [Fact]
+    public async Task InterruptedRemovalRestoresPackAndOriginalMarkerState()
+    {
+        var pack = await Service.ImportAsync(MakePack());
+        var backupName = ".removing-en-zh-" + Guid.NewGuid().ToString("N");
+        WriteJournal("remove", null, backupName, hadPrevious: true, hadRemovedMarker: false);
+        Directory.Move(pack.DirectoryPath, Path.Combine(Service.RootDirectory, backupName));
+        File.WriteAllText(Path.Combine(Service.RootDirectory, ".removed-en-zh"), "pending removal");
+        var restarted = new LanguagePackService(Service.RootDirectory, AcceptStructuralFixture);
+        await LanguagePackService.VerifyAsync(Assert.Single(restarted.GetInstalledPacks()));
+        Assert.False(File.Exists(Path.Combine(Service.RootDirectory, ".removed-en-zh")));
+        AssertNoPendingTransaction();
+    }
+
+    [Fact]
+    public async Task LegacyInterruptedReplacementIsRecoveredOnFirstRead()
+    {
+        var pack = await Service.ImportAsync(MakePack(manifest => manifest with { PackageVersion = "9.0.0" }));
+        Directory.Move(pack.DirectoryPath, Path.Combine(Service.RootDirectory, ".previous-" + Guid.NewGuid().ToString("N")));
+        var abandoned = Path.Combine(Service.RootDirectory, ".install-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(abandoned);
+        File.WriteAllText(Path.Combine(abandoned, "incomplete"), "partial extraction");
+        Assert.Equal("9.0.0", Assert.Single(Service.GetInstalledPacks()).Manifest.PackageVersion);
+        AssertNoPendingTransaction();
+    }
+
+    [Fact]
+    public async Task DeferredBackupCleanupDoesNotBlockReadingDuringTranslation()
+    {
+        var pack = await Service.ImportAsync(MakePack());
+        var backup = Path.Combine(Service.RootDirectory, ".previous-en-zh-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(backup);
+        File.Copy(Path.Combine(pack.DirectoryPath, "manifest.json"), Path.Combine(backup, "manifest.json"));
+        using var translationLease = new FileStream(Path.Combine(Service.RootDirectory, ".write.lock"),
+            FileMode.Open, FileAccess.ReadWrite, FileShare.ReadWrite);
+        Assert.Single(Service.GetInstalledPacks());
+    }
+
+    [Fact]
+    public async Task DetailedBundledPreparationContinuesAfterCorruptArchive()
+    {
+        var valid = MakePack();
+        File.WriteAllText(Path.Combine(Path.GetDirectoryName(valid)!, "000-invalid.tlpack"), "not a zip");
+        var result = await Service.InstallBundledWithResultAsync(Path.GetDirectoryName(valid)!);
+        Assert.Equal(1, result.InstalledCount);
+        Assert.EndsWith("000-invalid.tlpack", Assert.Single(result.Failures).ArchivePath);
+        Assert.Equal("invalid-pack", result.Failures[0].Code);
+        Assert.Single(Service.GetInstalledPacks());
+    }
+
+    [Fact]
+    public async Task DetailedBundledPreparationPropagatesCancellation()
+    {
+        var archive = MakePack();
+        using var cancel = new CancellationTokenSource();
+        var service = new LanguagePackService(Service.RootDirectory, (pack, token) =>
+        {
+            cancel.Cancel();
+            return Task.FromCanceled(token);
+        });
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => service.InstallBundledWithResultAsync(
+            Path.GetDirectoryName(archive)!, cancellationToken: cancel.Token));
+        Assert.Empty(Service.GetInstalledPacks());
+        AssertNoPendingTransaction();
+    }
+
+    [Fact]
+    public async Task ConcurrentBundledPreparationCannotOverrideManualImportOrRemoval()
+    {
+        var archive = MakePack();
+        var started = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var release = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var manual = new LanguagePackService(Service.RootDirectory, async (pack, token) =>
+        {
+            started.SetResult();
+            await release.Task.WaitAsync(token);
+        });
+        var installing = manual.ImportAsync(MakePack(manifest => manifest with { PackageVersion = "9.0.0" }));
+        try
+        {
+            await started.Task.WaitAsync(TimeSpan.FromSeconds(10));
+            var busy = await Service.InstallBundledWithResultAsync(Path.GetDirectoryName(archive)!);
+            Assert.Equal(0, busy.InstalledCount);
+            Assert.All(busy.Failures, failure => Assert.Equal("pack-busy", failure.Code));
+            Assert.NotEmpty(busy.Failures);
+        }
+        finally { release.TrySetResult(); }
+        await installing;
+        Assert.Equal(0, await Service.InstallBundledAsync(Path.GetDirectoryName(archive)!));
+        Assert.Equal("9.0.0", Assert.Single(Service.GetInstalledPacks()).Manifest.PackageVersion);
+        Service.Remove("en-zh");
+        Assert.Equal(0, await Service.InstallBundledAsync(Path.GetDirectoryName(archive)!));
+        Assert.Empty(Service.GetInstalledPacks());
+    }
+
+    private void WriteJournal(string kind, string? staging, string backup, bool hadPrevious, bool hadRemovedMarker) =>
+        File.WriteAllText(Path.Combine(Service.RootDirectory, ".transaction-en-zh.json"),
+            JsonSerializer.Serialize(new { id = "en-zh", kind, stagingDirectory = staging, backupDirectory = backup, hadPrevious, hadRemovedMarker }));
+
+    private void AssertNoPendingTransaction()
+    {
+        Assert.Empty(Directory.GetFiles(Service.RootDirectory, ".transaction-*.json"));
+        Assert.Empty(Directory.GetDirectories(Service.RootDirectory, ".install-*"));
+        Assert.Empty(Directory.GetDirectories(Service.RootDirectory, ".previous-*"));
     }
 
     private string MakePack(Func<LanguagePackManifest, LanguagePackManifest>? changeManifest = null, string? extraPath = null)

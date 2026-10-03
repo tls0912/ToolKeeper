@@ -20,7 +20,7 @@ powershell -ExecutionPolicy Bypass -File scripts/Prepare-TransLampResources.ps1 
 - `LanguagePacks/*.tlpack`：中英兩方向的獨立資料 ZIP，無執行碼、無 directory entries，每個 payload 都有大小與 SHA256。
 - `Models/{en-zh,zh-en}/`：相同語言包的解包版本，供測試使用。
 - `Prerequisites/VC_redist.x64.exe`：官方 Microsoft 簽章的 Visual C++ x64 執行元件安裝器。目標機缺少此元件時需先安裝；建置腳本不會啟動安裝器或改動系統。安裝可能需要管理員權限。
-- `resource-build.json`、`verification.json`：來源、實際大小、協定驗證與已知品質問題。
+- `resource-build.json`（schema 2）、`verification.json`：來源、完整 Runtime 檔案大小／SHA256、worker 與 lock 雜湊、協定驗證與已知品質問題。清單只接受固定來源的檔案，未知殘留 DLL 會使準備失敗。
 
 Python 的 `._pth` 僅包含自身目錄及 app-local packages，未開啟 `import site`。啟動使用 `-I`；使用者 `PYTHONHOME`／`PYTHONPATH` 不會決定套件來源。
 
@@ -34,11 +34,15 @@ stdin 接收一行 UTF-8 JSON：`text`、絕對路徑 `modelPath`、`sourceLangu
 
 stdout 中途回傳 `{ "progress": 0, "total": 2 }`，最後一行為 `{ "text": "..." }`；失敗則 `{ "error": "..." }` 與非零 exit code。Host 應終止 process tree 以取消工作，不應顯示半成品為完整翻譯。程式不寫翻譯歷史，也不將 native exception 的原文或路徑透出。
 
-每次上限 20,000 字元，依換行與標點切段後以最多 256 個 source tokens 分塊，偏好單字邊界。換行與行首／尾空白保留；單一超長識別字可能在 subword 邊界切開。模型到達硬性輸出限制卻沒有結束符號時回報失敗，不冒充完整譯文。
+安裝前驗證請求使用 `action: "validate"`，保留同樣的 `modelPath`、`sourceLanguage`、`targetLanguage`，不需要 `text`。實際載入 SentencePiece 與 CTranslate2 CPU 模型成功後回傳 `{ "validated": true }`；損壞模型或 tokenizer 回傳安全 JSON 錯誤及非零 exit code。此操作確認可載入，不驗收語意品質。
+
+每次上限 20,000 字元，依換行與標點切段後以最多 256 個 source tokens 分塊。超長句先採分號，再採可用的逗號／單字邊界；常見英文稱謂縮寫與步驟編號保留上下文，避免拆開技術文字內的標點。換行與行首／尾空白保留；單一超長識別字可能在 subword 邊界切開。模型到達硬性輸出限制卻沒有結束符號時回報失敗，不冒充完整譯文。
 
 ## 實測與已知限制
 
-2026-10-03 在目前開發機執行 11 個 worker 單元測試、10 個真實 worker／錯誤處理檢查，以及兩個 ZIP 的完整 SHA256 清單驗證。`verify_translamp_runtime.py` 同時檢查獨立 Python 環境及 socket audit hook。這些是 runtime／協定測試，沒有替代人工翻譯品質驗收，也沒有做全機封包擷取。
+2026-10-03 本輪執行 19 個 worker 單元測試、7 個資源清單測試、10 個真實 worker／錯誤處理檢查，以及兩個 ZIP 的完整 SHA256 清單驗證。`verify_translamp_runtime.py` 同時檢查獨立 Python 環境及 socket audit hook。這些是 runtime／協定測試，沒有替代人工翻譯品質驗收，也沒有做全機封包擷取。
+
+另有 `tests/runtime/test_translamp_quality.py` 的 5 項真實模型回歸：兩方向載入、三種損壞 native 元件拒絕、長步驟文字、換行／縮排與 40 句診斷對照。10 步驟範例的 331 tokens 完整分成 10 段，數字與步驟計數吻合；40 句譯文全與修正前相同，仍含下述缺陷。品質 fixture 是診斷基準，沒有把已知錯譯當作正確答案。
 
 已修正 `SentencePiece.decode` 對這組 Argos 詞彙表可能留下 `▁` 的相容問題。只正規化這個分詞標記，不把一般 `_` 改成空白；使用者原文刻意包含 `▁` 的完整往返保真尚未支援。
 

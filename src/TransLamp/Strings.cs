@@ -32,6 +32,7 @@ internal static class Strings
         ("PackHint", "Import a language pack from local storage or USB. No download or account is required.", "從本機或 USB 匯入語言包，無須連網或登入帳號。", "ローカルまたは USB から言語パックをインポートします。ネット接続やアカウントは不要です。"),
         ("NoPacks", "No language packs installed. Import a trusted TransLamp .tlpack file to get started.", "尚未安裝語言包。匯入可信來源的 TransLamp .tlpack 檔案即可準備使用。", "言語パックがありません。信頼できる TransLamp .tlpack ファイルをインポートしてください。"),
         ("Remove", "Remove", "移除", "削除"),
+        ("LiteralWarning", "Check possible changes to source literals (translation/source counts):", "原文字面值可能缺漏或改變；請核對（譯文／原文次數）：", "原文の数値・識別子の欠落や変更を照合してください（訳文／原文の回数）："),
         ("Quality", "For understanding the gist. Machine translation may miss meaning; verify critical details. Chinese output may use simplified characters.", "以看懂大意為目標。機器翻譯可能有誤，重要資訊請對照原文；中文譯文可能使用簡體字。", "大意をつかむための翻訳です。誤訳の可能性があるため、重要な内容は原文と照合してください。中国語の訳文は簡体字になる場合があります。")
     ];
 }

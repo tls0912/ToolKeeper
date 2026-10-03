@@ -23,12 +23,25 @@ class Words:
         return " ".join(token.lstrip("▁") for token in tokens)
 
 
+class Console(io.StringIO):
+    def reconfigure(self, **kwargs):
+        pass
+
+
 class WorkerTests(unittest.TestCase):
     def request(self, **values):
         return {"text": "Example text", "sourceLanguage": "en", "targetLanguage": "zh", "modelPath": "C:/Models/en-zh", **values}
 
     def read(self, request):
         return WORKER.read_request(io.BytesIO(json.dumps(request).encode("utf-8") + b"\n"))
+
+    def invoke_main(self, request):
+        source = types.SimpleNamespace(buffer=io.BytesIO(json.dumps(request).encode("utf-8") + b"\n"))
+        output, errors = Console(), Console()
+        with patch.object(WORKER.sys, "stdin", source), patch.object(WORKER.sys, "stdout", output), \
+                patch.object(WORKER.sys, "stderr", errors), patch.object(WORKER.sys, "addaudithook"):
+            code = WORKER.main()
+        return code, [json.loads(line) for line in output.getvalue().splitlines()], errors.getvalue()
 
     def test_utf8_and_bom_are_supported(self):
         request = self.request(text="請重新啟動設備", sourceLanguage="zh", targetLanguage="en")
@@ -55,6 +68,44 @@ class WorkerTests(unittest.TestCase):
             with self.subTest(text=repr(text)), self.assertRaises(WORKER.TranslationError):
                 self.read(self.request(text=text))
 
+    def test_validate_request_needs_model_and_direction_but_not_text(self):
+        request = self.request(action="validate")
+        del request["text"]
+        self.assertEqual(self.read(request), request)
+        for changes in ({"action": "download"}, {"action": []}, {"sourceLanguage": "ja"}, {"modelPath": ""}):
+            with self.subTest(changes=changes), self.assertRaises(WORKER.TranslationError):
+                self.read({**request, **changes})
+        with self.assertRaises(WORKER.TranslationError):
+            self.read({**request, "action": "translate"})
+
+    def test_validate_action_loads_engine_and_emits_only_validation_result(self):
+        request = self.request(action="validate")
+        del request["text"]
+        model = Path(request["modelPath"])
+        with patch.object(WORKER, "validate_model", return_value=model), \
+                patch.object(WORKER, "load_engine") as load_engine, patch.object(WORKER, "translate") as translate:
+            code, lines, errors = self.invoke_main(request)
+        self.assertEqual((code, lines, errors), (0, [{"validated": True}], ""))
+        load_engine.assert_called_once_with(model)
+        translate.assert_not_called()
+
+    def test_native_validation_error_never_discloses_exception_or_path(self):
+        request = self.request(action="validate", modelPath="C:/CONFIDENTIAL-SEED/model")
+        with patch.object(WORKER, "validate_model", return_value=Path(request["modelPath"])), \
+                patch.object(WORKER, "load_engine", side_effect=RuntimeError("native details: CONFIDENTIAL-SEED")):
+            code, lines, errors = self.invoke_main(request)
+        self.assertEqual(code, 1)
+        self.assertEqual(len(lines), 1)
+        self.assertEqual(set(lines[0]), {"error"})
+        self.assertNotIn("CONFIDENTIAL-SEED", json.dumps(lines))
+        self.assertEqual(errors, "")
+
+    def test_translation_actions_keep_the_existing_result_protocol(self):
+        for action in (None, "translate"):
+            request = self.request(**({"action": action} if action else {}))
+            with self.subTest(action=action), patch.object(WORKER, "translate", return_value="譯文"):
+                self.assertEqual(self.invoke_main(request), (0, [{"text": "譯文"}], ""))
+
     def test_token_chunks_cover_long_input_without_loss(self):
         tokens = ["▁first", *["word"] * 7, "▁second", *["piece"] * 17, "▁last"]
         chunks = WORKER.token_chunks(tokens, limit=10)
@@ -69,6 +120,30 @@ class WorkerTests(unittest.TestCase):
         self.assertEqual([token for chunk in chunks for token in chunk], tokens)
         self.assertTrue(all(len(chunk) <= WORKER.MAX_SOURCE_TOKENS for chunk in chunks))
 
+    def test_only_long_sentences_are_split_into_semicolon_clauses(self):
+        tokens = ["▁first", ";", "▁second", "；", "▁third", ";", "▁last"]
+        self.assertEqual(WORKER.token_chunks(tokens, limit=7), [tokens])
+        chunks = WORKER.token_chunks(tokens, limit=4)
+        self.assertEqual(chunks, [tokens[:2], tokens[2:4], tokens[4:6], tokens[6:]])
+        self.assertEqual([token for chunk in chunks for token in chunk], tokens)
+
+    def test_clause_splitting_preserves_technical_punctuation(self):
+        for technical in ("https://x/a;b", "C:\\Logs\\a;b.txt", "`key;a,b`", "1,000.25"):
+            text = "start; " + technical + " end; finish"
+            tokens = list(text.replace(" ", "▁"))
+            chunks = WORKER.token_chunks(tokens, limit=len(technical) + 7)
+            with self.subTest(technical=technical):
+                self.assertEqual([token for chunk in chunks for token in chunk], tokens)
+                self.assertTrue(any(technical in "".join(chunk).replace("▁", " ") for chunk in chunks))
+                self.assertTrue(all(0 < len(chunk) <= len(technical) + 7 for chunk in chunks))
+
+    def test_long_clause_falls_back_to_commas_before_words_without_losing_tokens(self):
+        tokens = ["▁first", "part", ",", "▁second", "part", "more", "▁third", "part"]
+        chunks = WORKER.token_chunks(tokens, limit=6)
+        self.assertEqual(chunks[0], tokens[:3])
+        self.assertEqual([token for chunk in chunks for token in chunk], tokens)
+        self.assertTrue(all(0 < len(chunk) <= 6 for chunk in chunks))
+
     def test_plan_preserves_blank_lines_indentation_and_crlf(self):
         plan = WORKER.make_plan("  First line. Next sentence.\r\n\r\n\tLast line.  \n", Words())
         self.assertEqual([part for part in plan if isinstance(part, str)], ["\r\n", "", "\r\n", "\n", ""])
@@ -80,6 +155,18 @@ class WorkerTests(unittest.TestCase):
     def test_plan_does_not_split_internal_technical_dots(self):
         plan = WORKER.make_plan("Use 192.168.1.10 and version 1.2.3. Then retry.", Words())
         self.assertEqual(len(plan[0][1]), 2)
+
+    def test_titles_abbreviations_and_numbered_steps_stay_with_their_sentence(self):
+        for source, expected in (
+            ("Dr. Smith changed the limit to 0.8 MPa. Restart the unit.",
+             ["Dr. Smith changed the limit to 0.8 MPa.", "Restart the unit."]),
+            ("1. Stop the machine. 2. Turn off the power.", ["1. Stop the machine.", "2. Turn off the power."]),
+            ("Ask Mr. Smith or Prof. Lee. Use e.g. 0.8 MPa.", ["Ask Mr. Smith or Prof. Lee.", "Use e.g. 0.8 MPa."]),
+            ("Open https://example.com/a;b?c=1. Then use C:\\Logs\\a;b.txt.",
+             ["Open https://example.com/a;b?c=1.", "Then use C:\\Logs\\a;b.txt."]),
+        ):
+            with self.subTest(source=source):
+                self.assertEqual(WORKER.split_sentences(source), expected)
 
     def test_python_network_attempts_are_blocked(self):
         for event in ("socket.connect", "socket.connect_ex", "socket.getaddrinfo", "socket.bind"):

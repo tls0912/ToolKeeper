@@ -70,6 +70,9 @@ if ($LASTEXITCODE -ne 0) { throw 'TransLamp resource packaging failed.' }
 $unitTests = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '../tests/runtime/test_translamp_worker.py'))
 & $python -I -B $unitTests
 if ($LASTEXITCODE -ne 0) { throw 'TransLamp worker regression tests failed.' }
+$inventoryTests = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '../tests/runtime/test_translamp_resources.py'))
+& $python -I -B $inventoryTests
+if ($LASTEXITCODE -ne 0) { throw 'TransLamp resource inventory tests failed.' }
 $verification = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '../tests/runtime/verify_translamp_runtime.py'))
 & $python -I -B $verification --resources $outputPath
 if ($LASTEXITCODE -ne 0) { throw 'TransLamp CPU translation verification failed.' }

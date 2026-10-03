@@ -1,6 +1,6 @@
 # TransLamp 007 實作與待辦紀錄
 
-更新：2026-10-03。開發版：0.1.0。此文件集中記錄本次完成內容、驗證證據與尚未完成事項，供後續一次檢視。
+更新：2026-10-03。目前開發版：0.1.1。此文件保留原型能力及 0.1.0 的驗證紀錄；本輪修正與新版驗收集中於[優化實作紀錄](TRANSLAMP-OPTIMIZATION-IMPLEMENTATION.md)。
 
 後續檢查：[全面優化檢查](TRANSLAMP-OPTIMIZATION-REVIEW.md)，包含 12 項已確認問題、隔離重現證據、效能量測與修正順序。
 
@@ -19,9 +19,9 @@
 
 ## 執行與重建
 
-Offline Kit 的預設輸出為 `artifacts/TransLamp-OfflineKit`；本次最終交付另外保存於 `artifacts/TransLamp-OfflineKit-0.1.0`。完整資料夾需一起搬移，不能只複製 EXE。
+Offline Kit 的預設輸出已改為 `artifacts/TransLamp-OfflineKit-<產品版本>`。0.1.0 原型保留於 `artifacts/TransLamp-OfflineKit-0.1.0`；0.1.1 產物與當次驗證見優化實作紀錄。完整資料夾需一起搬移，不能只複製 EXE。
 
-本次可執行檔：[`TransLamp.exe`](../artifacts/TransLamp-OfflineKit-0.1.0/TransLamp.exe)。完整壓縮包：[`TransLamp-OfflineKit-0.1.0.zip`](../artifacts/TransLamp-OfflineKit-0.1.0.zip)。解壓後約427 MiB，另需約162 MiB存放首次安裝的兩個語言包。
+原型 0.1.0 可執行檔：[`TransLamp.exe`](../artifacts/TransLamp-OfflineKit-0.1.0/TransLamp.exe)。原型壓縮包：[`TransLamp-OfflineKit-0.1.0.zip`](../artifacts/TransLamp-OfflineKit-0.1.0.zip)。原型解壓後約427 MiB，另需約162 MiB存放首次安裝的兩個語言包。
 
 ```powershell
 # 開發環境需 .NET 10 SDK
@@ -61,7 +61,7 @@ SHA-256 是內容完整性與固定版本重現的檢查，**尚不是發行者�
 
 原文和譯文不保存為歷史、log 或遙測。翻譯 worker 不含 HTTP 下載／雲端翻譯程式，Python audit hook 額外拒絕 socket 連線。模型下載僅在明確執行資源準備脚本時發生。此措施不等同已完成作業系統封包監測或實體斷網機驗收。
 
-## 驗證紀錄
+## 0.1.0 原型驗證紀錄
 
 最終 TransLamp C# 回歸 **45／45 通過、無跳過**，包含真實 CPU 中英雙向推論、特殊符號回歸、推論中取消與包鎖定。指令：
 

@@ -34,6 +34,8 @@ public sealed record LanguagePackFile
 }
 
 public sealed record InstalledLanguagePack(LanguagePackManifest Manifest, string DirectoryPath, long SizeBytes);
+public sealed record LanguagePackInstallFailure(string ArchivePath, string Code, string Message);
+public sealed record LanguagePackInstallResult(int InstalledCount, IReadOnlyList<LanguagePackInstallFailure> Failures);
 public sealed record TranslationProgress(int Completed, int Total);
 
 public sealed class TransLampException(string code, string message, Exception? innerException = null)

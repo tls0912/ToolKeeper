@@ -113,14 +113,29 @@
             </Grid>
             <Border Grid.Row="3" Margin="0,14,0,10" BorderBrush="{DynamicResource LineBrush}" BorderThickness="0,1,0,0" Padding="0,10,0,0">
                 <Grid>
-                    <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
+                    <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
                     <TextBlock x:Name="StatusText" FontSize="12" AutomationProperties.LiveSetting="Polite" />
-                    <ProgressBar x:Name="OperationProgress" Grid.Row="1" Height="3" Margin="0,8,0,0" Visibility="Collapsed" Background="{DynamicResource LineBrush}" Foreground="{DynamicResource AccentBrush}" />
+                    <Border x:Name="QualityWarning" Grid.Row="1" Visibility="Collapsed" Margin="0,6,0,0" Padding="8,4" Background="{DynamicResource HoverBrush}" BorderBrush="{DynamicResource LineBrush}" BorderThickness="1" CornerRadius="4">
+                        <ScrollViewer MaxHeight="28" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                            <TextBlock x:Name="QualityWarningText" FontSize="12" Foreground="{DynamicResource AccentBrush}" AutomationProperties.LiveSetting="Polite" />
+                        </ScrollViewer>
+                    </Border>
+                    <ProgressBar x:Name="OperationProgress" Grid.Row="2" Height="3" Margin="0,8,0,0" Visibility="Collapsed" Background="{DynamicResource LineBrush}" Foreground="{DynamicResource AccentBrush}" />
                 </Grid>
             </Border>
-            <Expander x:Name="PacksExpander" Grid.Row="4" Foreground="{DynamicResource TextBrush}" Background="Transparent" IsExpanded="False">
+            <Expander x:Name="PacksExpander" Grid.Row="4" Foreground="{DynamicResource TextBrush}" Background="Transparent" IsExpanded="False" Expanded="PacksExpanded">
                 <Expander.Header><TextBlock Text="{DynamicResource Lamp.Packs}" FontWeight="SemiBold" /></Expander.Header>
-                <ScrollViewer MaxHeight="160" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                    <ScrollViewer.Style>
+                        <Style TargetType="ScrollViewer">
+                            <Setter Property="MaxHeight" Value="160" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding Visibility, ElementName=QualityWarning}" Value="Visible">
+                                    <Setter Property="MaxHeight" Value="140" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </ScrollViewer.Style>
                 <Border Background="{DynamicResource PaperBackgroundBrush}" BorderBrush="{DynamicResource LineBrush}" BorderThickness="1" CornerRadius="4" Padding="12" Margin="0,8,0,0">
                     <Grid>
                         <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
