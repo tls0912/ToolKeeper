@@ -275,6 +275,7 @@ public sealed class ResearchEngineTests(ITestOutputHelper output)
         Assert.Equal(ExclusionReason.CorporateActionInWindow, actual.PrimaryExclusion);
         Assert.Contains(ExclusionReason.NonTradingBar, actual.Exclusions);
         Assert.Contains(ExclusionReason.MissingPrice, actual.Exclusions);
+        Assert.Equal(new[] { ExclusionReason.CorporateActionInWindow, ExclusionReason.NonTradingBar, ExclusionReason.MissingPrice }, actual.Exclusions);
         Assert.Equal(1, Assert.Single(run.Statistics).Exclusions.Sum(e => e.Count));
         Assert.Equal(run.Funnel.SampledEvents, run.Statistics[0].ValidCount + run.Statistics[0].ExcludedCount);
     }
@@ -370,6 +371,83 @@ public sealed class ResearchEngineTests(ITestOutputHelper output)
         snapshot = Replace(snapshot, 2, b => b with { Volume = null });
         run = _engine.Run(snapshot, Definition(snapshot, 1, 1));
         Assert.Equal(1, Assert.Single(run.Statistics).ValidCount);
+    }
+
+    [Theory]
+    [InlineData(false, false)]
+    [InlineData(false, true)]
+    [InlineData(true, false)]
+    [InlineData(true, true)]
+    public void FirstInRun_CombinesUnknownVolumeWithPriceUsingThreeStateAnd(bool priceMatches, bool missingVolume)
+    {
+        var snapshot = priceMatches ? Snapshot(98, 99, 100, 102, 103) : Snapshot(102, 101, 100, 102, 103);
+        snapshot = Replace(snapshot, 0, b => b with { Volume = missingVolume ? null : 0 });
+        snapshot = Replace(snapshot, 1, b => b with { Volume = 0 });
+        var definition = ResearchTemplates.CreateDefinition("HL-R003", snapshot.Bars[2].Date,
+            snapshot.Bars[3].Date, snapshot.DataAsOf, 2, 1m) with { Horizons = [1] };
+
+        var run = _engine.Run(snapshot, definition);
+        var first = run.Evaluations[0];
+        Assert.Equal(priceMatches ? MatchState.Unknown : MatchState.NotMatched, first.State);
+        Assert.Equal(priceMatches ? MatchState.Matched : MatchState.NotMatched,
+            first.Features.Single(f => f.Condition.Feature == ResearchFeature.PriceChange).State);
+        var volume = first.Features.Single(f => f.Condition.Feature == ResearchFeature.RelativeVolume);
+        Assert.Equal(MatchState.Unknown, volume.State);
+        Assert.Null(volume.Value);
+        Assert.Equal(new[] { missingVolume ? ExclusionReason.MissingVolume : ExclusionReason.UndefinedFeature }, first.Reasons);
+        Assert.Equal(MatchState.Matched, run.Evaluations[1].State);
+        Assert.Equal(!priceMatches, run.Evaluations[1].IsSampled);
+        Assert.Equal(priceMatches ? ExclusionReason.EventStartUnknown : (ExclusionReason?)null, run.Evaluations[1].SamplingExclusion);
+        if (priceMatches) Assert.Empty(run.Cases);
+        else Assert.Equal(snapshot.Bars[3].Date, Assert.Single(run.Cases).EventDate);
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(1)]
+    [InlineData(2)]
+    public void MissingVolumeOnlyMakesItsOwnConditionUnknown(int missingIndex)
+    {
+        var snapshot = Replace(Snapshot(100, 101, 102, 103), missingIndex, b => b with { Volume = null });
+        var definition = ResearchTemplates.CreateDefinition("HL-R003", snapshot.Bars[2].Date,
+            snapshot.Bars[2].Date, snapshot.DataAsOf, 2, 1m) with { Horizons = [1] };
+        var evaluation = Assert.Single(_engine.Run(snapshot, definition).Evaluations);
+
+        Assert.Equal(MatchState.Unknown, evaluation.State);
+        Assert.Equal(MatchState.Matched, evaluation.Features[0].State);
+        Assert.Equal(MatchState.Unknown, evaluation.Features[1].State);
+        Assert.Equal(new[] { ExclusionReason.MissingVolume }, evaluation.Reasons);
+    }
+
+    [Fact]
+    public void MissingVolumeOutsideTheVolumeConditionWindowDoesNotMakeItUnknown()
+    {
+        var snapshot = Replace(Snapshot(100, 101, 102, 103, 104), 0, b => b with { Volume = null });
+        var definition = Definition(snapshot, 3, 3) with
+        {
+            Conditions =
+            [
+                Condition(ResearchFeature.PriceChange, 3, ComparisonOperator.GreaterThan, 0),
+                Condition(ResearchFeature.RelativeVolume, 1, ComparisonOperator.GreaterThanOrEqual, 1)
+            ]
+        };
+        var evaluation = Assert.Single(_engine.Run(snapshot, definition).Evaluations);
+        Assert.Equal(MatchState.Matched, evaluation.State);
+        Assert.All(evaluation.Features, feature => Assert.Equal(MatchState.Matched, feature.State));
+        Assert.Empty(evaluation.Reasons);
+    }
+
+    [Fact]
+    public void FalsePriceConditionDoesNotBypassTheStrictOhlcQualityGate()
+    {
+        var snapshot = Replace(Snapshot(102, 101, 100, 102), 0, b => b with { Open = null });
+        var definition = ResearchTemplates.CreateDefinition("HL-R003", snapshot.Bars[2].Date,
+            snapshot.Bars[2].Date, snapshot.DataAsOf, 2, 1m) with { Horizons = [1] };
+        var evaluation = Assert.Single(_engine.Run(snapshot, definition).Evaluations);
+
+        Assert.Equal(MatchState.Unknown, evaluation.State);
+        Assert.All(evaluation.Features, feature => Assert.Equal(MatchState.Unknown, feature.State));
+        Assert.Equal(new[] { ExclusionReason.MissingPrice }, evaluation.Reasons);
     }
 
     [Fact]
@@ -494,6 +572,66 @@ public sealed class ResearchEngineTests(ITestOutputHelper output)
         {
             Conditions = [Condition(ResearchFeature.ConsecutiveDeclines, 3, ComparisonOperator.GreaterThanOrEqual, 4)]
         }));
+    }
+
+    [Fact]
+    public void UpperThresholdOutsideThePercentageDisplayRangeIsRejectedBeforeResearch()
+    {
+        var snapshot = Snapshot(101, 100, 105);
+        var error = Assert.Throws<ArgumentException>(() => _engine.Run(snapshot,
+            Definition(snapshot, 1, 1) with { UpperThreshold = decimal.MaxValue }));
+        Assert.Equal("definition", error.ParamName);
+        Assert.Contains("百分比可表示範圍", error.Message);
+    }
+
+    [Fact]
+    public void ExtremeRepresentableUpperThresholdHasNoReachableUpperPrice()
+    {
+        var snapshot = Snapshot(101, 100, 105);
+        var run = _engine.Run(snapshot, Definition(snapshot, 1, 1) with { UpperThreshold = decimal.MaxValue / 100m });
+        var outcome = Assert.Single(Assert.Single(run.Cases).Outcomes);
+
+        Assert.True(outcome.IsValid);
+        Assert.Equal(0.05m, outcome.PriceChange);
+        Assert.Null(outcome.UpperFirstHitTradingDay);
+        Assert.Equal(ThresholdOrder.Neither, outcome.ThresholdOrder);
+        Assert.Equal(0, Assert.Single(run.Statistics).UpperHitCount);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void UpperPriceAtDecimalBoundaryOnlyHitsWhenTheProductIsRepresentable(bool targetOverflows)
+    {
+        var basePrice = (decimal.MaxValue - 1m) / 2m + (targetOverflows ? 1m : 0m);
+        var snapshot = Replace(Snapshot(basePrice, basePrice, basePrice), 2, b => b with { High = decimal.MaxValue });
+        var definition = Definition(snapshot, 1, 1) with
+        {
+            UpperThreshold = 1m,
+            Conditions = [Condition(ResearchFeature.PriceChange, 1, ComparisonOperator.GreaterThanOrEqual, 0)]
+        };
+        var outcome = Assert.Single(Assert.Single(_engine.Run(snapshot, definition).Cases).Outcomes);
+
+        Assert.True(outcome.IsValid);
+        Assert.Equal(targetOverflows ? (int?)null : 1, outcome.UpperFirstHitTradingDay);
+        Assert.Equal(targetOverflows ? ThresholdOrder.Neither : ThresholdOrder.UpperFirst, outcome.ThresholdOrder);
+    }
+
+    [Fact]
+    public void RepresentableUpperPriceRetainsDecimalMultiplicationRounding()
+    {
+        const decimal unit = 0.0000000000000000000000000001m;
+        var snapshot = Snapshot(2m * unit, unit, unit);
+        snapshot = snapshot with
+        {
+            Bars = snapshot.Bars.Select(b => b with { Open = b.Close, High = b.Close, Low = b.Close }).ToArray()
+        };
+        var outcome = Assert.Single(Assert.Single(_engine.Run(snapshot,
+            Definition(snapshot, 1, 1) with { UpperThreshold = 0.5m }).Cases).Outcomes);
+
+        Assert.True(outcome.IsValid);
+        Assert.Null(outcome.UpperFirstHitTradingDay);
+        Assert.Equal(1, outcome.LowerFirstHitTradingDay);
     }
 
     [Fact]

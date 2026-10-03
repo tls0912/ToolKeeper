@@ -11,7 +11,7 @@ internal sealed class PriceChart : FrameworkElement
     private IReadOnlyList<DailyBar> _bars = [];
     private DateOnly? _event;
     public void SetData(IReadOnlyList<DailyBar> bars, DateOnly? eventDate)
-    { _bars = bars; _event = eventDate; InvalidateVisual(); }
+    { _bars = bars.OrderBy(bar => bar.Date).ToArray(); _event = eventDate; InvalidateVisual(); }
 
     protected override void OnRender(DrawingContext drawing)
     {

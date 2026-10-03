@@ -9,6 +9,7 @@ using Xunit;
 
 namespace ToolKeeper.Tests;
 
+[Collection("WPF UI")]
 public sealed class MainWindowIntegrationTests
 {
     [Fact]

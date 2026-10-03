@@ -2,7 +2,7 @@
 
 更新：2026-10-03。依 [006 規格 0.2](products/006_HistoLens.md) 製作。**目前是合成資料開發預覽，不是可供真實股票研究的正式版本。**
 
-後續已完成 [006 全面檢查與優化清單](HISTOLENS-OPTIMIZATION-REVIEW.md)，集中記錄 13 項問題／改善、重現證據及處理順序。案例文字排序、阻擋研究覆蓋前次成果、異常檔載入一致性等已重現，尚未修正；使用本預覽時以該清單的最新限制為準。
+後續已完成 [006 全面檢查與優化清單](HISTOLENS-OPTIMIZATION-REVIEW.md)，並依使用者「提交後實作」完成 O01–O13 修正／整合驗證，詳見 [修正紀錄](HISTOLENS-FIXES.md)。目前引擎為 `0.1.1-m0`；案例數值排序、工作保留、載入一致性、三態 AND、背景保存及大量資料保存已補強。真實資料與正式發布仍未完成。
 
 使用者補充方向：先尋找免費資料供應商，或先備妥一組測試資料；可自行持續工作，問題集中留在本文件。
 
@@ -16,7 +16,7 @@
 - 統計與案例使用同一份引擎結果，分期呈現有效 N、漲跌平盤、平均、中位數、分位數、期間極值、收盤最大回撤及門檻觸及。
 - 案例可排序、點選查看事件前後原始 OHLC 與收盤路徑；採樣與排除頁保留不可判定／未採用日的原因。
 - 可取消研究。改設定後保留舊結果並標示未重跑；舊工作不可覆蓋後來的設定。
-- 本機保存完整合成資料快照、研究設定、引擎版本與結果；寫入先落暫存檔再改名，各次保存互不覆寫。載入檢查格式、檔案大小、校驗碼及資料／結果的快照一致性。
+- 本機保存完整合成資料快照、研究設定、引擎版本與結果；寫入先落暫存檔再改名，各次保存互不覆寫。v1 格式改用精簡 JSON，保留舊檔讀取，檔案上限 64 MiB；驗證、hash、序列化及 I/O 在背景執行。載入檢查結構、身份、觀察期、計數、校驗碼及資料／結果的快照一致性，完整準備後才替換原工作。
 
 ## 操作方式
 
@@ -68,6 +68,8 @@ M0 的核心計算與合成資料工作流已有自動驗證；本版不宣告�
 
 ## 驗證紀錄
 
+最新修正版本：Release HistoLens **105／105**，宿主定向測試三次各 **94／94**，預覽重建成功；舊 `0.1.0-m0` 範例重存後研究與快照不變。10,000 筆／6 條件／4 期間／9,880 事件可保存為約 34.16 MiB 的 v1 檔。完整證據與效能比較見[修正紀錄](HISTOLENS-FIXES.md)。
+
 以下為初次實作交付的驗證紀錄。後續檢查仍通過 HistoLens 53 項，但宿主預設平行測試兩次各為 93／94，序列診斷為 94／94；且新增的異常檔案與資料阻擋案例揭露原測試未涵蓋的缺口，詳見[本輪檢查](HISTOLENS-OPTIMIZATION-REVIEW.md)。不將原先通過的測試視為所有失敗情境已驗收。
 
 Release 建置／本機預覽輸出成功。最終 HistoLens 測試 **53／53 通過**（核心 45、介面／保存 8），宿主定向測試 **94／94 通過**；合計 **147 項通過、0 失敗、0 略過**。沒有執行整份 solution 的其他產品全套回歸。已驗證項目包括：
@@ -86,6 +88,10 @@ Release 建置／本機預覽輸出成功。最終 HistoLens 測試 **53／53 �
 可重跑命令：
 
 ```powershell
+# 完整重建測試、圖片、範例及隔離預覽，產物仍位於 artifacts。
+./scripts/Publish-HistoLensPreview.ps1
+
+# 以下為個別開發驗證命令，不會單獨重建所有交付物。
 dotnet test tests/HistoLens.Tests/HistoLens.Tests.csproj -c Release
 dotnet test tests/ToolKeeper.Tests/ToolKeeper.Tests.csproj -c Release --filter "FullyQualifiedName~ProductCatalogTests|FullyQualifiedName~ProductLauncherTests|FullyQualifiedName~UriActivationTests|FullyQualifiedName~MainWindowIntegrationTests|FullyQualifiedName~ModuleWindowManagerTests|FullyQualifiedName~LauncherShowsAllModuleEntriesAtMinimumSize"
 dotnet publish src/ToolKeeper/ToolKeeper.csproj -c Release -o artifacts/histolens-preview

@@ -3,7 +3,7 @@ namespace HistoLens.Core;
 /// <summary>Pure synchronous computation over a fixed snapshot; call from a worker thread in a UI.</summary>
 public sealed class ResearchEngine
 {
-    public const string Version = "0.1.0-m0";
+    public const string Version = "0.1.1-m0";
     public const int MaxLookback = 2500;
     public const int MaxHorizon = 2500;
 
@@ -108,8 +108,9 @@ public sealed class ResearchEngine
         };
     }
 
-    private static void ValidateDefinition(ResearchDefinition definition)
+    internal static void ValidateDefinition(ResearchDefinition definition)
     {
+        ArgumentNullException.ThrowIfNull(definition);
         if (definition.EventStart == default || definition.EventEnd < definition.EventStart || definition.DataAsOf < definition.EventEnd)
             throw new ArgumentException("事件日期須有合法起訖，且不得晚於研究截止日。", nameof(definition));
         if (string.IsNullOrWhiteSpace(definition.TemplateId) || string.IsNullOrWhiteSpace(definition.TemplateVersion))
@@ -131,6 +132,8 @@ public sealed class ResearchEngine
         if (definition.Horizons is null || definition.Horizons.Count is < 1 or > 4 ||
             definition.Horizons.Any(h => h is < 1 or > MaxHorizon) || definition.Horizons.Distinct().Count() != definition.Horizons.Count)
             throw new ArgumentException($"觀察期須為 1 至 4 個不重複的日數，每期介於 1 至 {MaxHorizon}。", nameof(definition));
+        if (definition.UpperThreshold > decimal.MaxValue / 100m)
+            throw new ArgumentException("上方門檻超出 decimal 百分比可表示範圍。", nameof(definition));
         if (definition.UpperThreshold <= 0 || definition.LowerThreshold >= 0 || definition.LowerThreshold <= -1 ||
             definition.UpperThreshold != decimal.Round(definition.UpperThreshold, 8) ||
             definition.LowerThreshold != decimal.Round(definition.LowerThreshold, 8))
@@ -143,6 +146,7 @@ public sealed class ResearchEngine
         private readonly ResearchDefinition _definition;
         private readonly CancellationToken _cancellationToken;
         private readonly Dictionary<DateOnly, DailyBar> _bars;
+        private readonly IReadOnlyList<ExclusionReason>[] _barReasons;
         private readonly Dictionary<int, EventEvaluation> _evaluations = [];
         public DateOnly[] Dates { get; }
         public int Lookback { get; }
@@ -154,6 +158,12 @@ public sealed class ResearchEngine
             _cancellationToken = cancellationToken;
             Dates = snapshot.Calendar.TradingDates.Order().ToArray();
             _bars = snapshot.Bars.ToDictionary(b => b.Date);
+            _barReasons = new IReadOnlyList<ExclusionReason>[Dates.Length];
+            for (var index = 0; index < Dates.Length; index++)
+            {
+                _cancellationToken.ThrowIfCancellationRequested();
+                _barReasons[index] = SnapshotValidator.GetBarReasons(Bar(index), false);
+            }
             Lookback = definition.Conditions.Max(c => c.Lookback);
         }
 
@@ -173,11 +183,9 @@ public sealed class ResearchEngine
                 for (var j = index - Lookback; j <= index; j++)
                 {
                     _cancellationToken.ThrowIfCancellationRequested();
-                    foreach (var reason in SnapshotValidator.GetBarReasons(Bar(j), false)) reasons.Add(reason);
+                    var barReasons = _barReasons[j];
+                    for (var r = 0; r < barReasons.Count; r++) reasons.Add(barReasons[r]);
                 }
-                foreach (var condition in _definition.Conditions.Where(c => c.Feature == ResearchFeature.RelativeVolume))
-                    for (var j = index - condition.Lookback; j <= index; j++)
-                        if (Bar(j)?.Volume is null) reasons.Add(ExclusionReason.MissingVolume);
             }
             FeatureValue[] features;
             MatchState state;
@@ -192,8 +200,14 @@ public sealed class ResearchEngine
                 features = _definition.Conditions.Select(condition =>
                 {
                     var key = (condition.Feature, condition.Lookback);
-                    if (!values.TryGetValue(key, out var value)) values[key] = value = Feature(index, condition);
-                    if (value is null) reasons.Add(ExclusionReason.UndefinedFeature);
+                    if (!values.TryGetValue(key, out var value))
+                    {
+                        var missingVolume = condition.Feature == ResearchFeature.RelativeVolume &&
+                            HasMissingVolume(index, condition.Lookback);
+                        values[key] = value = missingVolume ? null : Feature(index, condition);
+                        if (value is null)
+                            reasons.Add(missingVolume ? ExclusionReason.MissingVolume : ExclusionReason.UndefinedFeature);
+                    }
                     return new FeatureValue
                     {
                         Condition = condition, Value = value,
@@ -211,6 +225,16 @@ public sealed class ResearchEngine
             };
             _evaluations[index] = result;
             return result;
+        }
+
+        private bool HasMissingVolume(int index, int lookback)
+        {
+            for (var j = index - lookback; j <= index; j++)
+            {
+                _cancellationToken.ThrowIfCancellationRequested();
+                if (Bar(j)!.Volume is null) return true;
+            }
+            return false;
         }
 
         private decimal? Feature(int index, ResearchCondition condition)
@@ -266,7 +290,8 @@ public sealed class ResearchEngine
             for (var j = index + 1; j <= knownEnd; j++)
             {
                 _cancellationToken.ThrowIfCancellationRequested();
-                foreach (var reason in SnapshotValidator.GetBarReasons(Bar(j), false)) reasons.Add(reason);
+                var barReasons = _barReasons[j];
+                for (var r = 0; r < barReasons.Count; r++) reasons.Add(barReasons[r]);
             }
             if (reasons.Count > 0)
             {
@@ -280,7 +305,7 @@ public sealed class ResearchEngine
             var high = decimal.MinValue;
             var low = decimal.MaxValue;
             int? upper = null, lower = null;
-            var upperPrice = p0 * (1 + _definition.UpperThreshold);
+            var upperPrice = RepresentableUpperPrice(p0, _definition.UpperThreshold);
             var lowerPrice = p0 * (1 + _definition.LowerThreshold);
             for (var j = index + 1; j <= endIndex; j++)
             {
@@ -290,7 +315,7 @@ public sealed class ResearchEngine
                 low = Math.Min(low, bar.Low!.Value);
                 peak = Math.Max(peak, bar.Close!.Value);
                 maxDrawdown = Math.Min(maxDrawdown, bar.Close.Value / peak - 1);
-                if (upper is null && bar.High.Value >= upperPrice) upper = j - index;
+                if (upper is null && upperPrice.HasValue && bar.High.Value >= upperPrice.Value) upper = j - index;
                 if (lower is null && bar.Low.Value <= lowerPrice) lower = j - index;
             }
             var order = upper is null && lower is null ? ThresholdOrder.Neither :
@@ -304,6 +329,14 @@ public sealed class ResearchEngine
                 UpperFirstHitDate = upper.HasValue ? Dates[index + upper.Value] : null,
                 LowerFirstHitDate = lower.HasValue ? Dates[index + lower.Value] : null, ThresholdOrder = order
             };
+        }
+
+        private static decimal? RepresentableUpperPrice(decimal basePrice, decimal threshold)
+        {
+            // Preserve the original decimal multiplication and rounding for representable targets.
+            // An overflowing positive target is above every representable bar price, so it cannot be hit.
+            try { return checked(basePrice * (1 + threshold)); }
+            catch (OverflowException) { return null; }
         }
 
         private void AddActionReasons(DateOnly start, DateOnly end, HashSet<ExclusionReason> reasons)

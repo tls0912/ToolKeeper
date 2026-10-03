@@ -14,6 +14,7 @@ using Xunit;
 
 namespace ToolKeeper.Tests;
 
+[Collection("WPF UI")]
 public sealed class UiSmokeTests
 {
     private const string AbcMd5 = "900150983cd24fb0d6963f7d28e17f72";

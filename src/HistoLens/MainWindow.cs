@@ -24,6 +24,7 @@ public sealed partial class MainWindow : AppWindow
     private CancellationTokenSource? _work;
     private int _generation;
     private bool _updating, _closed, _stale;
+    private IReadOnlyList<DataIssue>? _attemptIssues;
     private Func<string>? _statusText;
     public DataSnapshot? Snapshot { get; private set; }
     public ResearchRun? Result { get; private set; }
@@ -34,6 +35,7 @@ public sealed partial class MainWindow : AppWindow
         var directory = dataDirectory ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "ToolKeeper", "HistoLens");
         _store = new ResearchStore(Path.Combine(directory, "research"));
         PreferencesPath = Path.Combine(directory, "ui.json");
+        SelectedTheme = "Ink";
         MainName = "HistoLens";
         SubName = "Historical Stock Research";
         AboutAuthor = "不告訴你";
@@ -155,11 +157,14 @@ public sealed partial class MainWindow : AppWindow
     public void LoadDemo()
     {
         InvalidateWork();
-        Snapshot = DemoData.Create(); Result = null; _stale = false;
+        Snapshot = DemoData.Create(); Result = null; _stale = false; _attemptIssues = null;
         _updating = true;
-        _start.Text = Snapshot.Calendar.TradingDates[Math.Min(130, Snapshot.Calendar.TradingDates.Count - 1)].ToString("yyyy-MM-dd");
-        _end.Text = _asOf.Text = Snapshot.DataAsOf.ToString("yyyy-MM-dd");
-        _updating = false;
+        try
+        {
+            _start.Text = Snapshot.Calendar.TradingDates[Math.Min(130, Snapshot.Calendar.TradingDates.Count - 1)].ToString("yyyy-MM-dd");
+            _end.Text = _asOf.Text = Snapshot.DataAsOf.ToString("yyyy-MM-dd");
+        }
+        finally { _updating = false; }
         RenderResult(); UpdateDataInfo(); SetEnabled();
         SetStatus(() => T("Synthetic data loaded. Choose a template and run.", "合成資料已載入，選擇模板後可執行研究。", "合成データを読み込みました。テンプレートを選んで実行します。"));
     }
@@ -178,13 +183,25 @@ public sealed partial class MainWindow : AppWindow
         SetStatus(() => T("Researching…", "研究中…", "研究中…"));
         try
         {
-            var result = await Task.Run(() => new ResearchEngine().Run(snapshot, definition, cancellation.Token), cancellation.Token);
+            var completed = await Task.Run(() =>
+            {
+                var run = new ResearchEngine().Run(snapshot, definition, cancellation.Token);
+                return (Run: run, Presentation: run.IsResearchAllowed ? PrepareResult(run, snapshot, cancellation.Token) : null);
+            }, cancellation.Token);
             cancellation.Token.ThrowIfCancellationRequested();
             if (_closed || generation != _generation) return;
-            Result = result; _stale = false; RenderResult();
-            SetStatus(() => result.IsResearchAllowed
-                ? T("Completed. Historical statistics use each horizon's own valid sample count.", "研究完成。各觀察期分別使用自己的有效樣本數。", "完了。各観察期間の有効ケース数を分母に使用します。")
-                : T("Research blocked by data quality. See Data quality.", "資料條件不足，無法研究；請看資料品質。", "データ品質により研究できません。データ品質を確認してください。"));
+            var result = completed.Run;
+            if (!result.IsResearchAllowed)
+            {
+                _attemptIssues = result.Diagnostics;
+                _quality.ItemsSource = _attemptIssues;
+                _stale = Result is not null;
+                UpdateSummary();
+                SetStatus(() => T("Research blocked; previous result retained. See Data quality: ", "資料條件不足，保留前次結果；請看資料品質：", "研究できません。前回結果を保持します。データ品質：") + string.Join(" · ", result.BlockingReasons));
+                return;
+            }
+            Result = result; _stale = false; _attemptIssues = null; RenderResult(completed.Presentation);
+            SetStatus(() => T("Completed. Historical statistics use each horizon's own valid sample count.", "研究完成。各觀察期分別使用自己的有效樣本數。", "完了。各観察期間の有効ケース数を分母に使用します。"));
         }
         catch (OperationCanceledException)
         { if (!_closed && generation == _generation) SetStatus(() => T("Cancelled; previous result retained.", "已取消，保留前次完整結果。", "キャンセルしました。前回結果を保持します。")); }
@@ -204,13 +221,15 @@ public sealed partial class MainWindow : AppWindow
         decimal? threshold = template.DefaultThreshold is null ? null : Number(_threshold.Text);
         if (template.Id == "HL-R001") threshold /= 100;
         var definition = ResearchTemplates.CreateDefinition(template.Id, Date(_start.Text), Date(_end.Text), Date(_asOf.Text), lookback, threshold);
-        return definition with
+        definition = definition with
         {
             Horizons = _horizons.Text.Split(',', StringSplitOptions.TrimEntries).Select(value => int.Parse(value, NumberStyles.None, CultureInfo.InvariantCulture)).ToArray(),
             SamplingPolicy = (SamplingPolicy)_sampling.SelectedItem,
             UpperThreshold = Number(_upper.Text) / 100,
             LowerThreshold = Number(_lower.Text) / 100
         };
+        ResearchEngine.ValidateDefinition(definition);
+        return definition;
     }
 
     private static DateOnly Date(string text) => DateOnly.ParseExact(text, "yyyy-MM-dd", CultureInfo.InvariantCulture);
@@ -220,10 +239,14 @@ public sealed partial class MainWindow : AppWindow
     {
         if (_template.SelectedItem is not ComboBoxItem { Tag: ResearchTemplate template }) return;
         _updating = true;
-        _lookback.Text = template.DefaultLookback.ToString(CultureInfo.InvariantCulture);
-        _threshold.Text = template.DefaultThreshold is { } threshold ? (template.Id == "HL-R001" ? threshold * 100 : threshold).ToString(CultureInfo.InvariantCulture) : "";
-        _threshold.IsEnabled = template.DefaultThreshold is not null;
-        _formula.Text = template.Formula; _updating = false;
+        try
+        {
+            _lookback.Text = template.DefaultLookback.ToString(CultureInfo.InvariantCulture);
+            _threshold.Text = template.DefaultThreshold is { } threshold ? (template.Id == "HL-R001" ? threshold * 100 : threshold).ToString(CultureInfo.InvariantCulture) : "";
+            _threshold.IsEnabled = template.DefaultThreshold is not null;
+            _formula.Text = template.Formula;
+        }
+        finally { _updating = false; }
     }
 
     private void Edited()
@@ -232,6 +255,7 @@ public sealed partial class MainWindow : AppWindow
         InvalidateWork();
         _stale = Result is not null;
         if (_stale) SetStatus(() => T("Settings changed. Results below still show the previous completed run.", "設定已變更，尚未重新執行；下方仍是前次完整結果。", "設定変更済み・未再実行です。前回の結果を表示しています。"));
+        else SetStatus(() => T("Settings changed. Run research when ready.", "設定已變更，準備完成後可執行研究。", "設定を変更しました。準備ができたら研究を実行します。"));
         UpdateSummary(); SetEnabled();
     }
 
@@ -239,33 +263,81 @@ public sealed partial class MainWindow : AppWindow
 
     public async Task<string> SaveResearchAsync(CancellationToken cancellationToken = default)
     {
-        if (Snapshot is null || Result is not { IsResearchAllowed: true } || _stale || _work is not null) throw new InvalidOperationException("Run current settings before saving.");
-        return await _store.SaveAsync(Snapshot, Result, cancellationToken);
+        if (_closed || Snapshot is null || Result is not { IsResearchAllowed: true } || _stale || _work is not null) throw new InvalidOperationException("Run current settings before saving.");
+        var cancellation = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        _work = cancellation; SetEnabled();
+        try { return await _store.SaveAsync(Snapshot, Result, cancellation.Token); }
+        finally
+        {
+            if (ReferenceEquals(_work, cancellation)) _work = null;
+            cancellation.Dispose(); if (!_closed) SetEnabled();
+        }
     }
 
     private async Task SaveFromUi()
     {
-        try { await SaveResearchAsync(); RefreshSaved(); SetStatus(() => T("Saved locally with the complete snapshot.", "已保存到本機，包含完整資料快照。", "完全なスナップショットとともに保存しました。")); }
-        catch (Exception error) { SetStatus(() => T("Save failed: ", "保存失敗：", "保存エラー：") + error.Message); }
+        var generation = _generation;
+        try
+        {
+            SetStatus(() => T("Saving…", "保存中…", "保存中…"));
+            await SaveResearchAsync();
+            if (_closed || generation != _generation) return;
+            RefreshSaved(); SetStatus(() => T("Saved locally with the complete snapshot.", "已保存到本機，包含完整資料快照。", "完全なスナップショットとともに保存しました。"));
+        }
+        catch (OperationCanceledException)
+        { if (!_closed && generation == _generation) SetStatus(() => T("Save cancelled; completed result retained.", "已取消保存，保留完整結果。", "保存をキャンセルしました。完了した結果を保持します。")); }
+        catch (Exception error)
+        { if (!_closed && generation == _generation) SetStatus(() => T("Save failed: ", "保存失敗：", "保存エラー：") + error.Message); }
     }
 
-    public async Task LoadResearchAsync(string path)
+    public Task LoadResearchAsync(string path) => LoadResearchAsync(path, default);
+
+    public async Task LoadResearchAsync(string path, CancellationToken cancellationToken)
     {
+        if (_closed) return;
         InvalidateWork(); var generation = _generation;
-        var saved = await ResearchStore.LoadAsync(path);
-        if (_closed || generation != _generation) return;
+        var cancellation = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        _work = cancellation; SetEnabled();
+        try
+        {
+            var saved = await ResearchStore.LoadAsync(path, cancellation.Token);
+            cancellation.Token.ThrowIfCancellationRequested();
+            if (_closed || generation != _generation) return;
+            var editor = PrepareEditor(saved.Run.Definition);
+            var presentation = await Task.Run(() => PrepareResult(saved.Run, saved.Snapshot, cancellation.Token), cancellation.Token);
+            cancellation.Token.ThrowIfCancellationRequested();
+            if (_closed || generation != _generation) return;
+            // Everything that depends on file content has been checked and prepared.
+            _updating = true;
+            try
+            {
+                _template.SelectedItem = editor.Template;
+                _lookback.Text = editor.Lookback; _threshold.Text = editor.Threshold;
+                var template = (ResearchTemplate)editor.Template.Tag;
+                _threshold.IsEnabled = template.DefaultThreshold is not null; _formula.Text = template.Formula;
+                _start.Text = editor.Start; _end.Text = editor.End; _asOf.Text = editor.AsOf;
+                _horizons.Text = editor.Horizons; _sampling.SelectedItem = saved.Run.Definition.SamplingPolicy;
+                _upper.Text = editor.Upper; _lower.Text = editor.Lower;
+                Snapshot = saved.Snapshot; Result = saved.Run; _stale = false; _attemptIssues = null;
+                UpdateDataInfo(); RenderResult(presentation);
+            }
+            finally { _updating = false; }
+            SetStatus(() => T("Saved run opened. Its snapshot and engine version are preserved.", "已開啟保存研究，保留原始快照與引擎版本。", "保存した研究を開きました。元のデータとエンジン版を保持しています。"));
+        }
+        finally
+        {
+            if (ReferenceEquals(_work, cancellation)) _work = null;
+            cancellation.Dispose(); if (!_closed) SetEnabled();
+        }
+    }
+
+    private EditorValues PrepareEditor(ResearchDefinition definition)
+    {
         // Validate supported settings before changing any current work.
-        var definition = saved.Run.Definition;
+        ResearchEngine.ValidateDefinition(definition);
         var selectedItem = _template.Items.Cast<ComboBoxItem>().FirstOrDefault(item => ((ResearchTemplate)item.Tag).Id == definition.TemplateId)
             ?? throw new InvalidDataException("This preview cannot edit that template.");
         var selected = (ResearchTemplate)selectedItem.Tag;
-        if (definition.Conditions is null || definition.Conditions.Count == 0 || definition.Conditions.Any(item => item is null) ||
-            definition.Horizons is null || definition.Horizons.Count is < 1 or > 4 ||
-            definition.Horizons.Any(h => h is < 1 or > ResearchEngine.MaxHorizon) || definition.Horizons.Distinct().Count() != definition.Horizons.Count ||
-            !Enum.IsDefined(definition.SamplingPolicy) || definition.PriceMode != PriceMode.ConservativeRaw ||
-            definition.EventStart == default || definition.EventStart > definition.EventEnd || definition.EventEnd > definition.DataAsOf ||
-            definition.UpperThreshold <= 0 || definition.LowerThreshold is <= -1 or >= 0)
-            throw new InvalidDataException("Saved settings are not valid for this preview.");
         var lookback = selected.Id == "HL-R002" ? checked((int)definition.Conditions[0].Value) : definition.Conditions[0].Lookback;
         decimal? threshold = selected.Id == "HL-R001" ? definition.Conditions.Last().Value : null;
         if (selected.Id == "HL-R003")
@@ -276,29 +348,29 @@ public sealed partial class MainWindow : AppWindow
         var expected = ResearchTemplates.CreateDefinition(selected.Id, definition.EventStart, definition.EventEnd, definition.DataAsOf, lookback, threshold);
         if (definition.TemplateVersion != selected.Version || !definition.Conditions.SequenceEqual(expected.Conditions))
             throw new InvalidDataException("Saved template conditions or version are not supported by this preview.");
-        Snapshot = saved.Snapshot; Result = saved.Run; _stale = false;
-        _updating = true; _template.SelectedItem = selectedItem; _updating = false;
-        ApplyTemplateDefaults(); _updating = true;
-        _lookback.Text = definition.Conditions[0].Lookback.ToString(CultureInfo.InvariantCulture);
-        if (selected.Id == "HL-R002") _lookback.Text = definition.Conditions[0].Value.ToString(CultureInfo.InvariantCulture);
-        if (selected.Id == "HL-R001") _threshold.Text = (definition.Conditions.Last().Value * 100).ToString(CultureInfo.InvariantCulture);
-        if (selected.Id == "HL-R003")
-        {
-            var volume = definition.Conditions.Single(item => item.Feature == ResearchFeature.RelativeVolume);
-            _lookback.Text = volume.Lookback.ToString(CultureInfo.InvariantCulture); _threshold.Text = volume.Value.ToString(CultureInfo.InvariantCulture);
-        }
-        _start.Text = definition.EventStart.ToString("yyyy-MM-dd"); _end.Text = definition.EventEnd.ToString("yyyy-MM-dd");
-        _asOf.Text = definition.DataAsOf.ToString("yyyy-MM-dd"); _horizons.Text = string.Join(',', definition.Horizons);
-        _sampling.SelectedItem = definition.SamplingPolicy;
-        _upper.Text = (definition.UpperThreshold * 100).ToString(CultureInfo.InvariantCulture); _lower.Text = (definition.LowerThreshold * 100).ToString(CultureInfo.InvariantCulture);
-        _updating = false; UpdateDataInfo(); RenderResult(); SetEnabled();
-        SetStatus(() => T("Saved run opened. Its snapshot and engine version are preserved.", "已開啟保存研究，保留原始快照與引擎版本。", "保存した研究を開きました。元のデータとエンジン版を保持しています。"));
+        return new(selectedItem, lookback.ToString(CultureInfo.InvariantCulture),
+            threshold is { } value ? (selected.Id == "HL-R001" ? InputPercent(value) : value.ToString(CultureInfo.InvariantCulture)) : "",
+            definition.EventStart.ToString("yyyy-MM-dd"), definition.EventEnd.ToString("yyyy-MM-dd"), definition.DataAsOf.ToString("yyyy-MM-dd"),
+            string.Join(',', definition.Horizons), InputPercent(definition.UpperThreshold), InputPercent(definition.LowerThreshold));
     }
+
+    private static string InputPercent(decimal fraction)
+    {
+        try { return checked(fraction * 100).ToString(CultureInfo.InvariantCulture); }
+        catch (OverflowException error) { throw new InvalidDataException("Saved percentage cannot be edited by this preview.", error); }
+    }
+
+    private sealed record EditorValues(ComboBoxItem Template, string Lookback, string Threshold, string Start, string End, string AsOf, string Horizons, string Upper, string Lower);
 
     private async Task LoadFromUi(string path)
     {
+        // LoadResearchAsync starts a new generation before its first await.
+        var generation = _generation + 1;
         try { await LoadResearchAsync(path); }
-        catch (Exception error) { SetStatus(() => T("Open failed; previous work retained: ", "開啟失敗，保留原工作：", "読込エラー。前回の作業を保持：") + error.Message); }
+        catch (OperationCanceledException)
+        { if (!_closed && generation == _generation) SetStatus(() => T("Open cancelled; previous work retained.", "已取消開啟，保留原工作。", "読込をキャンセルしました。前回の作業を保持します。")); }
+        catch (Exception error)
+        { if (!_closed && generation == _generation) SetStatus(() => T("Open failed; previous work retained: ", "開啟失敗，保留原工作：", "読込エラー。前回の作業を保持：") + error.Message); }
     }
 
     private void RefreshSaved()
@@ -322,7 +394,7 @@ public sealed partial class MainWindow : AppWindow
         Description = T("Select a question. Explore historical cases.", "選一個問題，把歷史攤開來研究。", "問いを選び、過去のケースを研究します。");
         foreach (var action in _translations) action();
         if (_statusText is not null) _status.Text = _statusText();
-        UpdateDataInfo(); UpdateSummary(); _chart.InvalidateVisual();
+        UpdateDataInfo(); UpdateSummary(); UpdateCaseDetail(); _chart.InvalidateVisual();
     }
     private static TextBlock Text()
     {
@@ -361,9 +433,10 @@ public sealed partial class MainWindow : AppWindow
         rowStyle.Setters.Add(new Setter(Control.ForegroundProperty, new DynamicResourceExtension("TextBrush"))); table.RowStyle = rowStyle;
         return table;
     }
-    private void Column(DataGrid grid, string property, string en, string zh, string ja)
+    private void Column(DataGrid grid, string property, string en, string zh, string ja, string? sortProperty = null)
     {
-        var column = new DataGridTextColumn { Binding = new Binding(property) { StringFormat = property == "Date" ? "{0:yyyy-MM-dd}" : null }, MinWidth = 76, Width = DataGridLength.Auto };
+        var column = new DataGridTextColumn { Binding = new Binding(property) { StringFormat = property == "Date" ? "{0:yyyy-MM-dd}" : null },
+            SortMemberPath = sortProperty ?? property, CanUserSort = sortProperty != "", MinWidth = 76, Width = DataGridLength.Auto };
         Bind(() => column.Header = T(en, zh, ja)); grid.Columns.Add(column);
     }
     private sealed record SavedItem(string Path, string Label);

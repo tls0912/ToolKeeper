@@ -1,7 +1,12 @@
 using System.IO;
+using System.ComponentModel;
 using System.Reflection;
+using System.Security.Cryptography;
+using System.Text;
+using System.Text.Json;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Data;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
@@ -148,6 +153,238 @@ public sealed class MainWindowTests
         }
         finally { window.Close(); }
     });
+
+    [Fact]
+    public Task NumericColumnsSortOriginalValuesAndKeepTheCompletedResearch() => OnSta(async () =>
+    {
+        var directory = NewDirectory();
+        var window = new MainWindow(directory) { PreferencesPath = null };
+        try
+        {
+            var (snapshot, run) = SortingFixture();
+            var path = await new ResearchStore(directory).SaveAsync(snapshot, run);
+            await window.LoadResearchAsync(path);
+            var original = window.Result;
+            var cases = Get<DataGrid>(window, "_cases");
+            var rawChanges = cases.Items.Cast<object>().Select(Outcome).Select(o => o.PriceChange).ToArray();
+            Assert.Contains(rawChanges, value => value < 0);
+            Assert.Contains(rawChanges, value => value > 0);
+            Assert.Contains(0m, rawChanges); Assert.Contains(null, rawChanges);
+            foreach (var (column, value) in new (string Column, Func<HorizonOutcome, decimal?> Value)[]
+            {
+                ("Change", o => o.PriceChange), ("High", o => o.HighestPriceChange),
+                ("Low", o => o.LowestPriceChange), ("Mdd", o => o.CloseMaxDrawdown),
+                ("Upper", o => o.UpperFirstHitTradingDay), ("Lower", o => o.LowerFirstHitTradingDay)
+            })
+            {
+                Sort(cases, column);
+                var ordered = cases.Items.Cast<object>().Select(Outcome).Select(value).ToArray();
+                Assert.Equal(ordered.OrderBy(item => item), ordered);
+            }
+            var hitDays = cases.Items.Cast<object>().Select(Outcome).Select(o => o.UpperFirstHitTradingDay).ToArray();
+            Assert.Contains(2, hitDays); Assert.Contains(10, hitDays);
+            var stats = Get<DataGrid>(window, "_stats");
+            foreach (var (column, value) in new (string Column, Func<HorizonStatistics, decimal?> Value)[]
+            {
+                ("Mean", s => s.MeanPriceChange), ("Median", s => s.MedianPriceChange), ("Up", s => s.UpRate),
+                ("Flat", s => s.FlatRate), ("Down", s => s.DownRate), ("Best", s => s.BestPriceChange),
+                ("Worst", s => s.WorstPriceChange), ("Upper", s => s.UpperHitRate), ("Lower", s => s.LowerHitRate)
+            })
+            {
+                Sort(stats, column);
+                var ordered = stats.Items.Cast<object>().Select(item => (HorizonStatistics)item.GetType().GetProperty("Statistics")!.GetValue(item)!).Select(value).ToArray();
+                Assert.Equal(ordered.OrderBy(item => item), ordered);
+            }
+            Assert.False(Column(stats, "Order").CanUserSort);
+            Assert.Same(original, window.Result);
+            Assert.Equal(run.Statistics.Select(s => s.ValidCount), window.Result!.Statistics.Select(s => s.ValidCount));
+        }
+        finally { window.Close(); Directory.Delete(directory, true); }
+    });
+
+    [Fact]
+    public Task BlockedRunKeepsPreviousCasesAndShowsItsOwnQualityReasons() => OnSta(async () =>
+    {
+        var window = new MainWindow(NewDirectory()) { PreferencesPath = null, SelectedLanguage = "zh-TW" };
+        try
+        {
+            window.LoadDemo(); await window.RunResearchAsync();
+            var original = window.Result;
+            var cases = Get<DataGrid>(window, "_cases");
+            cases.SelectedIndex = Math.Min(2, cases.Items.Count - 1);
+            var rows = cases.ItemsSource; var selection = cases.SelectedItem;
+            Get<TextBox>(window, "_asOf").Text = window.Snapshot!.DataAsOf.AddDays(1).ToString("yyyy-MM-dd");
+            await window.RunResearchAsync();
+            Assert.Same(original, window.Result); Assert.True(window.IsResultStale);
+            Assert.Same(rows, cases.ItemsSource); Assert.Same(selection, cases.SelectedItem);
+            Assert.Contains(Get<DataGrid>(window, "_quality").Items.Cast<DataIssue>(), issue => issue.Code == "AsOfBeyondSnapshot" && issue.BlocksResearch);
+            Assert.Contains("保留前次結果", Get<TextBlock>(window, "_status").Text);
+            Assert.False(Get<Button>(window, "_save").IsEnabled);
+        }
+        finally { window.Close(); }
+    });
+
+    [Theory]
+    [InlineData("null-statistics")]
+    [InlineData("extreme-threshold")]
+    [InlineData("unsupported-template")]
+    [InlineData("unsupported-template-version")]
+    public Task InvalidSavedContentRetainsAllWorkAndEditableState(string failure) => OnSta(async () =>
+    {
+        var directory = NewDirectory();
+        var window = new MainWindow(directory) { PreferencesPath = null, SelectedLanguage = "zh-TW" };
+        try
+        {
+            window.LoadDemo(); await window.RunResearchAsync();
+            var original = window.Result!; var snapshot = window.Snapshot!;
+            var cases = Get<DataGrid>(window, "_cases");
+            cases.SelectedIndex = Math.Min(2, cases.Items.Count - 1);
+            var rows = cases.ItemsSource; var selection = cases.SelectedItem;
+            var stats = Get<DataGrid>(window, "_stats").ItemsSource;
+            var bars = Get<DataGrid>(window, "_bars").ItemsSource;
+            var detail = Get<TextBlock>(window, "_detail").Text;
+            var malformed = failure switch
+            {
+                "null-statistics" => original with { Statistics = null! },
+                "extreme-threshold" => original with { Definition = original.Definition with { UpperThreshold = decimal.MaxValue } },
+                "unsupported-template" => original with { Definition = original.Definition with { TemplateId = "unsupported" } },
+                _ => original with { Definition = original.Definition with { TemplateVersion = "unknown" } }
+            };
+            var path = await WriteResearchFile(directory, snapshot, malformed);
+            await Assert.ThrowsAnyAsync<Exception>(() => window.LoadResearchAsync(path));
+            Assert.Same(snapshot, window.Snapshot); Assert.Same(original, window.Result);
+            Assert.Same(rows, cases.ItemsSource); Assert.Same(selection, cases.SelectedItem);
+            Assert.Same(stats, Get<DataGrid>(window, "_stats").ItemsSource);
+            Assert.Same(bars, Get<DataGrid>(window, "_bars").ItemsSource);
+            Assert.Equal(detail, Get<TextBlock>(window, "_detail").Text);
+            Assert.False(Get<bool>(window, "_updating")); Assert.False(window.IsResultStale);
+            Get<TextBox>(window, "_upper").Text = "8";
+            Assert.True(window.IsResultStale); Assert.Same(original, window.Result);
+            Assert.True(Get<Button>(window, "_runButton").IsEnabled);
+        }
+        finally { window.Close(); Directory.Delete(directory, true); }
+    });
+
+    [Fact]
+    public Task ReorderedSnapshotKeepsCaseAndChartDatesInChronologicalOrder() => OnSta(async () =>
+    {
+        var directory = NewDirectory();
+        var window = new MainWindow(directory) { PreferencesPath = null };
+        try
+        {
+            window.LoadDemo(); await window.RunResearchAsync();
+            var original = window.Result!;
+            var expected = Get<DataGrid>(window, "_bars").Items.Cast<DailyBar>().Select(bar => bar.Date).ToArray();
+            var snapshot = window.Snapshot! with { Bars = window.Snapshot!.Bars.Reverse().ToArray() };
+            var path = await new ResearchStore(directory).SaveAsync(snapshot, original);
+            await window.LoadResearchAsync(path);
+            Assert.Equal(original.DataContentHash, window.Result!.DataContentHash);
+            Assert.Equal(JsonSerializer.Serialize(original.Statistics), JsonSerializer.Serialize(window.Result.Statistics));
+            var dates = Get<DataGrid>(window, "_bars").Items.Cast<DailyBar>().Select(bar => bar.Date).ToArray();
+            Assert.Equal(expected, dates); Assert.Equal(dates.Order(), dates);
+            var chart = Get<object>(window, "_chart");
+            var chartBars = (IReadOnlyList<DailyBar>)chart.GetType().GetField("_bars", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(chart)!;
+            Assert.Equal(dates, chartBars.Select(bar => bar.Date));
+        }
+        finally { window.Close(); Directory.Delete(directory, true); }
+    });
+
+    [Fact]
+    public Task FirstResearchCancelledByEditReturnsToReadyState() => OnSta(async () =>
+    {
+        var window = new MainWindow(NewDirectory()) { PreferencesPath = null, SelectedLanguage = "zh-TW" };
+        try
+        {
+            window.LoadDemo(); var pending = window.RunResearchAsync();
+            Get<TextBox>(window, "_upper").Text = "7";
+            await pending;
+            Assert.Null(window.Result); Assert.False(window.IsResultStale);
+            Assert.Contains("設定已變更", Get<TextBlock>(window, "_status").Text);
+            Assert.DoesNotContain("研究中", Get<TextBlock>(window, "_status").Text);
+            Assert.True(Get<Button>(window, "_runButton").IsEnabled);
+            Assert.False(Get<Button>(window, "_cancel").IsEnabled);
+        }
+        finally { window.Close(); }
+    });
+
+    [Fact]
+    public Task LanguageChangesRefreshSelectedCaseWithoutRunningResearch() => OnSta(async () =>
+    {
+        var window = new MainWindow(NewDirectory()) { PreferencesPath = null, SelectedLanguage = "zh-TW" };
+        try
+        {
+            window.LoadDemo(); await window.RunResearchAsync();
+            var result = window.Result; var cases = Get<DataGrid>(window, "_cases");
+            cases.SelectedIndex = Math.Min(2, cases.Items.Count - 1); var selection = cases.SelectedItem;
+            foreach (var (language, expected) in new[] { ("en", "Close-price path"), ("ja", "終値の推移"), ("zh-TW", "收盤價格路徑") })
+            {
+                window.SelectedLanguage = language;
+                Assert.Contains(expected, Get<TextBlock>(window, "_detail").Text);
+                Assert.Same(result, window.Result); Assert.Same(selection, cases.SelectedItem);
+                Assert.False(window.IsResultStale);
+            }
+        }
+        finally { window.Close(); }
+    });
+
+    [Fact]
+    public Task CancelledSaveAndLoadReleaseBusyStateAndRetainResearch() => OnSta(async () =>
+    {
+        var directory = NewDirectory();
+        var window = new MainWindow(directory) { PreferencesPath = null };
+        try
+        {
+            window.LoadDemo(); await window.RunResearchAsync();
+            var original = window.Result; var snapshot = window.Snapshot;
+            var path = await window.SaveResearchAsync();
+            using var cancellation = new CancellationTokenSource(); cancellation.Cancel();
+            await Assert.ThrowsAnyAsync<OperationCanceledException>(() => window.SaveResearchAsync(cancellation.Token));
+            await Assert.ThrowsAnyAsync<OperationCanceledException>(() => window.LoadResearchAsync(path, cancellation.Token));
+            Assert.Same(original, window.Result); Assert.Same(snapshot, window.Snapshot);
+            Assert.True(Get<Button>(window, "_save").IsEnabled);
+            Assert.True(Get<Button>(window, "_open").IsEnabled);
+            Assert.False(Get<Button>(window, "_cancel").IsEnabled);
+            var pending = window.LoadResearchAsync(path);
+            Get<TextBox>(window, "_upper").Text = "9";
+            await Assert.ThrowsAnyAsync<OperationCanceledException>(() => pending);
+            Assert.True(window.IsResultStale); Assert.Same(original, window.Result);
+            Assert.Equal("9", Get<TextBox>(window, "_upper").Text);
+        }
+        finally { window.Close(); Directory.Delete(directory, true); }
+    });
+
+    private static string NewDirectory() => Path.Combine(Path.GetTempPath(), "HistoLens.UiTests", Guid.NewGuid().ToString("N"));
+    private static HorizonOutcome Outcome(object row) => (HorizonOutcome)row.GetType().GetProperty("Outcome")!.GetValue(row)!;
+    private static DataGridTextColumn Column(DataGrid grid, string property) => grid.Columns.Cast<DataGridTextColumn>().Single(column => ((Binding)column.Binding).Path.Path == property);
+    private static void Sort(DataGrid grid, string property)
+    {
+        var column = Column(grid, property);
+        Assert.True(column.CanUserSort);
+        grid.Items.SortDescriptions.Clear(); grid.Items.SortDescriptions.Add(new SortDescription(column.SortMemberPath, ListSortDirection.Ascending));
+        grid.Items.Refresh();
+    }
+    private static (DataSnapshot Snapshot, ResearchRun Run) SortingFixture()
+    {
+        var snapshot = DemoData.Create();
+        decimal[] prices = [100, 100, 100, 110, 100, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 100, 90, 100, 100];
+        snapshot = snapshot with
+        {
+            ContentHash = "", CorporateActions = [],
+            Bars = snapshot.Bars.Select((bar, index) => bar with { Open = prices[index % prices.Length], High = prices[index % prices.Length], Low = prices[index % prices.Length], Close = prices[index % prices.Length], Volume = 1000 }).ToArray()
+        };
+        var hash = SnapshotFingerprint.Compute(snapshot); snapshot = snapshot with { ContentHash = hash, SnapshotId = hash };
+        var definition = ResearchTemplates.CreateDefinition("HL-R001", snapshot.Calendar.TradingDates[1], snapshot.DataAsOf, snapshot.DataAsOf, 1, 1) with
+        { Horizons = [1, 10], SamplingPolicy = SamplingPolicy.EveryMatch, UpperThreshold = 0.10m };
+        return (snapshot, new ResearchEngine().Run(snapshot, definition));
+    }
+    private static async Task<string> WriteResearchFile(string directory, DataSnapshot snapshot, ResearchRun run)
+    {
+        Directory.CreateDirectory(directory);
+        var payload = JsonSerializer.Serialize(new SavedResearch { SavedAtUtc = DateTimeOffset.UtcNow, Snapshot = snapshot, Run = run });
+        var envelope = JsonSerializer.Serialize(new { FormatVersion = 1, Checksum = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(payload))), Payload = payload });
+        var path = Path.Combine(directory, Guid.NewGuid().ToString("N") + ".histolens.json");
+        await File.WriteAllTextAsync(path, envelope); return path;
+    }
     private static IEnumerable<DependencyObject> Descendants(DependencyObject parent)
     {
         for (var index = 0; index < VisualTreeHelper.GetChildrenCount(parent); index++)
