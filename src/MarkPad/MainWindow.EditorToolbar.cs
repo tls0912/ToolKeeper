@@ -23,6 +23,7 @@ public partial class MainWindow
     private Button _editorSizeDown = null!, _editorSizeUp = null!;
     private WrapPanel _editorFormatButtons = null!;
     private bool _updatingEditorToolbar;
+    private bool _editorFontListLoaded;
     private string? _editorToolbarLanguage;
 
     private bool CanFormatFromToolbar => !_disposed && _current is { IsPreviewMode: false, IsReadOnly: false }
@@ -41,6 +42,13 @@ public partial class MainWindow
             return combo;
         }
         _editorFontCombo = Combo(nameof(FontOption.Value));
+        _editorFontCombo.DropDownOpened += (_, _) =>
+        {
+            if (_editorFontListLoaded) return;
+            _editorFontListLoaded = true;
+            _editorToolbarLanguage = null;
+            RefreshEditorToolbar();
+        };
         _editorFontCombo.SelectionChanged += (_, _) =>
         {
             if (_updatingEditorToolbar || _editorFontCombo.SelectedValue is not string family
@@ -115,7 +123,9 @@ public partial class MainWindow
                     new("Cascadia Mono", T("Automatic (mono)", "自動（等寬）", "自動（等幅）")),
                     new(InkTypography.FontChoice, T("Traditional", "傳統文字", "伝統書体"))
                 };
-                fonts.AddRange(EditorToolbarFonts.Value.Where(name => name != "Cascadia Mono").Select(name => new FontOption(name, name)));
+                // Enumerating every installed font is only needed when the picker is opened.
+                if (_editorFontListLoaded)
+                    fonts.AddRange(EditorToolbarFonts.Value.Where(name => name != "Cascadia Mono").Select(name => new FontOption(name, name)));
                 _editorFontCombo.ItemsSource = fonts;
                 _editorHeadingCombo.ItemsSource = Enumerable.Range(-1, 8)
                     .Select(level => new HeadingOption(level, level == -1 ? T("Mixed", "混合", "混在")

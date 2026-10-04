@@ -10,35 +10,35 @@ public sealed partial class MainWindow
 
     private void ConfigureColumns()
     {
-        Column(_stats, "Horizon", "Days", "交易日", "取引日");
-        Column(_stats, "N", "Valid N", "有效 N", "有効 N");
-        Column(_stats, "Excluded", "Excluded", "排除", "除外");
-        Column(_stats, "Mean", "Mean", "平均", "平均", "Statistics.MeanPriceChange");
-        Column(_stats, "Median", "Median", "中位數", "中央値", "Statistics.MedianPriceChange");
-        Column(_stats, "Up", "Up count / rate", "上漲次數／比例", "上昇数／割合", "Statistics.UpRate");
-        Column(_stats, "Flat", "Flat count / rate", "平盤次數／比例", "横ばい数／割合", "Statistics.FlatRate");
-        Column(_stats, "Down", "Down count / rate", "下跌次數／比例", "下落数／割合", "Statistics.DownRate");
-        Column(_stats, "P10", "P10", "P10", "P10", "Statistics.P10"); Column(_stats, "P25", "P25", "P25", "P25", "Statistics.P25");
-        Column(_stats, "P75", "P75", "P75", "P75", "Statistics.P75"); Column(_stats, "P90", "P90", "P90", "P90", "Statistics.P90");
-        Column(_stats, "Best", "Best / date", "最佳／日期", "最高／日付", "Statistics.BestPriceChange");
-        Column(_stats, "Worst", "Worst / date", "最差／日期", "最低／日付", "Statistics.WorstPriceChange");
-        Column(_stats, "High", "Mean period high", "平均期間最高變動", "期間高値変動の平均", "Statistics.MeanHighestPriceChange");
-        Column(_stats, "Low", "Mean period low", "平均期間最低變動", "期間安値変動の平均", "Statistics.MeanLowestPriceChange");
-        Column(_stats, "Mdd", "Mean close max drawdown", "平均收盤最大回撤", "終値最大ドローダウンの平均", "Statistics.MeanCloseMaxDrawdown");
-        Column(_stats, "Upper", "Upper hit count / rate", "上方觸及次數／比例", "上方到達数／割合", "Statistics.UpperHitRate");
-        Column(_stats, "Lower", "Lower hit count / rate", "下方觸及次數／比例", "下方到達数／割合", "Statistics.LowerHitRate");
-        Column(_stats, "Order", "Upper / lower first / same day / neither", "上先／下先／同日不明／皆無", "上先／下先／同日不明／なし", "");
+        Column(_stats, "Horizon", "Days", "交易日", "取引日", numeric: true);
+        Column(_stats, "N", "Valid N", "有效 N", "有効 N", numeric: true);
+        Column(_stats, "Excluded", "Excluded", "排除", "除外", numeric: true);
+        Column(_stats, "Mean", "Mean", "平均", "平均", "Statistics.MeanPriceChange", numeric: true);
+        Column(_stats, "Median", "Median", "中位數", "中央値", "Statistics.MedianPriceChange", numeric: true);
+        Column(_stats, "Up", "Up count / rate", "上漲次數／比例", "上昇数／割合", "Statistics.UpRate", numeric: true);
+        Column(_stats, "Flat", "Flat count / rate", "平盤次數／比例", "横ばい数／割合", "Statistics.FlatRate", numeric: true);
+        Column(_stats, "Down", "Down count / rate", "下跌次數／比例", "下落数／割合", "Statistics.DownRate", numeric: true);
+        Column(_stats, "P10", "P10", "P10", "P10", "Statistics.P10", numeric: true); Column(_stats, "P25", "P25", "P25", "P25", "Statistics.P25", numeric: true);
+        Column(_stats, "P75", "P75", "P75", "P75", "Statistics.P75", numeric: true); Column(_stats, "P90", "P90", "P90", "P90", "Statistics.P90", numeric: true);
+        Column(_stats, "Best", "Best / date", "最佳／日期", "最高／日付", "Statistics.BestPriceChange", numeric: true);
+        Column(_stats, "Worst", "Worst / date", "最差／日期", "最低／日付", "Statistics.WorstPriceChange", numeric: true);
+        Column(_stats, "High", "Mean period high", "平均期間最高變動", "期間高値変動の平均", "Statistics.MeanHighestPriceChange", numeric: true);
+        Column(_stats, "Low", "Mean period low", "平均期間最低變動", "期間安値変動の平均", "Statistics.MeanLowestPriceChange", numeric: true);
+        Column(_stats, "Mdd", "Mean close max drawdown", "平均收盤最大回撤", "終値最大ドローダウンの平均", "Statistics.MeanCloseMaxDrawdown", numeric: true);
+        Column(_stats, "Upper", "Upper hit count / rate", "上方觸及次數／比例", "上方到達数／割合", "Statistics.UpperHitRate", numeric: true);
+        Column(_stats, "Lower", "Lower hit count / rate", "下方觸及次數／比例", "下方到達数／割合", "Statistics.LowerHitRate", numeric: true);
+        Column(_stats, "Order", "Upper / lower first / same day / neither", "上先／下先／同日不明／皆無", "上先／下先／同日不明／なし", "", numeric: true);
         Column(_stats, "Reasons", "Exclusion reasons", "排除原因", "除外理由");
 
         Column(_cases, "Date", "Event date", "事件日期", "イベント日", "Case.EventDate");
-        Column(_cases, "Horizon", "Days", "交易日", "取引日");
+        Column(_cases, "Horizon", "Days", "交易日", "取引日", numeric: true);
         Column(_cases, "Status", "Status", "狀態", "状態");
-        Column(_cases, "Change", "End price change", "期末價格變動", "期末価格変動", "Outcome.PriceChange");
-        Column(_cases, "High", "Period high change", "期間最高價變動", "期間高値変動", "Outcome.HighestPriceChange");
-        Column(_cases, "Low", "Period low change", "期間最低價變動", "期間安値変動", "Outcome.LowestPriceChange");
-        Column(_cases, "Mdd", "Close max drawdown", "收盤最大回撤", "終値最大ドローダウン", "Outcome.CloseMaxDrawdown");
-        Column(_cases, "Upper", "Upper first hit day", "上方首次觸及交易日", "上方初回到達日数", "Outcome.UpperFirstHitTradingDay");
-        Column(_cases, "Lower", "Lower first hit day", "下方首次觸及交易日", "下方初回到達日数", "Outcome.LowerFirstHitTradingDay");
+        Column(_cases, "Change", "End price change", "期末價格變動", "期末価格変動", "Outcome.PriceChange", numeric: true);
+        Column(_cases, "High", "Period high change", "期間最高價變動", "期間高値変動", "Outcome.HighestPriceChange", numeric: true);
+        Column(_cases, "Low", "Period low change", "期間最低價變動", "期間安値変動", "Outcome.LowestPriceChange", numeric: true);
+        Column(_cases, "Mdd", "Close max drawdown", "收盤最大回撤", "終値最大ドローダウン", "Outcome.CloseMaxDrawdown", numeric: true);
+        Column(_cases, "Upper", "Upper first hit day", "上方首次觸及交易日", "上方初回到達日数", "Outcome.UpperFirstHitTradingDay", numeric: true);
+        Column(_cases, "Lower", "Lower first hit day", "下方首次觸及交易日", "下方初回到達日数", "Outcome.LowerFirstHitTradingDay", numeric: true);
         Column(_cases, "Order", "Threshold order", "觸及先後", "到達順序");
         Column(_cases, "Features", "Features (unrounded)", "事件特徵（原精度）", "特徴量（元の精度）");
 
@@ -56,7 +56,11 @@ public sealed partial class MainWindow
             ("Date", "Date", "日期", "日付"), ("Open", "Open", "開盤", "始値"), ("High", "High", "最高", "高値"),
             ("Low", "Low", "最低", "安値"), ("Close", "Close", "收盤", "終値"), ("Volume", "Volume (shares)", "成交量（股）", "出来高（株）"),
             ("Status", "Trading status", "交易狀態", "取引状態")
-        }) Column(_bars, key, en, zh, ja);
+        })
+        {
+            Column(_bars, key, en, zh, ja, numeric: key is "Open" or "High" or "Low" or "Close" or "Volume");
+            Column(_marketBars, key, en, zh, ja, numeric: key is "Open" or "High" or "Low" or "Close" or "Volume");
+        }
     }
 
     private static ResultPresentation PrepareResult(ResearchRun? result, DataSnapshot? snapshot, CancellationToken cancellationToken = default)
@@ -86,27 +90,32 @@ public sealed partial class MainWindow
         _stats.ItemsSource = presentation.Statistics;
         _cases.ItemsSource = presentation.Cases;
         _evaluations.ItemsSource = presentation.Evaluations;
-        _quality.ItemsSource = _attemptIssues ?? presentation.Quality;
+        _quality.ItemsSource = _attemptIssues ?? MergeIssues(_dataDiagnostics, presentation.Quality);
         _cases.SelectedIndex = _cases.Items.Count > 0 ? 0 : -1;
         UpdateCaseDetail(); UpdateSummary();
     }
 
     private void UpdateDataInfo()
     {
+        UpdateSourceNotice();
+        _marketBars.ItemsSource = Snapshot?.Bars.OrderBy(bar => bar.Date).ToArray();
         _dataInfo.Text = Snapshot is null ? T("No data loaded.", "尚未載入資料。", "データ未読込。")
-            : $"{Snapshot.Instrument.Code} · {Snapshot.Instrument.Name}\n{Snapshot.Instrument.Market} · {Snapshot.Bars.Count:N0} · {Snapshot.Instrument.Currency}\n{Snapshot.Calendar.CoverageStart:yyyy-MM-dd} → {Snapshot.DataAsOf:yyyy-MM-dd}\n{Snapshot.SourceId}";
+            : $"{SourceKind(Snapshot.IsSynthetic)}\n{Snapshot.Instrument.Code} · {Snapshot.Instrument.Name}\n{MarketLabel(Snapshot.Instrument.Market)} · {Snapshot.Bars.Count:N0} · {Snapshot.Instrument.Currency}\n{Snapshot.Calendar.CoverageStart:yyyy-MM-dd} → {Snapshot.DataAsOf:yyyy-MM-dd}\n{SourceLabel(Snapshot.SourceId)}\n" +
+                T("Quality details: Data quality tab", "品質明細：資料品質分頁", "品質の詳細：データ品質タブ");
     }
 
     private void UpdateSummary()
     {
         if (Result is null)
         {
-            _summary.Text = T("Load the sample, choose a template, then run research.\nResults and individual cases will appear here.",
-                "載入測試資料、選擇模板並執行研究，這裡會顯示統計與可核對的案例。", "合成データとテンプレートを選んで実行すると統計とケースを表示します。"); return;
+            _summary.Text = (Snapshot is null ? "" : SourceKind(Snapshot.IsSynthetic) + $" · {Snapshot.Instrument.Code} · {SourceLabel(Snapshot.SourceId)}\n") +
+                T("Download or open data, check Data quality, then choose a template and run research.\nResults and individual cases will appear here.",
+                "下載或開啟資料並確認資料品質，再選擇模板執行研究。這裡會顯示統計與可核對的案例。", "データを取得または開いて品質を確認し、テンプレートを選んで実行すると統計とケースを表示します。"); return;
         }
         var r = Result; var d = r.Definition; var f = r.Funnel;
         _summary.Text = (_stale ? T("SETTINGS CHANGED · Previous result\n", "設定已變更，尚未重新執行 · 以下為前次結果\n", "設定変更済み・前回の結果\n") : "") +
-            $"{r.Instrument.Code} · {r.SourceId} · {d.TemplateId} v{d.TemplateVersion}\n" +
+            SourceKind(r.IsSynthetic) + "\n" +
+            $"{r.Instrument.Code} · {SourceLabel(r.SourceId)} · {d.TemplateId} v{d.TemplateVersion}\n" +
             $"{d.EventStart:yyyy-MM-dd} → {d.EventEnd:yyyy-MM-dd} · DataAsOf {d.DataAsOf:yyyy-MM-dd}\n" +
             $"{d.SamplingPolicy} · ConservativeRaw · Engine {r.EngineVersion}\n" +
             T($"Candidates {f.CandidateDates} → determinable {f.DeterminableDates} → matching days {f.RawMatchDays} → events {f.SampledEvents}",

@@ -40,7 +40,7 @@ public sealed class ResearchStoreTests
     }
 
     [Fact]
-    public async Task RejectsNonSyntheticOrMismatchedDataWithoutCreatingAFile()
+    public async Task RejectsInconsistentSyntheticIdentityOrMismatchedDataWithoutCreatingAFile()
     {
         var directory = Path.Combine(Path.GetTempPath(), "HistoLens.Tests", Guid.NewGuid().ToString("N"));
         var snapshot = DemoData.Create();

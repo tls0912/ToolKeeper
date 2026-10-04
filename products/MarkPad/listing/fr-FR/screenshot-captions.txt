@@ -1,0 +1,5 @@
+01-preview-bamboo-light.png	Lisez avec le thème Bambou (clair) sur un fond inspiré du papier xuan. Le plan regroupe les niveaux de titres H1–H6 sélectionnés pour naviguer dans le document.
+02-preview-bamboo-dark.png	Le thème Bambou (sombre) offre un fond de lecture sombre à la texture de papier, avec le plan des chapitres toujours visible.
+03-preview-light.png	Affichez votre Markdown avec le thème Clair. Parcourez les chapitres et lisez des tableaux et des listes de tâches mis en forme.
+04-preview-dark.png	Lisez votre Markdown en texte clair sur le fond du thème Sombre. Le plan des chapitres permet d'accéder directement à un titre.
+05-edit-bamboo-light.png	Écrivez avec Bambou (clair) : Markdown à gauche, aperçu en temps réel à droite. Réglez police, taille et mise en forme dans la barre d'outils supérieure.

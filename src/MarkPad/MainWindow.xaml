@@ -22,22 +22,14 @@
       <Border x:Name="EditorToolbarHost" Visibility="Collapsed" Background="{DynamicResource ChromeToolbarBrush}" BorderBrush="{DynamicResource LineBrush}" BorderThickness="0,0,0,1" Padding="8,4,2,4" />
       <Grid x:Name="DocumentHost" Grid.Row="1" />
       <Grid x:Name="EmptyState" Grid.Row="1" Background="{DynamicResource PaperBackgroundBrush}">
-       <Viewbox x:Name="InkLandscape" Visibility="Collapsed" VerticalAlignment="Bottom" HorizontalAlignment="Stretch" Stretch="UniformToFill" Height="170" Opacity="0.2" IsHitTestVisible="False" ClipToBounds="True">
-        <Canvas Width="640" Height="170">
-         <Path Data="M0,138 C60,110 78,142 127,103 C168,70 178,80 214,47 C238,29 252,75 278,84 C323,100 345,42 371,56 C407,73 426,116 464,94 C491,78 508,95 546,120 C579,129 603,116 640,133 L640,170 L0,170 Z">
-          <Path.Fill><LinearGradientBrush StartPoint="0,0" EndPoint="0,1"><GradientStop Color="#737F73" Offset="0" /><GradientStop Color="#00737F73" Offset="1" /></LinearGradientBrush></Path.Fill>
-         </Path>
-         <Path Data="M0,154 C52,139 63,111 100,129 C126,143 156,93 188,108 C217,128 225,103 249,117 C276,137 315,141 346,124 C389,91 409,109 436,123 C474,148 507,111 544,142 C589,148 609,130 640,150 L640,170 L0,170 Z">
-          <Path.Fill><LinearGradientBrush StartPoint="0,0" EndPoint="0,1"><GradientStop Color="#4F6258" Offset="0" /><GradientStop Color="#004F6258" Offset="1" /></LinearGradientBrush></Path.Fill>
-         </Path>
-         <Path Data="M376,150 C420,147 480,151 522,149 M112,156 C147,153 206,158 259,155" Stroke="#748578" StrokeThickness="0.7" StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
-        </Canvas>
-       </Viewbox>
-       <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Margin="24">
-        <Border BorderBrush="{DynamicResource LineBrush}" BorderThickness="1" CornerRadius="8" Width="56" Height="64" Margin="0,0,0,20"><TextBlock x:Name="EmptyMonogram" Text="M↓" FontSize="23" FontWeight="SemiBold" Foreground="{DynamicResource MutedBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" /></Border>
-        <ui:ChromeTextShadow><TextBlock x:Name="EmptyLabel" Text="Drop or open Markdown" FontSize="{DynamicResource UiHeadingFontSize}" HorizontalAlignment="Center" TextWrapping="Wrap" /></ui:ChromeTextShadow>
-        <Button x:Name="EmptyOpenButton" Content="Open a document  ·  Ctrl+O" Foreground="{DynamicResource AccentBrush}" Margin="0,12,0,0" />
-       </StackPanel>
+       <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="*" /></Grid.RowDefinitions>
+       <Border BorderBrush="{DynamicResource LineBrush}" BorderThickness="0,0,0,1" Padding="16,8">
+        <WrapPanel VerticalAlignment="Center">
+         <TextBlock x:Name="EmptyLabel" Text="Drop or open Markdown" Foreground="{DynamicResource MutedBrush}" VerticalAlignment="Center" Margin="0,0,16,0" />
+         <Button x:Name="EmptyOpenButton" Content="Open a document  ·  Ctrl+O" Foreground="{DynamicResource AccentBrush}" />
+        </WrapPanel>
+       </Border>
+       <Border x:Name="EmptyPreviewHost" Grid.Row="1" />
       </Grid>
       <Border x:Name="SearchPanel" Grid.Row="1" Visibility="Collapsed" Width="320" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="14" Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource LineBrush}" BorderThickness="1" CornerRadius="4" Padding="8" Panel.ZIndex="10">
        <Border.Effect><DropShadowEffect BlurRadius="8" ShadowDepth="1" Opacity="0.12" /></Border.Effect>

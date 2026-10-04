@@ -1,5 +1,6 @@
 using System.IO;
 using System.Reflection;
+using System.Text.Json;
 using AngleSharp.Dom;
 using AngleSharp.Html.Parser;
 using MarkPad.Rendering;
@@ -153,6 +154,34 @@ public sealed class MarkdownRendererTests
             Assert.False(MarkdownRenderer.IsSafeLink(blocked), blocked);
     }
 
+    [Theory]
+    [InlineData("%5C%5Cserver%5Cshare%5Cdocument.md")]
+    [InlineData("%2F%2Fserver/share/document.md")]
+    [InlineData("file%3A///C:/private.md")]
+    [InlineData("C%3A/private.md")]
+    [InlineData("%5Crooted.md")]
+    [InlineData("notes%00.md")]
+    public void EncodedLocalLinksCannotBypassPathRestrictions(string href)
+    {
+        Assert.False(MarkdownRenderer.IsSafeLink(href));
+        var document = Render($"<a href=\"{href}\">blocked</a>");
+        Assert.Null(document.QuerySelector("#document a")!.GetAttribute("href"));
+    }
+
+    [Theory]
+    [InlineData("../notes%20and%20ideas.md")]
+    [InlineData("%E7%AD%86%E8%A8%98.md#%E7%AB%A0%E7%AF%80")]
+    [InlineData("images/../notes.md")]
+    [InlineData("https://example.com/%2F%2Fpage")]
+    [InlineData("mailto:hello@example.com?subject=notes%20today")]
+    [InlineData("#%E7%AB%A0%E7%AF%80")]
+    public void EncodedOrdinaryLinksRemainAllowed(string href)
+    {
+        Assert.True(MarkdownRenderer.IsSafeLink(href));
+        var document = Render($"<a href=\"{href}\">allowed</a>");
+        Assert.Equal(href, document.QuerySelector("#document a")!.GetAttribute("href"));
+    }
+
     [Fact]
     public void DocumentTextAndPreferenceValuesCannotEscapeTrustedHtmlShell()
     {
@@ -172,6 +201,57 @@ public sealed class MarkdownRendererTests
         Assert.Equal("Report & Notes.pdf", document.Title);
         Assert.Contains("<title>Report &amp; Notes.pdf</title>", html);
         Assert.Equal("汗青", Render("# Heading").Title);
+    }
+
+    [Theory]
+    [InlineData("zh-CN", "ltr")]
+    [InlineData("es", "ltr")]
+    [InlineData("ar", "rtl")]
+    [InlineData("fr", "ltr")]
+    [InlineData("ko", "ltr")]
+    public void NewPreviewLanguagesTranslateControlsWithoutForcingDocumentDirection(string language, string uiDirection)
+    {
+        var document = Render("# English document\n\n- [ ] task\n\n![offline](https://example.invalid/image.png)",
+            new PreviewOptions(Language: language));
+        Assert.Equal(language, document.DocumentElement.GetAttribute("lang"));
+        Assert.Equal(uiDirection, document.DocumentElement.GetAttribute("dir"));
+        Assert.Equal("auto", document.GetElementById("document")!.GetAttribute("dir"));
+        Assert.Equal("English document", document.QuerySelector("#document h1")!.TextContent);
+        Assert.NotEqual("Toggle task", document.QuerySelector("#document input")!.GetAttribute("aria-label"));
+        Assert.NotEqual("Image unavailable offline", document.QuerySelector("#document .image-unavailable")!.GetAttribute("title"));
+        using var config = PreviewConfig(document);
+        Assert.Equal(uiDirection, config.RootElement.GetProperty("uiDirection").GetString());
+        Assert.False(config.RootElement.GetProperty("readOnly").GetBoolean());
+        var englishLabels = new Dictionary<string, string>
+        {
+            ["copy"] = "Copy", ["copied"] = "Copied", ["copyMarkdown"] = "Copy as Markdown", ["selectAll"] = "Select All",
+            ["open"] = "Open Link", ["copyLink"] = "Copy Link", ["edit"] = "Edit Here", ["fold"] = "Fold section", ["close"] = "Close image"
+        };
+        foreach (var pair in englishLabels)
+        {
+            var label = config.RootElement.GetProperty("labels").GetProperty(pair.Key).GetString();
+            Assert.False(string.IsNullOrWhiteSpace(label));
+            Assert.NotEqual(pair.Value, label);
+        }
+    }
+
+    [Theory]
+    [InlineData(true, "rtl")]
+    [InlineData(false, "ltr")]
+    public void ReadOnlyArticleHonorsExplicitDirectionAndPreservesSourceMetadata(bool rightToLeft, string direction)
+    {
+        const string markdown = "# مقدمة\n\n- [x] مهمة\n\n```csharp\nvar value = 42;\n```";
+        var document = Render(markdown, new PreviewOptions(Language: "ar", ReadOnly: true, RightToLeft: rightToLeft));
+        Assert.Equal(direction, document.GetElementById("document")!.GetAttribute("dir"));
+        var task = Assert.Single(document.QuerySelectorAll("#document input"));
+        Assert.True(task.HasAttribute("disabled"));
+        Assert.Equal("3", task.GetAttribute("data-task-line"));
+        Assert.Equal("1", document.QuerySelector("#document h1")!.GetAttribute("data-source-line"));
+        Assert.Equal("var value = 42;\n", document.QuerySelector("#document pre code")!.TextContent);
+        using var config = PreviewConfig(document);
+        Assert.Equal(markdown, config.RootElement.GetProperty("markdown").GetString());
+        Assert.True(config.RootElement.GetProperty("readOnly").GetBoolean());
+        Assert.Contains("direction:ltr;unicode-bidi:isolate", document.QuerySelector("style")!.TextContent);
     }
 
     [Fact]
@@ -271,4 +351,13 @@ public sealed class MarkdownRendererTests
 
     private static IDocument Render(string markdown, PreviewOptions? options = null, string? documentPath = null) =>
         new HtmlParser().ParseDocument(new MarkdownRenderer().Render(markdown, options ?? new PreviewOptions(), documentPath));
+
+    private static JsonDocument PreviewConfig(IDocument document)
+    {
+        var script = Assert.Single(document.QuerySelectorAll("script")).TextContent;
+        const string prefix = "window.markpadConfig=";
+        var end = script.IndexOf(";(() =>", StringComparison.Ordinal);
+        Assert.True(end > prefix.Length);
+        return JsonDocument.Parse(script[prefix.Length..end]);
+    }
 }

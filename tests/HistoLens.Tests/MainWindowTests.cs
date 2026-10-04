@@ -16,6 +16,7 @@ using Xunit;
 
 namespace HistoLens.Tests;
 
+[Collection("HistoLens WPF UI")]
 public sealed class MainWindowTests
 {
     [Fact]
@@ -120,7 +121,7 @@ public sealed class MainWindowTests
                 Render(frame, folder, $"histolens-{language}-{theme}-{width}.png", width, height);
             }
             var tabs = Descendants(frame).OfType<TabControl>().Single();
-            tabs.SelectedIndex = 1; frame.UpdateLayout();
+            tabs.SelectedIndex = 2; frame.UpdateLayout();
             Assert.True(Get<DataGrid>(window, "_cases").ActualHeight >= 45);
             Assert.True(Get<DataGrid>(window, "_bars").ActualHeight >= 45);
             if (!string.IsNullOrEmpty(folder)) Render(frame, folder, $"histolens-cases-{language}-{theme}-{width}.png", width, height);

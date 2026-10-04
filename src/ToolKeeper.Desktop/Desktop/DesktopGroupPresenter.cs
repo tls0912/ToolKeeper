@@ -40,7 +40,7 @@ public sealed class DesktopGroupPresenter : IDisposable
     private string? _failure;
     private IReadOnlyList<DesktopTool> _tools = [];
     private Action<string>? _activateTool;
-    private string _theme = "Light";
+    private string _theme = "Ink";
 
     public event Action<DesktopItem>? ItemOpenRequested;
     public event Action<DesktopItem, string>? ManualAssignmentRequested;

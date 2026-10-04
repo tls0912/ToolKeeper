@@ -1,7 +1,120 @@
 ﻿{
-    "generatedUtc":  "2026-09-28T07:50:03.3385797Z",
+    "generatedUtc":  "2026-10-04T06:37:50.0198416Z",
+    "packageVersion":  "1.0.3.0",
+    "languages":  [
+                      "zh-TW",
+                      "en-US",
+                      "ja-JP",
+                      "zh-CN",
+                      "es-ES",
+                      "ar-SA",
+                      "fr-FR",
+                      "ko-KR"
+                  ],
     "passed":  true,
+    "textLengths":  [
+                        {
+                            "language":  "zh-TW",
+                            "description":  698,
+                            "shortDescription":  72,
+                            "releaseNotes":  167,
+                            "privacyPolicy":  1335,
+                            "featureCount":  14,
+                            "keywordCount":  7,
+                            "longestFeature":  33,
+                            "longestCaption":  49
+                        },
+                        {
+                            "language":  "en-US",
+                            "description":  2003,
+                            "shortDescription":  227,
+                            "releaseNotes":  506,
+                            "privacyPolicy":  3655,
+                            "featureCount":  14,
+                            "keywordCount":  7,
+                            "longestFeature":  108,
+                            "longestCaption":  141
+                        },
+                        {
+                            "language":  "ja-JP",
+                            "description":  979,
+                            "shortDescription":  97,
+                            "releaseNotes":  245,
+                            "privacyPolicy":  1873,
+                            "featureCount":  14,
+                            "keywordCount":  7,
+                            "longestFeature":  45,
+                            "longestCaption":  71
+                        },
+                        {
+                            "language":  "zh-CN",
+                            "description":  717,
+                            "shortDescription":  78,
+                            "releaseNotes":  169,
+                            "privacyPolicy":  1359,
+                            "featureCount":  14,
+                            "keywordCount":  7,
+                            "longestFeature":  34,
+                            "longestCaption":  49
+                        },
+                        {
+                            "language":  "es-ES",
+                            "description":  2288,
+                            "shortDescription":  219,
+                            "releaseNotes":  630,
+                            "privacyPolicy":  4292,
+                            "featureCount":  15,
+                            "keywordCount":  7,
+                            "longestFeature":  102,
+                            "longestCaption":  151
+                        },
+                        {
+                            "language":  "ar-SA",
+                            "description":  2011,
+                            "shortDescription":  180,
+                            "releaseNotes":  495,
+                            "privacyPolicy":  3304,
+                            "featureCount":  16,
+                            "keywordCount":  7,
+                            "longestFeature":  103,
+                            "longestCaption":  151
+                        },
+                        {
+                            "language":  "fr-FR",
+                            "description":  2391,
+                            "shortDescription":  223,
+                            "releaseNotes":  648,
+                            "privacyPolicy":  4615,
+                            "featureCount":  15,
+                            "keywordCount":  7,
+                            "longestFeature":  117,
+                            "longestCaption":  160
+                        },
+                        {
+                            "language":  "ko-KR",
+                            "description":  1082,
+                            "shortDescription":  120,
+                            "releaseNotes":  275,
+                            "privacyPolicy":  2018,
+                            "featureCount":  15,
+                            "keywordCount":  7,
+                            "longestFeature":  51,
+                            "longestCaption":  87
+                        }
+                    ],
     "checks":  [
+                   {
+                       "check":  "eight distinct listing languages",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "five planned screenshots per language",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "zh-TW has a display name",
+                       "passed":  true
+                   },
                    {
                        "check":  "zh-TW description nonempty and \u003c=10000 characters",
                        "passed":  true
@@ -27,7 +140,7 @@
                        "passed":  true
                    },
                    {
-                       "check":  "zh-TW update-only notes below 1500 characters",
+                       "check":  "zh-TW current update notes nonempty and \u003c=1500 characters",
                        "passed":  true
                    },
                    {
@@ -35,7 +148,31 @@
                        "passed":  true
                    },
                    {
+                       "check":  "zh-TW caption uses filename and tab-separated text",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "zh-TW caption uses filename and tab-separated text",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "zh-TW caption uses filename and tab-separated text",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "zh-TW caption uses filename and tab-separated text",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "zh-TW caption uses filename and tab-separated text",
+                       "passed":  true
+                   },
+                   {
                        "check":  "zh-TW has five screenshot captions",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "zh-TW screenshot names and order match capture plan",
                        "passed":  true
                    },
                    {
@@ -43,7 +180,15 @@
                        "passed":  true
                    },
                    {
+                       "check":  "zh-TW/01-preview-bamboo-light.png screenshot exists",
+                       "passed":  true
+                   },
+                   {
                        "check":  "zh-TW/02-preview-bamboo-dark.png caption \u003c=200 characters",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "zh-TW/02-preview-bamboo-dark.png screenshot exists",
                        "passed":  true
                    },
                    {
@@ -51,11 +196,27 @@
                        "passed":  true
                    },
                    {
+                       "check":  "zh-TW/03-preview-light.png screenshot exists",
+                       "passed":  true
+                   },
+                   {
                        "check":  "zh-TW/04-preview-dark.png caption \u003c=200 characters",
                        "passed":  true
                    },
                    {
+                       "check":  "zh-TW/04-preview-dark.png screenshot exists",
+                       "passed":  true
+                   },
+                   {
                        "check":  "zh-TW/05-edit-bamboo-light.png caption \u003c=200 characters",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "zh-TW/05-edit-bamboo-light.png screenshot exists",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "en-US has a display name",
                        "passed":  true
                    },
                    {
@@ -83,7 +244,7 @@
                        "passed":  true
                    },
                    {
-                       "check":  "en-US update-only notes below 1500 characters",
+                       "check":  "en-US current update notes nonempty and \u003c=1500 characters",
                        "passed":  true
                    },
                    {
@@ -91,7 +252,31 @@
                        "passed":  true
                    },
                    {
+                       "check":  "en-US caption uses filename and tab-separated text",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "en-US caption uses filename and tab-separated text",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "en-US caption uses filename and tab-separated text",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "en-US caption uses filename and tab-separated text",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "en-US caption uses filename and tab-separated text",
+                       "passed":  true
+                   },
+                   {
                        "check":  "en-US has five screenshot captions",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "en-US screenshot names and order match capture plan",
                        "passed":  true
                    },
                    {
@@ -99,7 +284,15 @@
                        "passed":  true
                    },
                    {
+                       "check":  "en-US/01-preview-bamboo-light.png screenshot exists",
+                       "passed":  true
+                   },
+                   {
                        "check":  "en-US/02-preview-bamboo-dark.png caption \u003c=200 characters",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "en-US/02-preview-bamboo-dark.png screenshot exists",
                        "passed":  true
                    },
                    {
@@ -107,11 +300,27 @@
                        "passed":  true
                    },
                    {
+                       "check":  "en-US/03-preview-light.png screenshot exists",
+                       "passed":  true
+                   },
+                   {
                        "check":  "en-US/04-preview-dark.png caption \u003c=200 characters",
                        "passed":  true
                    },
                    {
+                       "check":  "en-US/04-preview-dark.png screenshot exists",
+                       "passed":  true
+                   },
+                   {
                        "check":  "en-US/05-edit-bamboo-light.png caption \u003c=200 characters",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "en-US/05-edit-bamboo-light.png screenshot exists",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "ja-JP has a display name",
                        "passed":  true
                    },
                    {
@@ -139,7 +348,7 @@
                        "passed":  true
                    },
                    {
-                       "check":  "ja-JP update-only notes below 1500 characters",
+                       "check":  "ja-JP current update notes nonempty and \u003c=1500 characters",
                        "passed":  true
                    },
                    {
@@ -147,7 +356,31 @@
                        "passed":  true
                    },
                    {
+                       "check":  "ja-JP caption uses filename and tab-separated text",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "ja-JP caption uses filename and tab-separated text",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "ja-JP caption uses filename and tab-separated text",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "ja-JP caption uses filename and tab-separated text",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "ja-JP caption uses filename and tab-separated text",
+                       "passed":  true
+                   },
+                   {
                        "check":  "ja-JP has five screenshot captions",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "ja-JP screenshot names and order match capture plan",
                        "passed":  true
                    },
                    {
@@ -155,7 +388,15 @@
                        "passed":  true
                    },
                    {
+                       "check":  "ja-JP/01-preview-bamboo-light.png screenshot exists",
+                       "passed":  true
+                   },
+                   {
                        "check":  "ja-JP/02-preview-bamboo-dark.png caption \u003c=200 characters",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "ja-JP/02-preview-bamboo-dark.png screenshot exists",
                        "passed":  true
                    },
                    {
@@ -163,11 +404,543 @@
                        "passed":  true
                    },
                    {
+                       "check":  "ja-JP/03-preview-light.png screenshot exists",
+                       "passed":  true
+                   },
+                   {
                        "check":  "ja-JP/04-preview-dark.png caption \u003c=200 characters",
                        "passed":  true
                    },
                    {
+                       "check":  "ja-JP/04-preview-dark.png screenshot exists",
+                       "passed":  true
+                   },
+                   {
                        "check":  "ja-JP/05-edit-bamboo-light.png caption \u003c=200 characters",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "ja-JP/05-edit-bamboo-light.png screenshot exists",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "zh-CN has a display name",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "zh-CN description nonempty and \u003c=10000 characters",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "zh-CN description has no URLs or HTML",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "zh-CN short description below 270 characters",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "zh-CN privacy policy text present",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "zh-CN features satisfy count/length/no-bullet rules",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "zh-CN keywords satisfy 7 phrases/40 chars/21 words limits",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "zh-CN current update notes nonempty and \u003c=1500 characters",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "zh-CN system requirements satisfy listing limits",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "zh-CN caption uses filename and tab-separated text",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "zh-CN caption uses filename and tab-separated text",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "zh-CN caption uses filename and tab-separated text",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "zh-CN caption uses filename and tab-separated text",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "zh-CN caption uses filename and tab-separated text",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "zh-CN has five screenshot captions",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "zh-CN screenshot names and order match capture plan",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "zh-CN/01-preview-bamboo-light.png caption \u003c=200 characters",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "zh-CN/01-preview-bamboo-light.png screenshot exists",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "zh-CN/02-preview-bamboo-dark.png caption \u003c=200 characters",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "zh-CN/02-preview-bamboo-dark.png screenshot exists",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "zh-CN/03-preview-light.png caption \u003c=200 characters",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "zh-CN/03-preview-light.png screenshot exists",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "zh-CN/04-preview-dark.png caption \u003c=200 characters",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "zh-CN/04-preview-dark.png screenshot exists",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "zh-CN/05-edit-bamboo-light.png caption \u003c=200 characters",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "zh-CN/05-edit-bamboo-light.png screenshot exists",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "es-ES has a display name",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "es-ES description nonempty and \u003c=10000 characters",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "es-ES description has no URLs or HTML",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "es-ES short description below 270 characters",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "es-ES privacy policy text present",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "es-ES features satisfy count/length/no-bullet rules",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "es-ES keywords satisfy 7 phrases/40 chars/21 words limits",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "es-ES current update notes nonempty and \u003c=1500 characters",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "es-ES system requirements satisfy listing limits",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "es-ES caption uses filename and tab-separated text",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "es-ES caption uses filename and tab-separated text",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "es-ES caption uses filename and tab-separated text",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "es-ES caption uses filename and tab-separated text",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "es-ES caption uses filename and tab-separated text",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "es-ES has five screenshot captions",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "es-ES screenshot names and order match capture plan",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "es-ES/01-preview-bamboo-light.png caption \u003c=200 characters",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "es-ES/01-preview-bamboo-light.png screenshot exists",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "es-ES/02-preview-bamboo-dark.png caption \u003c=200 characters",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "es-ES/02-preview-bamboo-dark.png screenshot exists",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "es-ES/03-preview-light.png caption \u003c=200 characters",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "es-ES/03-preview-light.png screenshot exists",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "es-ES/04-preview-dark.png caption \u003c=200 characters",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "es-ES/04-preview-dark.png screenshot exists",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "es-ES/05-edit-bamboo-light.png caption \u003c=200 characters",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "es-ES/05-edit-bamboo-light.png screenshot exists",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "ar-SA has a display name",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "ar-SA description nonempty and \u003c=10000 characters",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "ar-SA description has no URLs or HTML",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "ar-SA short description below 270 characters",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "ar-SA privacy policy text present",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "ar-SA features satisfy count/length/no-bullet rules",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "ar-SA keywords satisfy 7 phrases/40 chars/21 words limits",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "ar-SA current update notes nonempty and \u003c=1500 characters",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "ar-SA system requirements satisfy listing limits",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "ar-SA caption uses filename and tab-separated text",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "ar-SA caption uses filename and tab-separated text",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "ar-SA caption uses filename and tab-separated text",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "ar-SA caption uses filename and tab-separated text",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "ar-SA caption uses filename and tab-separated text",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "ar-SA has five screenshot captions",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "ar-SA screenshot names and order match capture plan",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "ar-SA/01-preview-bamboo-light.png caption \u003c=200 characters",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "ar-SA/01-preview-bamboo-light.png screenshot exists",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "ar-SA/02-preview-bamboo-dark.png caption \u003c=200 characters",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "ar-SA/02-preview-bamboo-dark.png screenshot exists",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "ar-SA/03-preview-light.png caption \u003c=200 characters",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "ar-SA/03-preview-light.png screenshot exists",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "ar-SA/04-preview-dark.png caption \u003c=200 characters",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "ar-SA/04-preview-dark.png screenshot exists",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "ar-SA/05-edit-bamboo-light.png caption \u003c=200 characters",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "ar-SA/05-edit-bamboo-light.png screenshot exists",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "fr-FR has a display name",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "fr-FR description nonempty and \u003c=10000 characters",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "fr-FR description has no URLs or HTML",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "fr-FR short description below 270 characters",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "fr-FR privacy policy text present",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "fr-FR features satisfy count/length/no-bullet rules",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "fr-FR keywords satisfy 7 phrases/40 chars/21 words limits",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "fr-FR current update notes nonempty and \u003c=1500 characters",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "fr-FR system requirements satisfy listing limits",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "fr-FR caption uses filename and tab-separated text",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "fr-FR caption uses filename and tab-separated text",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "fr-FR caption uses filename and tab-separated text",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "fr-FR caption uses filename and tab-separated text",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "fr-FR caption uses filename and tab-separated text",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "fr-FR has five screenshot captions",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "fr-FR screenshot names and order match capture plan",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "fr-FR/01-preview-bamboo-light.png caption \u003c=200 characters",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "fr-FR/01-preview-bamboo-light.png screenshot exists",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "fr-FR/02-preview-bamboo-dark.png caption \u003c=200 characters",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "fr-FR/02-preview-bamboo-dark.png screenshot exists",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "fr-FR/03-preview-light.png caption \u003c=200 characters",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "fr-FR/03-preview-light.png screenshot exists",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "fr-FR/04-preview-dark.png caption \u003c=200 characters",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "fr-FR/04-preview-dark.png screenshot exists",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "fr-FR/05-edit-bamboo-light.png caption \u003c=200 characters",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "fr-FR/05-edit-bamboo-light.png screenshot exists",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "ko-KR has a display name",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "ko-KR description nonempty and \u003c=10000 characters",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "ko-KR description has no URLs or HTML",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "ko-KR short description below 270 characters",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "ko-KR privacy policy text present",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "ko-KR features satisfy count/length/no-bullet rules",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "ko-KR keywords satisfy 7 phrases/40 chars/21 words limits",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "ko-KR current update notes nonempty and \u003c=1500 characters",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "ko-KR system requirements satisfy listing limits",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "ko-KR caption uses filename and tab-separated text",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "ko-KR caption uses filename and tab-separated text",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "ko-KR caption uses filename and tab-separated text",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "ko-KR caption uses filename and tab-separated text",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "ko-KR caption uses filename and tab-separated text",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "ko-KR has five screenshot captions",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "ko-KR screenshot names and order match capture plan",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "ko-KR/01-preview-bamboo-light.png caption \u003c=200 characters",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "ko-KR/01-preview-bamboo-light.png screenshot exists",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "ko-KR/02-preview-bamboo-dark.png caption \u003c=200 characters",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "ko-KR/02-preview-bamboo-dark.png screenshot exists",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "ko-KR/03-preview-light.png caption \u003c=200 characters",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "ko-KR/03-preview-light.png screenshot exists",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "ko-KR/04-preview-dark.png caption \u003c=200 characters",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "ko-KR/04-preview-dark.png screenshot exists",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "ko-KR/05-edit-bamboo-light.png caption \u003c=200 characters",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "ko-KR/05-edit-bamboo-light.png screenshot exists",
                        "passed":  true
                    },
                    {
@@ -283,6 +1056,46 @@
                        "passed":  true
                    },
                    {
+                       "check":  "screenshots/ar-SA/01-preview-bamboo-light.png below 50 MB",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "screenshots/ar-SA/01-preview-bamboo-light.png is 1600x1000",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "screenshots/ar-SA/02-preview-bamboo-dark.png below 50 MB",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "screenshots/ar-SA/02-preview-bamboo-dark.png is 1600x1000",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "screenshots/ar-SA/03-preview-light.png below 50 MB",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "screenshots/ar-SA/03-preview-light.png is 1600x1000",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "screenshots/ar-SA/04-preview-dark.png below 50 MB",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "screenshots/ar-SA/04-preview-dark.png is 1600x1000",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "screenshots/ar-SA/05-edit-bamboo-light.png below 50 MB",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "screenshots/ar-SA/05-edit-bamboo-light.png is 1600x1000",
+                       "passed":  true
+                   },
+                   {
                        "check":  "screenshots/en-US/01-preview-bamboo-light.png below 50 MB",
                        "passed":  true
                    },
@@ -323,6 +1136,86 @@
                        "passed":  true
                    },
                    {
+                       "check":  "screenshots/es-ES/01-preview-bamboo-light.png below 50 MB",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "screenshots/es-ES/01-preview-bamboo-light.png is 1600x1000",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "screenshots/es-ES/02-preview-bamboo-dark.png below 50 MB",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "screenshots/es-ES/02-preview-bamboo-dark.png is 1600x1000",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "screenshots/es-ES/03-preview-light.png below 50 MB",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "screenshots/es-ES/03-preview-light.png is 1600x1000",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "screenshots/es-ES/04-preview-dark.png below 50 MB",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "screenshots/es-ES/04-preview-dark.png is 1600x1000",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "screenshots/es-ES/05-edit-bamboo-light.png below 50 MB",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "screenshots/es-ES/05-edit-bamboo-light.png is 1600x1000",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "screenshots/fr-FR/01-preview-bamboo-light.png below 50 MB",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "screenshots/fr-FR/01-preview-bamboo-light.png is 1600x1000",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "screenshots/fr-FR/02-preview-bamboo-dark.png below 50 MB",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "screenshots/fr-FR/02-preview-bamboo-dark.png is 1600x1000",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "screenshots/fr-FR/03-preview-light.png below 50 MB",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "screenshots/fr-FR/03-preview-light.png is 1600x1000",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "screenshots/fr-FR/04-preview-dark.png below 50 MB",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "screenshots/fr-FR/04-preview-dark.png is 1600x1000",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "screenshots/fr-FR/05-edit-bamboo-light.png below 50 MB",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "screenshots/fr-FR/05-edit-bamboo-light.png is 1600x1000",
+                       "passed":  true
+                   },
+                   {
                        "check":  "screenshots/ja-JP/01-preview-bamboo-light.png below 50 MB",
                        "passed":  true
                    },
@@ -360,6 +1253,86 @@
                    },
                    {
                        "check":  "screenshots/ja-JP/05-edit-bamboo-light.png is 1600x1000",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "screenshots/ko-KR/01-preview-bamboo-light.png below 50 MB",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "screenshots/ko-KR/01-preview-bamboo-light.png is 1600x1000",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "screenshots/ko-KR/02-preview-bamboo-dark.png below 50 MB",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "screenshots/ko-KR/02-preview-bamboo-dark.png is 1600x1000",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "screenshots/ko-KR/03-preview-light.png below 50 MB",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "screenshots/ko-KR/03-preview-light.png is 1600x1000",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "screenshots/ko-KR/04-preview-dark.png below 50 MB",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "screenshots/ko-KR/04-preview-dark.png is 1600x1000",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "screenshots/ko-KR/05-edit-bamboo-light.png below 50 MB",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "screenshots/ko-KR/05-edit-bamboo-light.png is 1600x1000",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "screenshots/zh-CN/01-preview-bamboo-light.png below 50 MB",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "screenshots/zh-CN/01-preview-bamboo-light.png is 1600x1000",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "screenshots/zh-CN/02-preview-bamboo-dark.png below 50 MB",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "screenshots/zh-CN/02-preview-bamboo-dark.png is 1600x1000",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "screenshots/zh-CN/03-preview-light.png below 50 MB",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "screenshots/zh-CN/03-preview-light.png is 1600x1000",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "screenshots/zh-CN/04-preview-dark.png below 50 MB",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "screenshots/zh-CN/04-preview-dark.png is 1600x1000",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "screenshots/zh-CN/05-edit-bamboo-light.png below 50 MB",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "screenshots/zh-CN/05-edit-bamboo-light.png is 1600x1000",
                        "passed":  true
                    },
                    {
@@ -419,7 +1392,7 @@
                        "passed":  true
                    },
                    {
-                       "check":  "15 localized screenshots present",
+                       "check":  "40 localized screenshots present",
                        "passed":  true
                    },
                    {
@@ -436,6 +1409,222 @@
                    },
                    {
                        "check":  "ja-JP five screenshots present",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "zh-CN five screenshots present",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "es-ES five screenshots present",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "ar-SA five screenshots present",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "fr-FR five screenshots present",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "ko-KR five screenshots present",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "listing version matches MSIX",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "listing identity matches MSIX",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "all listing languages match MSIX declarations",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "MSIX contains logo Square150x150Logo.png",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "Square150x150Logo.png matches MSIX SHA256",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "MSIX contains logo Square150x150Logo.scale-100.png",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "Square150x150Logo.scale-100.png matches MSIX SHA256",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "MSIX contains logo Square150x150Logo.scale-125.png",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "Square150x150Logo.scale-125.png matches MSIX SHA256",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "MSIX contains logo Square150x150Logo.scale-150.png",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "Square150x150Logo.scale-150.png matches MSIX SHA256",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "MSIX contains logo Square150x150Logo.scale-200.png",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "Square150x150Logo.scale-200.png matches MSIX SHA256",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "MSIX contains logo Square150x150Logo.scale-400.png",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "Square150x150Logo.scale-400.png matches MSIX SHA256",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "MSIX contains logo Square44x44Logo.png",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "Square44x44Logo.png matches MSIX SHA256",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "MSIX contains logo Square44x44Logo.scale-100.png",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "Square44x44Logo.scale-100.png matches MSIX SHA256",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "MSIX contains logo Square44x44Logo.scale-125.png",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "Square44x44Logo.scale-125.png matches MSIX SHA256",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "MSIX contains logo Square44x44Logo.scale-150.png",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "Square44x44Logo.scale-150.png matches MSIX SHA256",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "MSIX contains logo Square44x44Logo.scale-200.png",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "Square44x44Logo.scale-200.png matches MSIX SHA256",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "MSIX contains logo Square44x44Logo.scale-400.png",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "Square44x44Logo.scale-400.png matches MSIX SHA256",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "MSIX contains logo Square44x44Logo.targetsize-16_altform-unplated.png",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "Square44x44Logo.targetsize-16_altform-unplated.png matches MSIX SHA256",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "MSIX contains logo Square44x44Logo.targetsize-24_altform-unplated.png",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "Square44x44Logo.targetsize-24_altform-unplated.png matches MSIX SHA256",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "MSIX contains logo Square44x44Logo.targetsize-256_altform-unplated.png",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "Square44x44Logo.targetsize-256_altform-unplated.png matches MSIX SHA256",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "MSIX contains logo Square44x44Logo.targetsize-32_altform-unplated.png",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "Square44x44Logo.targetsize-32_altform-unplated.png matches MSIX SHA256",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "MSIX contains logo Square44x44Logo.targetsize-48_altform-unplated.png",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "Square44x44Logo.targetsize-48_altform-unplated.png matches MSIX SHA256",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "MSIX contains logo StoreLogo.png",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "StoreLogo.png matches MSIX SHA256",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "MSIX contains logo StoreLogo.scale-100.png",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "StoreLogo.scale-100.png matches MSIX SHA256",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "MSIX contains logo StoreLogo.scale-125.png",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "StoreLogo.scale-125.png matches MSIX SHA256",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "MSIX contains logo StoreLogo.scale-150.png",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "StoreLogo.scale-150.png matches MSIX SHA256",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "MSIX contains logo StoreLogo.scale-200.png",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "StoreLogo.scale-200.png matches MSIX SHA256",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "MSIX contains logo StoreLogo.scale-400.png",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "StoreLogo.scale-400.png matches MSIX SHA256",
                        "passed":  true
                    },
                    {
@@ -459,6 +1648,10 @@
                        "passed":  true
                    },
                    {
+                       "check":  "preview link exists: listing/zh-TW/release-notes-update-only.txt",
+                       "passed":  true
+                   },
+                   {
                        "check":  "preview link exists: listing/zh-TW/features.txt",
                        "passed":  true
                    },
@@ -472,10 +1665,6 @@
                    },
                    {
                        "check":  "preview link exists: listing/zh-TW/privacy-policy.txt",
-                       "passed":  true
-                   },
-                   {
-                       "check":  "preview link exists: listing/zh-TW/release-notes-update-only.txt",
                        "passed":  true
                    },
                    {
@@ -547,6 +1736,10 @@
                        "passed":  true
                    },
                    {
+                       "check":  "preview link exists: listing/en-US/release-notes-update-only.txt",
+                       "passed":  true
+                   },
+                   {
                        "check":  "preview link exists: listing/en-US/features.txt",
                        "passed":  true
                    },
@@ -560,10 +1753,6 @@
                    },
                    {
                        "check":  "preview link exists: listing/en-US/privacy-policy.txt",
-                       "passed":  true
-                   },
-                   {
-                       "check":  "preview link exists: listing/en-US/release-notes-update-only.txt",
                        "passed":  true
                    },
                    {
@@ -635,6 +1824,10 @@
                        "passed":  true
                    },
                    {
+                       "check":  "preview link exists: listing/ja-JP/release-notes-update-only.txt",
+                       "passed":  true
+                   },
+                   {
                        "check":  "preview link exists: listing/ja-JP/features.txt",
                        "passed":  true
                    },
@@ -651,10 +1844,6 @@
                        "passed":  true
                    },
                    {
-                       "check":  "preview link exists: listing/ja-JP/release-notes-update-only.txt",
-                       "passed":  true
-                   },
-                   {
                        "check":  "preview link exists: screenshots/ja-JP/01-preview-bamboo-light.png",
                        "passed":  true
                    },
@@ -712,6 +1901,446 @@
                    },
                    {
                        "check":  "preview link exists: screenshots/ja-JP/05-edit-bamboo-light.png",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: listing/zh-CN/description.txt",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: listing/zh-CN/short-description.txt",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: listing/zh-CN/release-notes-update-only.txt",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: listing/zh-CN/features.txt",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: listing/zh-CN/keywords.txt",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: listing/zh-CN/system-requirements.txt",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: listing/zh-CN/privacy-policy.txt",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: screenshots/zh-CN/01-preview-bamboo-light.png",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: screenshots/zh-CN/01-preview-bamboo-light.png",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: screenshots/zh-CN/01-preview-bamboo-light.png",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: screenshots/zh-CN/02-preview-bamboo-dark.png",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: screenshots/zh-CN/02-preview-bamboo-dark.png",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: screenshots/zh-CN/02-preview-bamboo-dark.png",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: screenshots/zh-CN/03-preview-light.png",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: screenshots/zh-CN/03-preview-light.png",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: screenshots/zh-CN/03-preview-light.png",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: screenshots/zh-CN/04-preview-dark.png",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: screenshots/zh-CN/04-preview-dark.png",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: screenshots/zh-CN/04-preview-dark.png",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: screenshots/zh-CN/05-edit-bamboo-light.png",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: screenshots/zh-CN/05-edit-bamboo-light.png",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: screenshots/zh-CN/05-edit-bamboo-light.png",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: listing/es-ES/description.txt",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: listing/es-ES/short-description.txt",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: listing/es-ES/release-notes-update-only.txt",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: listing/es-ES/features.txt",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: listing/es-ES/keywords.txt",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: listing/es-ES/system-requirements.txt",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: listing/es-ES/privacy-policy.txt",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: screenshots/es-ES/01-preview-bamboo-light.png",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: screenshots/es-ES/01-preview-bamboo-light.png",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: screenshots/es-ES/01-preview-bamboo-light.png",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: screenshots/es-ES/02-preview-bamboo-dark.png",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: screenshots/es-ES/02-preview-bamboo-dark.png",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: screenshots/es-ES/02-preview-bamboo-dark.png",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: screenshots/es-ES/03-preview-light.png",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: screenshots/es-ES/03-preview-light.png",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: screenshots/es-ES/03-preview-light.png",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: screenshots/es-ES/04-preview-dark.png",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: screenshots/es-ES/04-preview-dark.png",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: screenshots/es-ES/04-preview-dark.png",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: screenshots/es-ES/05-edit-bamboo-light.png",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: screenshots/es-ES/05-edit-bamboo-light.png",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: screenshots/es-ES/05-edit-bamboo-light.png",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: listing/ar-SA/description.txt",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: listing/ar-SA/short-description.txt",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: listing/ar-SA/release-notes-update-only.txt",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: listing/ar-SA/features.txt",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: listing/ar-SA/keywords.txt",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: listing/ar-SA/system-requirements.txt",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: listing/ar-SA/privacy-policy.txt",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: screenshots/ar-SA/01-preview-bamboo-light.png",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: screenshots/ar-SA/01-preview-bamboo-light.png",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: screenshots/ar-SA/01-preview-bamboo-light.png",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: screenshots/ar-SA/02-preview-bamboo-dark.png",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: screenshots/ar-SA/02-preview-bamboo-dark.png",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: screenshots/ar-SA/02-preview-bamboo-dark.png",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: screenshots/ar-SA/03-preview-light.png",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: screenshots/ar-SA/03-preview-light.png",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: screenshots/ar-SA/03-preview-light.png",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: screenshots/ar-SA/04-preview-dark.png",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: screenshots/ar-SA/04-preview-dark.png",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: screenshots/ar-SA/04-preview-dark.png",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: screenshots/ar-SA/05-edit-bamboo-light.png",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: screenshots/ar-SA/05-edit-bamboo-light.png",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: screenshots/ar-SA/05-edit-bamboo-light.png",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: listing/fr-FR/description.txt",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: listing/fr-FR/short-description.txt",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: listing/fr-FR/release-notes-update-only.txt",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: listing/fr-FR/features.txt",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: listing/fr-FR/keywords.txt",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: listing/fr-FR/system-requirements.txt",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: listing/fr-FR/privacy-policy.txt",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: screenshots/fr-FR/01-preview-bamboo-light.png",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: screenshots/fr-FR/01-preview-bamboo-light.png",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: screenshots/fr-FR/01-preview-bamboo-light.png",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: screenshots/fr-FR/02-preview-bamboo-dark.png",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: screenshots/fr-FR/02-preview-bamboo-dark.png",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: screenshots/fr-FR/02-preview-bamboo-dark.png",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: screenshots/fr-FR/03-preview-light.png",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: screenshots/fr-FR/03-preview-light.png",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: screenshots/fr-FR/03-preview-light.png",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: screenshots/fr-FR/04-preview-dark.png",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: screenshots/fr-FR/04-preview-dark.png",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: screenshots/fr-FR/04-preview-dark.png",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: screenshots/fr-FR/05-edit-bamboo-light.png",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: screenshots/fr-FR/05-edit-bamboo-light.png",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: screenshots/fr-FR/05-edit-bamboo-light.png",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: listing/ko-KR/description.txt",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: listing/ko-KR/short-description.txt",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: listing/ko-KR/release-notes-update-only.txt",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: listing/ko-KR/features.txt",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: listing/ko-KR/keywords.txt",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: listing/ko-KR/system-requirements.txt",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: listing/ko-KR/privacy-policy.txt",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: screenshots/ko-KR/01-preview-bamboo-light.png",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: screenshots/ko-KR/01-preview-bamboo-light.png",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: screenshots/ko-KR/01-preview-bamboo-light.png",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: screenshots/ko-KR/02-preview-bamboo-dark.png",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: screenshots/ko-KR/02-preview-bamboo-dark.png",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: screenshots/ko-KR/02-preview-bamboo-dark.png",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: screenshots/ko-KR/03-preview-light.png",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: screenshots/ko-KR/03-preview-light.png",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: screenshots/ko-KR/03-preview-light.png",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: screenshots/ko-KR/04-preview-dark.png",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: screenshots/ko-KR/04-preview-dark.png",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: screenshots/ko-KR/04-preview-dark.png",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: screenshots/ko-KR/05-edit-bamboo-light.png",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: screenshots/ko-KR/05-edit-bamboo-light.png",
+                       "passed":  true
+                   },
+                   {
+                       "check":  "preview link exists: screenshots/ko-KR/05-edit-bamboo-light.png",
                        "passed":  true
                    },
                    {
@@ -925,94 +2554,244 @@
                        "bytes":  182467
                    },
                    {
+                       "file":  "screenshots/ar-SA/01-preview-bamboo-light.png",
+                       "width":  1600,
+                       "height":  1000,
+                       "bytes":  438717
+                   },
+                   {
+                       "file":  "screenshots/ar-SA/02-preview-bamboo-dark.png",
+                       "width":  1600,
+                       "height":  1000,
+                       "bytes":  425524
+                   },
+                   {
+                       "file":  "screenshots/ar-SA/03-preview-light.png",
+                       "width":  1600,
+                       "height":  1000,
+                       "bytes":  274707
+                   },
+                   {
+                       "file":  "screenshots/ar-SA/04-preview-dark.png",
+                       "width":  1600,
+                       "height":  1000,
+                       "bytes":  281721
+                   },
+                   {
+                       "file":  "screenshots/ar-SA/05-edit-bamboo-light.png",
+                       "width":  1600,
+                       "height":  1000,
+                       "bytes":  547784
+                   },
+                   {
                        "file":  "screenshots/en-US/01-preview-bamboo-light.png",
                        "width":  1600,
                        "height":  1000,
-                       "bytes":  499926
+                       "bytes":  516555
                    },
                    {
                        "file":  "screenshots/en-US/02-preview-bamboo-dark.png",
                        "width":  1600,
                        "height":  1000,
-                       "bytes":  489137
+                       "bytes":  505451
                    },
                    {
                        "file":  "screenshots/en-US/03-preview-light.png",
                        "width":  1600,
                        "height":  1000,
-                       "bytes":  316890
+                       "bytes":  329012
                    },
                    {
                        "file":  "screenshots/en-US/04-preview-dark.png",
                        "width":  1600,
                        "height":  1000,
-                       "bytes":  323493
+                       "bytes":  335269
                    },
                    {
                        "file":  "screenshots/en-US/05-edit-bamboo-light.png",
                        "width":  1600,
                        "height":  1000,
-                       "bytes":  610903
+                       "bytes":  625462
+                   },
+                   {
+                       "file":  "screenshots/es-ES/01-preview-bamboo-light.png",
+                       "width":  1600,
+                       "height":  1000,
+                       "bytes":  569107
+                   },
+                   {
+                       "file":  "screenshots/es-ES/02-preview-bamboo-dark.png",
+                       "width":  1600,
+                       "height":  1000,
+                       "bytes":  555913
+                   },
+                   {
+                       "file":  "screenshots/es-ES/03-preview-light.png",
+                       "width":  1600,
+                       "height":  1000,
+                       "bytes":  369562
+                   },
+                   {
+                       "file":  "screenshots/es-ES/04-preview-dark.png",
+                       "width":  1600,
+                       "height":  1000,
+                       "bytes":  376627
+                   },
+                   {
+                       "file":  "screenshots/es-ES/05-edit-bamboo-light.png",
+                       "width":  1600,
+                       "height":  1000,
+                       "bytes":  669621
+                   },
+                   {
+                       "file":  "screenshots/fr-FR/01-preview-bamboo-light.png",
+                       "width":  1600,
+                       "height":  1000,
+                       "bytes":  593621
+                   },
+                   {
+                       "file":  "screenshots/fr-FR/02-preview-bamboo-dark.png",
+                       "width":  1600,
+                       "height":  1000,
+                       "bytes":  582430
+                   },
+                   {
+                       "file":  "screenshots/fr-FR/03-preview-light.png",
+                       "width":  1600,
+                       "height":  1000,
+                       "bytes":  379943
+                   },
+                   {
+                       "file":  "screenshots/fr-FR/04-preview-dark.png",
+                       "width":  1600,
+                       "height":  1000,
+                       "bytes":  387632
+                   },
+                   {
+                       "file":  "screenshots/fr-FR/05-edit-bamboo-light.png",
+                       "width":  1600,
+                       "height":  1000,
+                       "bytes":  690430
                    },
                    {
                        "file":  "screenshots/ja-JP/01-preview-bamboo-light.png",
                        "width":  1600,
                        "height":  1000,
-                       "bytes":  447891
+                       "bytes":  463934
                    },
                    {
                        "file":  "screenshots/ja-JP/02-preview-bamboo-dark.png",
                        "width":  1600,
                        "height":  1000,
-                       "bytes":  441264
+                       "bytes":  457072
                    },
                    {
                        "file":  "screenshots/ja-JP/03-preview-light.png",
                        "width":  1600,
                        "height":  1000,
-                       "bytes":  324199
+                       "bytes":  339351
                    },
                    {
                        "file":  "screenshots/ja-JP/04-preview-dark.png",
                        "width":  1600,
                        "height":  1000,
-                       "bytes":  334761
+                       "bytes":  347239
                    },
                    {
                        "file":  "screenshots/ja-JP/05-edit-bamboo-light.png",
                        "width":  1600,
                        "height":  1000,
-                       "bytes":  511204
+                       "bytes":  525674
+                   },
+                   {
+                       "file":  "screenshots/ko-KR/01-preview-bamboo-light.png",
+                       "width":  1600,
+                       "height":  1000,
+                       "bytes":  447607
+                   },
+                   {
+                       "file":  "screenshots/ko-KR/02-preview-bamboo-dark.png",
+                       "width":  1600,
+                       "height":  1000,
+                       "bytes":  433213
+                   },
+                   {
+                       "file":  "screenshots/ko-KR/03-preview-light.png",
+                       "width":  1600,
+                       "height":  1000,
+                       "bytes":  274967
+                   },
+                   {
+                       "file":  "screenshots/ko-KR/04-preview-dark.png",
+                       "width":  1600,
+                       "height":  1000,
+                       "bytes":  277396
+                   },
+                   {
+                       "file":  "screenshots/ko-KR/05-edit-bamboo-light.png",
+                       "width":  1600,
+                       "height":  1000,
+                       "bytes":  511474
+                   },
+                   {
+                       "file":  "screenshots/zh-CN/01-preview-bamboo-light.png",
+                       "width":  1600,
+                       "height":  1000,
+                       "bytes":  458356
+                   },
+                   {
+                       "file":  "screenshots/zh-CN/02-preview-bamboo-dark.png",
+                       "width":  1600,
+                       "height":  1000,
+                       "bytes":  452742
+                   },
+                   {
+                       "file":  "screenshots/zh-CN/03-preview-light.png",
+                       "width":  1600,
+                       "height":  1000,
+                       "bytes":  308095
+                   },
+                   {
+                       "file":  "screenshots/zh-CN/04-preview-dark.png",
+                       "width":  1600,
+                       "height":  1000,
+                       "bytes":  312920
+                   },
+                   {
+                       "file":  "screenshots/zh-CN/05-edit-bamboo-light.png",
+                       "width":  1600,
+                       "height":  1000,
+                       "bytes":  520653
                    },
                    {
                        "file":  "screenshots/zh-TW/01-preview-bamboo-light.png",
                        "width":  1600,
                        "height":  1000,
-                       "bytes":  456868
+                       "bytes":  470289
                    },
                    {
                        "file":  "screenshots/zh-TW/02-preview-bamboo-dark.png",
                        "width":  1600,
                        "height":  1000,
-                       "bytes":  450661
+                       "bytes":  464193
                    },
                    {
                        "file":  "screenshots/zh-TW/03-preview-light.png",
                        "width":  1600,
                        "height":  1000,
-                       "bytes":  270447
+                       "bytes":  288545
                    },
                    {
                        "file":  "screenshots/zh-TW/04-preview-dark.png",
                        "width":  1600,
                        "height":  1000,
-                       "bytes":  276492
+                       "bytes":  291498
                    },
                    {
                        "file":  "screenshots/zh-TW/05-edit-bamboo-light.png",
                        "width":  1600,
                        "height":  1000,
-                       "bytes":  524694
+                       "bytes":  537857
                    }
                ]
 }

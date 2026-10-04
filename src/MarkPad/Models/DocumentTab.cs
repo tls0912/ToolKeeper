@@ -17,14 +17,20 @@ public sealed class DocumentTab : INotifyPropertyChanged
     private bool _isPreviewMode = true;
     private Encoding _encoding = new UTF8Encoding(false, true);
     private bool _hasBom;
+    private string? _savedContentAfterConcurrentEdit;
 
     public DocumentTab()
     {
         Document = new TextDocument();
-        Document.TextChanged += (_, _) => OnPropertyChanged(nameof(Content));
+        Document.TextChanged += (_, _) =>
+        {
+            if (_savedContentAfterConcurrentEdit is { } savedContent)
+                SetDirty(!string.Equals(Content, savedContent, StringComparison.Ordinal));
+            OnPropertyChanged(nameof(Content));
+        };
         Document.UndoStack.PropertyChanged += (_, e) =>
         {
-            if (e.PropertyName == nameof(Document.UndoStack.IsOriginalFile))
+            if (_savedContentAfterConcurrentEdit is null && e.PropertyName == nameof(Document.UndoStack.IsOriginalFile))
                 SetDirty(!Document.UndoStack.IsOriginalFile);
         };
     }
@@ -49,6 +55,7 @@ public sealed class DocumentTab : INotifyPropertyChanged
         get => _isDirty;
         set
         {
+            _savedContentAfterConcurrentEdit = null;
             if (value) Document.UndoStack.DiscardOriginalFileMarker();
             else Document.UndoStack.MarkAsOriginalFile();
             SetDirty(value);
@@ -71,6 +78,21 @@ public sealed class DocumentTab : INotifyPropertyChanged
     internal long DiskLength { get; set; }
 
     public event PropertyChangedEventHandler? PropertyChanged;
+
+    internal void RecordSavedContent(string content)
+    {
+        if (string.Equals(Content, content, StringComparison.Ordinal))
+        {
+            IsDirty = false;
+            return;
+        }
+
+        // AvalonEdit can mark only the current undo state. Retain the written snapshot
+        // when typing overtook a save, so Undo/Redo can still recognize the disk content.
+        _savedContentAfterConcurrentEdit = content;
+        Document.UndoStack.DiscardOriginalFileMarker();
+        SetDirty(true);
+    }
 
     private void SetDirty(bool value)
     {

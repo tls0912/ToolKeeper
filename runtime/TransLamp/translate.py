@@ -15,6 +15,13 @@ import sys
 from typing import Any
 
 RUNTIME_ID = "ctranslate2-sentencepiece-v1"
+# Fixed reviewed direct directions, mirrored by the bundled LanguagePackCatalog.
+SUPPORTED_DIRECTIONS = tuple(
+    direction
+    for language in ("zh", "zt", "fr", "pt", "ja", "ko", "es", "de", "it", "ru", "ar", "hi", "th", "vi")
+    for direction in (("en", language), (language, "en"))
+    if direction != ("es", "en")  # The current official reverse package needs a different BPE tokenizer.
+)
 MAX_TEXT_CHARACTERS = 20_000
 MAX_REQUEST_BYTES = 1_048_576
 MAX_SOURCE_TOKENS = 256
@@ -64,8 +71,8 @@ def read_request(stream: Any) -> dict[str, Any]:
         if "\x00" in text or any(0xD800 <= ord(char) <= 0xDFFF for char in text):
             raise TranslationError("輸入包含不支援的文字編碼。")
     direction = (request.get("sourceLanguage"), request.get("targetLanguage"))
-    if direction not in (("en", "zh"), ("zh", "en")):
-        raise TranslationError("目前支援中文與 English 之間的雙向翻譯。")
+    if direction not in SUPPORTED_DIRECTIONS:
+        raise TranslationError("目前不支援這個翻譯方向，請選擇資料管理中列出的語言包。")
     if not isinstance(request.get("modelPath"), str) or not request["modelPath"]:
         raise TranslationError("尚未選擇可用的語言包。")
     return request
@@ -90,10 +97,22 @@ def validate_model(request: dict[str, Any]) -> Path:
         request["sourceLanguage"], request["targetLanguage"]
     ):
         raise TranslationError("語言包方向與目前選擇不一致。")
-    for relative in ("model/model.bin", "model/config.json", "sentencepiece.model", "LICENSE", "NOTICE"):
+    for relative in ("model/model.bin", "sentencepiece.model", "LICENSE", "NOTICE"):
         path = root / relative
         if not path.is_file() or path.stat().st_size == 0:
             raise TranslationError("語言包不完整，請重新匯入。")
+    # CT2's old binary format includes its configuration and uses a text vocabulary.
+    # Do not synthesize model configuration or alter original tokenizer/vocabulary bytes.
+    def nonempty(relative: str) -> bool:
+        path = root / relative
+        return path.is_file() and path.stat().st_size > 0
+
+    if not nonempty("model/shared_vocabulary.txt") and not (
+        nonempty("model/config.json") and any(nonempty(relative) for relative in (
+            "model/shared_vocabulary.json", "model/vocabulary.json", "model/source_vocabulary.json"
+        ))
+    ):
+        raise TranslationError("語言包不完整，請重新匯入。")
     return root
 
 
@@ -218,7 +237,7 @@ def translate(request: dict[str, Any], progress: Any = emit) -> str:
     completed = 0
     progress({"progress": completed, "total": total})
     output: list[str] = []
-    joiner = " " if request["targetLanguage"] == "en" else ""
+    joiner = "" if request["targetLanguage"] in ("zh", "zt", "ja") else " "
     for item in plan:
         if isinstance(item, str):
             output.append(item)
@@ -239,7 +258,7 @@ def translate(request: dict[str, Any], progress: Any = emit) -> str:
             # marker after SentencePiece decoding. Preserve ordinary underscores
             # in technical identifiers; normalize only the tokenizer marker.
             value = tokenizer.decode(hypothesis[:-1]).replace("▁", " ").strip()
-            if request["targetLanguage"] == "zh":
+            if request["targetLanguage"] in ("zh", "zt", "ja"):
                 value = re.sub(r" +([，。！？：；、])", r"\1", value)
             if not value:
                 raise TranslationError("模型回傳空白結果，請調整文字後重試。")

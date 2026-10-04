@@ -15,7 +15,7 @@ public sealed record SavedResearch
     public ResearchRun Run { get; init; } = new();
 }
 
-/// <summary>Development saves contain synthetic data only; no source permission is inferred.</summary>
+/// <summary>Local research saves for synthetic samples and the supported TWSE source.</summary>
 public sealed class ResearchStore(string directory)
 {
     // Bounded v1 files accommodate 10,000 bars, six conditions and four dense horizons.
@@ -103,7 +103,7 @@ public sealed class ResearchStore(string directory)
 
     // Enforce the same bound while serializing both the payload and the escaped v1 envelope.
     // The caller owns the underlying stream, so disposal here does not close it.
-    private sealed class BoundedWriteStream(Stream inner) : Stream
+    internal sealed class BoundedWriteStream(Stream inner) : Stream
     {
         private long _written;
         public override bool CanRead => false;

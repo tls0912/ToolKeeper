@@ -28,6 +28,30 @@
     <PackageReference Include="HtmlSanitizer" Version="9.2.1039" />
     <EmbeddedResource Include="Resources\Preview.css" LogicalName="MarkPad.Resources.Preview.css" />
     <EmbeddedResource Include="Resources\Preview.js" LogicalName="MarkPad.Resources.Preview.js" />
+    <EmbeddedResource Include="..\..\products\MarkPad\samples\zh-TW\竹間札記.md" LogicalName="MarkPad.Resources.Welcome.zh-TW.md" WithCulture="false" />
+    <EmbeddedResource Include="..\..\products\MarkPad\samples\en-US\Quiet pages.md" LogicalName="MarkPad.Resources.Welcome.en.md" WithCulture="false" />
+    <EmbeddedResource Include="..\..\products\MarkPad\samples\ja-JP\竹のそばのメモ.md" LogicalName="MarkPad.Resources.Welcome.ja.md" WithCulture="false" />
+    <EmbeddedResource Include="..\..\docs\samples\Welcome.md" LogicalName="MarkPad.Resources.Introduction.zh-TW.md" WithCulture="false" />
+    <EmbeddedResource Include="..\..\docs\samples\Welcome.en.md" LogicalName="MarkPad.Resources.Introduction.en.md" WithCulture="false" />
+    <EmbeddedResource Include="..\..\docs\samples\Welcome.ja.md" LogicalName="MarkPad.Resources.Introduction.ja.md" WithCulture="false" />
+    <EmbeddedResource Include="..\..\docs\samples\HanqingOrigin.md" LogicalName="MarkPad.Resources.Origin.zh-TW.md" WithCulture="false" />
+    <EmbeddedResource Include="..\..\docs\samples\HanqingOrigin.en.md" LogicalName="MarkPad.Resources.Origin.en.md" WithCulture="false" />
+    <EmbeddedResource Include="..\..\docs\samples\HanqingOrigin.ja.md" LogicalName="MarkPad.Resources.Origin.ja.md" WithCulture="false" />
+    <EmbeddedResource Include="..\..\docs\samples\Welcome.zh-CN.md" LogicalName="MarkPad.Resources.Introduction.zh-CN.md" WithCulture="false" />
+    <EmbeddedResource Include="..\..\docs\samples\Welcome.es.md" LogicalName="MarkPad.Resources.Introduction.es.md" WithCulture="false" />
+    <EmbeddedResource Include="..\..\docs\samples\Welcome.ar.md" LogicalName="MarkPad.Resources.Introduction.ar.md" WithCulture="false" />
+    <EmbeddedResource Include="..\..\docs\samples\Welcome.fr.md" LogicalName="MarkPad.Resources.Introduction.fr.md" WithCulture="false" />
+    <EmbeddedResource Include="..\..\docs\samples\Welcome.ko.md" LogicalName="MarkPad.Resources.Introduction.ko.md" WithCulture="false" />
+    <EmbeddedResource Include="..\..\docs\samples\HanqingOrigin.zh-CN.md" LogicalName="MarkPad.Resources.Origin.zh-CN.md" WithCulture="false" />
+    <EmbeddedResource Include="..\..\docs\samples\HanqingOrigin.es.md" LogicalName="MarkPad.Resources.Origin.es.md" WithCulture="false" />
+    <EmbeddedResource Include="..\..\docs\samples\HanqingOrigin.ar.md" LogicalName="MarkPad.Resources.Origin.ar.md" WithCulture="false" />
+    <EmbeddedResource Include="..\..\docs\samples\HanqingOrigin.fr.md" LogicalName="MarkPad.Resources.Origin.fr.md" WithCulture="false" />
+    <EmbeddedResource Include="..\..\docs\samples\HanqingOrigin.ko.md" LogicalName="MarkPad.Resources.Origin.ko.md" WithCulture="false" />
+    <EmbeddedResource Include="..\..\docs\samples\QuietPages.zh-CN.md" LogicalName="MarkPad.Resources.Welcome.zh-CN.md" WithCulture="false" />
+    <EmbeddedResource Include="..\..\docs\samples\QuietPages.es.md" LogicalName="MarkPad.Resources.Welcome.es.md" WithCulture="false" />
+    <EmbeddedResource Include="..\..\docs\samples\QuietPages.ar.md" LogicalName="MarkPad.Resources.Welcome.ar.md" WithCulture="false" />
+    <EmbeddedResource Include="..\..\docs\samples\QuietPages.fr.md" LogicalName="MarkPad.Resources.Welcome.fr.md" WithCulture="false" />
+    <EmbeddedResource Include="..\..\docs\samples\QuietPages.ko.md" LogicalName="MarkPad.Resources.Welcome.ko.md" WithCulture="false" />
     <Resource Include="Assets\MarkPad.ico" />
   </ItemGroup>
 

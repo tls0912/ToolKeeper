@@ -2,7 +2,16 @@
 
 此流程將現有 WPF 應用程式發佈成 self-contained MSIX，包含 .NET/WPF runtime、第三方授權與多尺寸圖示。套件由 Microsoft Store 在通過認證後簽章；此流程不購買憑證、不安裝或註冊應用程式，也不變更本機憑證信任。
 
-## 目前封裝狀態（2026-09-28）
+## 目前封裝狀態（2026-10-04）
+
+- 最新 **1.0.3.0 / x64 MSIX**：`artifacts/msix/Hanqing-1.0.3.0-x64-store/Hanqing_1.0.3.0_x64.msix`，83,454,481 bytes（約 79.6 MiB）。封入目前工作樹的汗青與共用介面修改；EXE 檔案版本為 1.0.3.0，「關於」版本為 1.0.3，開發版專案版本維持 0.1.19。
+- SHA256：`0B40447AC7B4513A562531BA19B9067FB269217D6CFBBFF04CAFCD4505892F69`。
+- 套件語言宣告補齊英文、繁中、日文、簡中、西班牙文、阿拉伯文、法文及韓文；已核對八語共 24 篇內嵌文章及五份新增語系資源。
+- MakeAppx 完整語意驗證、套件內容／身分檢查及正式組件的 Store 授權設定核對通過。相較 1.0.2.0，Name、Publisher、x64 架構及 Application Id 保持一致，版本遞增；舊套件 SHA256 與原紀錄相同。
+- 既有回歸測試共 **355 項通過**（汗青 249、共用 UI 91、預覽 JavaScript 15），無失敗或略過。詳細結果及本次更新摘要見 [1.0.3.0 更新封裝紀錄](../../docs/HANQING-STORE-UPDATE-1.0.3.md)。
+- 本次只產生更新上傳檔，未安裝、上傳或提交認證；WACK、實際安裝升級及真實 Store 授權驗收未執行。套件未簽章，供對應 Partner Center 產品上傳使用。
+
+## 歷史封裝狀態（2026-09-28）
 
 - 最新 **1.0.2.0 / x64 MSIX**：`artifacts/msix/Hanqing-1.0.2.0-x64-store/Hanqing_1.0.2.0_x64.msix`，保留 0.1.19 的啟動授權功能並封入竹材 M 新圖示。檔案大小 83,378,899 bytes（約 79.5 MiB）。正式 EXE 檔案版本為 1.0.2.0，「關於」顯示 1.0.2；開發版專案仍為 0.1.19。
 - SHA256：`81396DD45383A00F2186915DA1904A89545CFBDC503098DF6F20376621226023`。
@@ -37,10 +46,10 @@
 需要 Windows 與 .NET 10 SDK。在儲存庫根目錄執行：
 
 ```powershell
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\Publish-MarkPadMsix.ps1 -IdentityFile .\packaging\MarkPad\StoreIdentity.json -PackageVersion 1.0.2.0
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\Publish-MarkPadMsix.ps1 -IdentityFile .\packaging\MarkPad\StoreIdentity.json -PackageVersion 1.0.3.0
 ```
 
-上述命令產生 **x64 / 1.0.2.0 / Release** 套件，也是腳本目前的預設架構與版本。可指定 `-Runtime win-arm64`、新的 `-PackageVersion`、`-OutputDirectory <空資料夾>`；`-MaxVersionTested` 預設為 SDK 目標 `10.0.26100.0`，應依實際支援／驗證的 Windows 版本調整。
+上述命令產生 **x64 / 1.0.3.0 / Release** 套件，也是腳本目前的預設架構與版本。可指定 `-Runtime win-arm64`、新的 `-PackageVersion`、`-OutputDirectory <空資料夾>`；`-MaxVersionTested` 預設為 SDK 目標 `10.0.26100.0`，應依實際支援／驗證的 Windows 版本調整。後續更新須再指定比已提交版本高的新版本號。
 
 商店版本採四段數字、第一段不得為 0，最後一段固定 0。封裝時將版本傳給 .NET publish，所以執行檔與「關於」版本和套件一致；不修改可攜版專案的開發版本。
 
@@ -48,7 +57,7 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\Publish-MarkPa
 
 輸出位於 `artifacts/msix/Hanqing-<runtime>-<時間>/`：
 
-- `Hanqing_1.0.2.0_x64.msix`：上傳至對應 Partner Center 產品的檔案。
+- `Hanqing_1.0.3.0_x64.msix`：上傳至對應 Partner Center 產品的檔案。
 - `*.sha256`：套件 SHA256。
 - `PACKAGE-INFO.txt`：套件身分、執行環境需求與驗證界線。
 - `Layout/`：可檢查的套件內容、`Hanqing.exe` 與已填入身分的 `AppxManifest.xml`。
@@ -65,7 +74,7 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\Publish-MarkPa
 - 可攜版仍使用 `Register-MarkPad.ps1`／`Unregister-MarkPad.ps1`，登錄中對外 `ApplicationName` 為「汗青」。既有所有權標記、ProgID、capabilities 路徑與 `RegisteredApplications` 識別維持不變，重跑登錄可將原本路徑更新至 `Hanqing.exe`。
 - 檔案參數有引號保護，可處理空格與中文路徑；通過啟動授權檢查後才進行單一實例轉送。Store 版與可攜版使用分開的實例識別，避免開檔要求轉送到另一種發行版本。
 - 使用 `runFullTrust` 執行 WPF。送審若要求說明，可寫明：桌面 Markdown 編輯器需要開啟／儲存使用者選擇的本機文件、處理本機圖片與匯出 PDF；不需要系統管理員權限。
-- 介面語言宣告為英文、繁體中文、日文。
+- 介面語言宣告為英文、繁體中文、日文、簡體中文、西班牙文、阿拉伯文、法文及韓文。
 - 技術最低版本沿用專案的 Windows 10 build 17763。支援聲明還須符合 [.NET 10 的 OS 支援與生命週期](https://github.com/dotnet/core/blob/main/release-notes/10.0/supported-os.md)，不能只憑此數值承諾所有舊版 Windows 都受支援。
 
 ### 啟動正式／試用授權（0.1.19）

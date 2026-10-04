@@ -12,6 +12,9 @@
   </PropertyGroup>
   <ItemGroup>
     <EmbeddedResource Include="Resources/ToolKeeper.ico" LogicalName="ToolKeeper.Resources.ToolKeeper.ico" />
+    <Resource Include="Resources/ProductIcons/*.png" />
+    <Resource Include="../MarkPad/Assets/MarkPad.ico" Link="Resources/MarkPad.ico" />
+    <Resource Include="../TransLamp/Resources/TransLamp.ico" Link="Resources/TransLamp.ico" />
     <ProjectReference Include="../ToolKeeper.UI/ToolKeeper.UI.csproj" />
     <ProjectReference Include="../ToolKeeper.Desktop/ToolKeeper.Desktop.csproj" />
     <ProjectReference Include="../HistoLens/HistoLens.csproj" />

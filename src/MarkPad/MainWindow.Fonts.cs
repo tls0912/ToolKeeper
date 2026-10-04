@@ -31,10 +31,10 @@ public partial class MainWindow
 
     private async void OnContentMouseWheel(object sender, MouseWheelEventArgs e)
     {
-        if (_disposed || _current is null || Keyboard.Modifiers != ModifierKeys.Control || e.Delta == 0) return;
+        if (_disposed || Keyboard.Modifiers != ModifierKeys.Control || e.Delta == 0) return;
         // Intercept before AvalonEdit/WebView2 scrolls or applies its own zoom.
         e.Handled = true;
-        var previewMode = _current.IsPreviewMode || _preview.IsMouseOver;
+        var previewMode = _current is null || _current.IsPreviewMode || _preview.IsMouseOver;
         var previous = previewMode ? Settings.PreviewFontSize : Settings.EditorFontSize;
         await GuardAsync(() => ChangeContentFontSizeAsync(previewMode, previous + Math.Sign(e.Delta)));
     }
@@ -51,6 +51,7 @@ public partial class MainWindow
         foreach (var window in Application.Current.Windows.OfType<MainWindow>())
         {
             if (window._disposed) continue;
+            if (previewMode) updates.Add(window._emptyPreview.SetFontSizeAsync(size));
             foreach (var view in window._documentViews.Values)
             {
                 if (previewMode) updates.Add(view.Preview.SetFontSizeAsync(size));

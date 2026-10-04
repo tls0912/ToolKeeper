@@ -1,107 +1,612 @@
+PASS settings use an isolated capture directory
 PASS zh-TW real WebView2 initialized
 PASS zh-TW isolated browser profile
+PASS zh-TW actual interface language
+PASS zh-TW three localized document tabs
+PASS zh-TW only isolated sample copies opened
 PASS zh-TW document has an actual chapter list
 PASS live preview theme ink
+PASS live preview language zh-TW
+PASS live preview localized title 竹間札記
+PASS live preview paragraph direction zh-TW
+PASS live preview contains sample text and headings
+PASS live preview represents the current document
 PASS real preview frame contains rendered content
+PASS real preview frame has visible text rather than a blank background
 PASS zh-TW Ink preview has chapter navigation
-PASS zh-TW/01-preview-bamboo-light meets desktop minimum size
+PASS zh-TW/01-preview-bamboo-light is 1600x1000 at 96 DPI
+PASS zh-TW/01-preview-bamboo-light composed preview has visible text and contrast
 PASS zh-TW/01-preview-bamboo-light PNG below 50 MB
-PNG screenshots/zh-TW/01-preview-bamboo-light.png 1600x1000
+PNG screenshots/zh-TW/01-preview-bamboo-light.png 1600x1000 470289 bytes
 PASS live preview theme ink-dark
+PASS live preview language zh-TW
+PASS live preview localized title 竹間札記
+PASS live preview paragraph direction zh-TW
+PASS live preview contains sample text and headings
+PASS live preview represents the current document
 PASS real preview frame contains rendered content
+PASS real preview frame has visible text rather than a blank background
 PASS zh-TW InkDark preview has chapter navigation
-PASS zh-TW/02-preview-bamboo-dark meets desktop minimum size
+PASS zh-TW/02-preview-bamboo-dark is 1600x1000 at 96 DPI
+PASS zh-TW/02-preview-bamboo-dark composed preview has visible text and contrast
 PASS zh-TW/02-preview-bamboo-dark PNG below 50 MB
-PNG screenshots/zh-TW/02-preview-bamboo-dark.png 1600x1000
+PNG screenshots/zh-TW/02-preview-bamboo-dark.png 1600x1000 464193 bytes
 PASS live preview theme light
+PASS live preview language zh-TW
+PASS live preview localized title 竹間札記
+PASS live preview paragraph direction zh-TW
+PASS live preview contains sample text and headings
+PASS live preview represents the current document
 PASS real preview frame contains rendered content
+PASS real preview frame has visible text rather than a blank background
 PASS zh-TW Light preview has chapter navigation
-PASS zh-TW/03-preview-light meets desktop minimum size
+PASS zh-TW/03-preview-light is 1600x1000 at 96 DPI
+PASS zh-TW/03-preview-light composed preview has visible text and contrast
 PASS zh-TW/03-preview-light PNG below 50 MB
-PNG screenshots/zh-TW/03-preview-light.png 1600x1000
+PNG screenshots/zh-TW/03-preview-light.png 1600x1000 288545 bytes
 PASS live preview theme dark
+PASS live preview language zh-TW
+PASS live preview localized title 竹間札記
+PASS live preview paragraph direction zh-TW
+PASS live preview contains sample text and headings
+PASS live preview represents the current document
 PASS real preview frame contains rendered content
+PASS real preview frame has visible text rather than a blank background
 PASS zh-TW Dark preview has chapter navigation
-PASS zh-TW/04-preview-dark meets desktop minimum size
+PASS zh-TW/04-preview-dark is 1600x1000 at 96 DPI
+PASS zh-TW/04-preview-dark composed preview has visible text and contrast
 PASS zh-TW/04-preview-dark PNG below 50 MB
-PNG screenshots/zh-TW/04-preview-dark.png 1600x1000
+PNG screenshots/zh-TW/04-preview-dark.png 1600x1000 291498 bytes
 PASS live preview theme ink
+PASS live preview language zh-TW
+PASS live preview localized title 竹間札記
+PASS live preview paragraph direction zh-TW
+PASS live preview contains sample text and headings
+PASS live preview represents the current document
 PASS real preview frame contains rendered content
+PASS real preview frame has visible text rather than a blank background
 PASS zh-TW actual editor toolbar visible in split mode
 PASS zh-TW editor has no chapter sidebar
-PASS zh-TW/05-edit-bamboo-light meets desktop minimum size
+PASS zh-TW split view places editor left and preview right
+PASS zh-TW/05-edit-bamboo-light is 1600x1000 at 96 DPI
+PASS zh-TW/05-edit-bamboo-light composed preview has visible text and contrast
 PASS zh-TW/05-edit-bamboo-light PNG below 50 MB
-PNG screenshots/zh-TW/05-edit-bamboo-light.png 1600x1000
+PNG screenshots/zh-TW/05-edit-bamboo-light.png 1600x1000 537857 bytes
 PASS zh-TW original demo document was not edited
+PASS zh-TW source samples were not rewritten
+PASS zh-TW session state remains isolated and empty
 PASS en-US real WebView2 initialized
 PASS en-US isolated browser profile
+PASS en-US actual interface language
+PASS en-US three localized document tabs
+PASS en-US only isolated sample copies opened
 PASS en-US document has an actual chapter list
 PASS live preview theme ink
+PASS live preview language en
+PASS live preview localized title Quiet pages
+PASS live preview paragraph direction en
+PASS live preview contains sample text and headings
+PASS live preview represents the current document
 PASS real preview frame contains rendered content
+PASS real preview frame has visible text rather than a blank background
 PASS en-US Ink preview has chapter navigation
-PASS en-US/01-preview-bamboo-light meets desktop minimum size
+PASS en-US/01-preview-bamboo-light is 1600x1000 at 96 DPI
+PASS en-US/01-preview-bamboo-light composed preview has visible text and contrast
 PASS en-US/01-preview-bamboo-light PNG below 50 MB
-PNG screenshots/en-US/01-preview-bamboo-light.png 1600x1000
+PNG screenshots/en-US/01-preview-bamboo-light.png 1600x1000 516555 bytes
 PASS live preview theme ink-dark
+PASS live preview language en
+PASS live preview localized title Quiet pages
+PASS live preview paragraph direction en
+PASS live preview contains sample text and headings
+PASS live preview represents the current document
 PASS real preview frame contains rendered content
+PASS real preview frame has visible text rather than a blank background
 PASS en-US InkDark preview has chapter navigation
-PASS en-US/02-preview-bamboo-dark meets desktop minimum size
+PASS en-US/02-preview-bamboo-dark is 1600x1000 at 96 DPI
+PASS en-US/02-preview-bamboo-dark composed preview has visible text and contrast
 PASS en-US/02-preview-bamboo-dark PNG below 50 MB
-PNG screenshots/en-US/02-preview-bamboo-dark.png 1600x1000
+PNG screenshots/en-US/02-preview-bamboo-dark.png 1600x1000 505451 bytes
 PASS live preview theme light
+PASS live preview language en
+PASS live preview localized title Quiet pages
+PASS live preview paragraph direction en
+PASS live preview contains sample text and headings
+PASS live preview represents the current document
 PASS real preview frame contains rendered content
+PASS real preview frame has visible text rather than a blank background
 PASS en-US Light preview has chapter navigation
-PASS en-US/03-preview-light meets desktop minimum size
+PASS en-US/03-preview-light is 1600x1000 at 96 DPI
+PASS en-US/03-preview-light composed preview has visible text and contrast
 PASS en-US/03-preview-light PNG below 50 MB
-PNG screenshots/en-US/03-preview-light.png 1600x1000
+PNG screenshots/en-US/03-preview-light.png 1600x1000 329012 bytes
 PASS live preview theme dark
+PASS live preview language en
+PASS live preview localized title Quiet pages
+PASS live preview paragraph direction en
+PASS live preview contains sample text and headings
+PASS live preview represents the current document
 PASS real preview frame contains rendered content
+PASS real preview frame has visible text rather than a blank background
 PASS en-US Dark preview has chapter navigation
-PASS en-US/04-preview-dark meets desktop minimum size
+PASS en-US/04-preview-dark is 1600x1000 at 96 DPI
+PASS en-US/04-preview-dark composed preview has visible text and contrast
 PASS en-US/04-preview-dark PNG below 50 MB
-PNG screenshots/en-US/04-preview-dark.png 1600x1000
+PNG screenshots/en-US/04-preview-dark.png 1600x1000 335269 bytes
 PASS live preview theme ink
+PASS live preview language en
+PASS live preview localized title Quiet pages
+PASS live preview paragraph direction en
+PASS live preview contains sample text and headings
+PASS live preview represents the current document
 PASS real preview frame contains rendered content
+PASS real preview frame has visible text rather than a blank background
 PASS en-US actual editor toolbar visible in split mode
 PASS en-US editor has no chapter sidebar
-PASS en-US/05-edit-bamboo-light meets desktop minimum size
+PASS en-US split view places editor left and preview right
+PASS en-US/05-edit-bamboo-light is 1600x1000 at 96 DPI
+PASS en-US/05-edit-bamboo-light composed preview has visible text and contrast
 PASS en-US/05-edit-bamboo-light PNG below 50 MB
-PNG screenshots/en-US/05-edit-bamboo-light.png 1600x1000
+PNG screenshots/en-US/05-edit-bamboo-light.png 1600x1000 625462 bytes
 PASS en-US original demo document was not edited
+PASS en-US source samples were not rewritten
+PASS en-US session state remains isolated and empty
 PASS ja-JP real WebView2 initialized
 PASS ja-JP isolated browser profile
+PASS ja-JP actual interface language
+PASS ja-JP three localized document tabs
+PASS ja-JP only isolated sample copies opened
 PASS ja-JP document has an actual chapter list
 PASS live preview theme ink
+PASS live preview language ja
+PASS live preview localized title 竹のそばのメモ
+PASS live preview paragraph direction ja
+PASS live preview contains sample text and headings
+PASS live preview represents the current document
 PASS real preview frame contains rendered content
+PASS real preview frame has visible text rather than a blank background
 PASS ja-JP Ink preview has chapter navigation
-PASS ja-JP/01-preview-bamboo-light meets desktop minimum size
+PASS ja-JP/01-preview-bamboo-light is 1600x1000 at 96 DPI
+PASS ja-JP/01-preview-bamboo-light composed preview has visible text and contrast
 PASS ja-JP/01-preview-bamboo-light PNG below 50 MB
-PNG screenshots/ja-JP/01-preview-bamboo-light.png 1600x1000
+PNG screenshots/ja-JP/01-preview-bamboo-light.png 1600x1000 463934 bytes
 PASS live preview theme ink-dark
+PASS live preview language ja
+PASS live preview localized title 竹のそばのメモ
+PASS live preview paragraph direction ja
+PASS live preview contains sample text and headings
+PASS live preview represents the current document
 PASS real preview frame contains rendered content
+PASS real preview frame has visible text rather than a blank background
 PASS ja-JP InkDark preview has chapter navigation
-PASS ja-JP/02-preview-bamboo-dark meets desktop minimum size
+PASS ja-JP/02-preview-bamboo-dark is 1600x1000 at 96 DPI
+PASS ja-JP/02-preview-bamboo-dark composed preview has visible text and contrast
 PASS ja-JP/02-preview-bamboo-dark PNG below 50 MB
-PNG screenshots/ja-JP/02-preview-bamboo-dark.png 1600x1000
+PNG screenshots/ja-JP/02-preview-bamboo-dark.png 1600x1000 457072 bytes
 PASS live preview theme light
+PASS live preview language ja
+PASS live preview localized title 竹のそばのメモ
+PASS live preview paragraph direction ja
+PASS live preview contains sample text and headings
+PASS live preview represents the current document
 PASS real preview frame contains rendered content
+PASS real preview frame has visible text rather than a blank background
 PASS ja-JP Light preview has chapter navigation
-PASS ja-JP/03-preview-light meets desktop minimum size
+PASS ja-JP/03-preview-light is 1600x1000 at 96 DPI
+PASS ja-JP/03-preview-light composed preview has visible text and contrast
 PASS ja-JP/03-preview-light PNG below 50 MB
-PNG screenshots/ja-JP/03-preview-light.png 1600x1000
+PNG screenshots/ja-JP/03-preview-light.png 1600x1000 339351 bytes
 PASS live preview theme dark
+PASS live preview language ja
+PASS live preview localized title 竹のそばのメモ
+PASS live preview paragraph direction ja
+PASS live preview contains sample text and headings
+PASS live preview represents the current document
 PASS real preview frame contains rendered content
+PASS real preview frame has visible text rather than a blank background
 PASS ja-JP Dark preview has chapter navigation
-PASS ja-JP/04-preview-dark meets desktop minimum size
+PASS ja-JP/04-preview-dark is 1600x1000 at 96 DPI
+PASS ja-JP/04-preview-dark composed preview has visible text and contrast
 PASS ja-JP/04-preview-dark PNG below 50 MB
-PNG screenshots/ja-JP/04-preview-dark.png 1600x1000
+PNG screenshots/ja-JP/04-preview-dark.png 1600x1000 347239 bytes
 PASS live preview theme ink
+PASS live preview language ja
+PASS live preview localized title 竹のそばのメモ
+PASS live preview paragraph direction ja
+PASS live preview contains sample text and headings
+PASS live preview represents the current document
 PASS real preview frame contains rendered content
+PASS real preview frame has visible text rather than a blank background
 PASS ja-JP actual editor toolbar visible in split mode
 PASS ja-JP editor has no chapter sidebar
-PASS ja-JP/05-edit-bamboo-light meets desktop minimum size
+PASS ja-JP split view places editor left and preview right
+PASS ja-JP/05-edit-bamboo-light is 1600x1000 at 96 DPI
+PASS ja-JP/05-edit-bamboo-light composed preview has visible text and contrast
 PASS ja-JP/05-edit-bamboo-light PNG below 50 MB
-PNG screenshots/ja-JP/05-edit-bamboo-light.png 1600x1000
+PNG screenshots/ja-JP/05-edit-bamboo-light.png 1600x1000 525674 bytes
 PASS ja-JP original demo document was not edited
-15 PNGs, captured from real MainWindow/AvalonEdit/WebView2 using original sample documents; four preview themes and Bamboo Light editing per language.
+PASS ja-JP source samples were not rewritten
+PASS ja-JP session state remains isolated and empty
+PASS zh-CN real WebView2 initialized
+PASS zh-CN isolated browser profile
+PASS zh-CN actual interface language
+PASS zh-CN three localized document tabs
+PASS zh-CN only isolated sample copies opened
+PASS zh-CN document has an actual chapter list
+PASS live preview theme ink
+PASS live preview language zh-CN
+PASS live preview localized title 竹间札记
+PASS live preview paragraph direction zh-CN
+PASS live preview contains sample text and headings
+PASS live preview represents the current document
+PASS real preview frame contains rendered content
+PASS real preview frame has visible text rather than a blank background
+PASS zh-CN Ink preview has chapter navigation
+PASS zh-CN/01-preview-bamboo-light is 1600x1000 at 96 DPI
+PASS zh-CN/01-preview-bamboo-light composed preview has visible text and contrast
+PASS zh-CN/01-preview-bamboo-light PNG below 50 MB
+PNG screenshots/zh-CN/01-preview-bamboo-light.png 1600x1000 458356 bytes
+PASS live preview theme ink-dark
+PASS live preview language zh-CN
+PASS live preview localized title 竹间札记
+PASS live preview paragraph direction zh-CN
+PASS live preview contains sample text and headings
+PASS live preview represents the current document
+PASS real preview frame contains rendered content
+PASS real preview frame has visible text rather than a blank background
+PASS zh-CN InkDark preview has chapter navigation
+PASS zh-CN/02-preview-bamboo-dark is 1600x1000 at 96 DPI
+PASS zh-CN/02-preview-bamboo-dark composed preview has visible text and contrast
+PASS zh-CN/02-preview-bamboo-dark PNG below 50 MB
+PNG screenshots/zh-CN/02-preview-bamboo-dark.png 1600x1000 452742 bytes
+PASS live preview theme light
+PASS live preview language zh-CN
+PASS live preview localized title 竹间札记
+PASS live preview paragraph direction zh-CN
+PASS live preview contains sample text and headings
+PASS live preview represents the current document
+PASS real preview frame contains rendered content
+PASS real preview frame has visible text rather than a blank background
+PASS zh-CN Light preview has chapter navigation
+PASS zh-CN/03-preview-light is 1600x1000 at 96 DPI
+PASS zh-CN/03-preview-light composed preview has visible text and contrast
+PASS zh-CN/03-preview-light PNG below 50 MB
+PNG screenshots/zh-CN/03-preview-light.png 1600x1000 308095 bytes
+PASS live preview theme dark
+PASS live preview language zh-CN
+PASS live preview localized title 竹间札记
+PASS live preview paragraph direction zh-CN
+PASS live preview contains sample text and headings
+PASS live preview represents the current document
+PASS real preview frame contains rendered content
+PASS real preview frame has visible text rather than a blank background
+PASS zh-CN Dark preview has chapter navigation
+PASS zh-CN/04-preview-dark is 1600x1000 at 96 DPI
+PASS zh-CN/04-preview-dark composed preview has visible text and contrast
+PASS zh-CN/04-preview-dark PNG below 50 MB
+PNG screenshots/zh-CN/04-preview-dark.png 1600x1000 312920 bytes
+PASS live preview theme ink
+PASS live preview language zh-CN
+PASS live preview localized title 竹间札记
+PASS live preview paragraph direction zh-CN
+PASS live preview contains sample text and headings
+PASS live preview represents the current document
+PASS real preview frame contains rendered content
+PASS real preview frame has visible text rather than a blank background
+PASS zh-CN actual editor toolbar visible in split mode
+PASS zh-CN editor has no chapter sidebar
+PASS zh-CN split view places editor left and preview right
+PASS zh-CN/05-edit-bamboo-light is 1600x1000 at 96 DPI
+PASS zh-CN/05-edit-bamboo-light composed preview has visible text and contrast
+PASS zh-CN/05-edit-bamboo-light PNG below 50 MB
+PNG screenshots/zh-CN/05-edit-bamboo-light.png 1600x1000 520653 bytes
+PASS zh-CN original demo document was not edited
+PASS zh-CN source samples were not rewritten
+PASS zh-CN session state remains isolated and empty
+PASS es-ES real WebView2 initialized
+PASS es-ES isolated browser profile
+PASS es-ES actual interface language
+PASS es-ES three localized document tabs
+PASS es-ES only isolated sample copies opened
+PASS es-ES document has an actual chapter list
+PASS live preview theme ink
+PASS live preview language es
+PASS live preview localized title Páginas tranquilas
+PASS live preview paragraph direction es
+PASS live preview contains sample text and headings
+PASS live preview represents the current document
+PASS real preview frame contains rendered content
+PASS real preview frame has visible text rather than a blank background
+PASS es-ES Ink preview has chapter navigation
+PASS es-ES/01-preview-bamboo-light is 1600x1000 at 96 DPI
+PASS es-ES/01-preview-bamboo-light composed preview has visible text and contrast
+PASS es-ES/01-preview-bamboo-light PNG below 50 MB
+PNG screenshots/es-ES/01-preview-bamboo-light.png 1600x1000 569107 bytes
+PASS live preview theme ink-dark
+PASS live preview language es
+PASS live preview localized title Páginas tranquilas
+PASS live preview paragraph direction es
+PASS live preview contains sample text and headings
+PASS live preview represents the current document
+PASS real preview frame contains rendered content
+PASS real preview frame has visible text rather than a blank background
+PASS es-ES InkDark preview has chapter navigation
+PASS es-ES/02-preview-bamboo-dark is 1600x1000 at 96 DPI
+PASS es-ES/02-preview-bamboo-dark composed preview has visible text and contrast
+PASS es-ES/02-preview-bamboo-dark PNG below 50 MB
+PNG screenshots/es-ES/02-preview-bamboo-dark.png 1600x1000 555913 bytes
+PASS live preview theme light
+PASS live preview language es
+PASS live preview localized title Páginas tranquilas
+PASS live preview paragraph direction es
+PASS live preview contains sample text and headings
+PASS live preview represents the current document
+PASS real preview frame contains rendered content
+PASS real preview frame has visible text rather than a blank background
+PASS es-ES Light preview has chapter navigation
+PASS es-ES/03-preview-light is 1600x1000 at 96 DPI
+PASS es-ES/03-preview-light composed preview has visible text and contrast
+PASS es-ES/03-preview-light PNG below 50 MB
+PNG screenshots/es-ES/03-preview-light.png 1600x1000 369562 bytes
+PASS live preview theme dark
+PASS live preview language es
+PASS live preview localized title Páginas tranquilas
+PASS live preview paragraph direction es
+PASS live preview contains sample text and headings
+PASS live preview represents the current document
+PASS real preview frame contains rendered content
+PASS real preview frame has visible text rather than a blank background
+PASS es-ES Dark preview has chapter navigation
+PASS es-ES/04-preview-dark is 1600x1000 at 96 DPI
+PASS es-ES/04-preview-dark composed preview has visible text and contrast
+PASS es-ES/04-preview-dark PNG below 50 MB
+PNG screenshots/es-ES/04-preview-dark.png 1600x1000 376627 bytes
+PASS live preview theme ink
+PASS live preview language es
+PASS live preview localized title Páginas tranquilas
+PASS live preview paragraph direction es
+PASS live preview contains sample text and headings
+PASS live preview represents the current document
+PASS real preview frame contains rendered content
+PASS real preview frame has visible text rather than a blank background
+PASS es-ES actual editor toolbar visible in split mode
+PASS es-ES editor has no chapter sidebar
+PASS es-ES split view places editor left and preview right
+PASS es-ES/05-edit-bamboo-light is 1600x1000 at 96 DPI
+PASS es-ES/05-edit-bamboo-light composed preview has visible text and contrast
+PASS es-ES/05-edit-bamboo-light PNG below 50 MB
+PNG screenshots/es-ES/05-edit-bamboo-light.png 1600x1000 669621 bytes
+PASS es-ES original demo document was not edited
+PASS es-ES source samples were not rewritten
+PASS es-ES session state remains isolated and empty
+PASS ar-SA real WebView2 initialized
+PASS ar-SA isolated browser profile
+PASS ar-SA actual interface language
+PASS ar-SA three localized document tabs
+PASS ar-SA only isolated sample copies opened
+PASS ar-SA document has an actual chapter list
+PASS live preview theme ink
+PASS live preview language ar
+PASS live preview localized title صفحات هادئة
+PASS live preview paragraph direction ar
+PASS live preview contains sample text and headings
+PASS live preview represents the current document
+PASS real preview frame contains rendered content
+PASS real preview frame has visible text rather than a blank background
+PASS ar-SA Ink preview has chapter navigation
+PASS ar-SA/01-preview-bamboo-light is 1600x1000 at 96 DPI
+PASS ar-SA/01-preview-bamboo-light composed preview has visible text and contrast
+PASS ar-SA/01-preview-bamboo-light PNG below 50 MB
+PNG screenshots/ar-SA/01-preview-bamboo-light.png 1600x1000 438717 bytes
+PASS live preview theme ink-dark
+PASS live preview language ar
+PASS live preview localized title صفحات هادئة
+PASS live preview paragraph direction ar
+PASS live preview contains sample text and headings
+PASS live preview represents the current document
+PASS real preview frame contains rendered content
+PASS real preview frame has visible text rather than a blank background
+PASS ar-SA InkDark preview has chapter navigation
+PASS ar-SA/02-preview-bamboo-dark is 1600x1000 at 96 DPI
+PASS ar-SA/02-preview-bamboo-dark composed preview has visible text and contrast
+PASS ar-SA/02-preview-bamboo-dark PNG below 50 MB
+PNG screenshots/ar-SA/02-preview-bamboo-dark.png 1600x1000 425524 bytes
+PASS live preview theme light
+PASS live preview language ar
+PASS live preview localized title صفحات هادئة
+PASS live preview paragraph direction ar
+PASS live preview contains sample text and headings
+PASS live preview represents the current document
+PASS real preview frame contains rendered content
+PASS real preview frame has visible text rather than a blank background
+PASS ar-SA Light preview has chapter navigation
+PASS ar-SA/03-preview-light is 1600x1000 at 96 DPI
+PASS ar-SA/03-preview-light composed preview has visible text and contrast
+PASS ar-SA/03-preview-light PNG below 50 MB
+PNG screenshots/ar-SA/03-preview-light.png 1600x1000 274707 bytes
+PASS live preview theme dark
+PASS live preview language ar
+PASS live preview localized title صفحات هادئة
+PASS live preview paragraph direction ar
+PASS live preview contains sample text and headings
+PASS live preview represents the current document
+PASS real preview frame contains rendered content
+PASS real preview frame has visible text rather than a blank background
+PASS ar-SA Dark preview has chapter navigation
+PASS ar-SA/04-preview-dark is 1600x1000 at 96 DPI
+PASS ar-SA/04-preview-dark composed preview has visible text and contrast
+PASS ar-SA/04-preview-dark PNG below 50 MB
+PNG screenshots/ar-SA/04-preview-dark.png 1600x1000 281721 bytes
+PASS live preview theme ink
+PASS live preview language ar
+PASS live preview localized title صفحات هادئة
+PASS live preview paragraph direction ar
+PASS live preview contains sample text and headings
+PASS live preview represents the current document
+PASS real preview frame contains rendered content
+PASS real preview frame has visible text rather than a blank background
+PASS ar-SA actual editor toolbar visible in split mode
+PASS ar-SA editor has no chapter sidebar
+PASS ar-SA split view places editor left and preview right
+PASS ar-SA/05-edit-bamboo-light is 1600x1000 at 96 DPI
+PASS ar-SA/05-edit-bamboo-light composed preview has visible text and contrast
+PASS ar-SA/05-edit-bamboo-light PNG below 50 MB
+PNG screenshots/ar-SA/05-edit-bamboo-light.png 1600x1000 547784 bytes
+PASS ar-SA original demo document was not edited
+PASS ar-SA source samples were not rewritten
+PASS ar-SA session state remains isolated and empty
+PASS fr-FR real WebView2 initialized
+PASS fr-FR isolated browser profile
+PASS fr-FR actual interface language
+PASS fr-FR three localized document tabs
+PASS fr-FR only isolated sample copies opened
+PASS fr-FR document has an actual chapter list
+PASS live preview theme ink
+PASS live preview language fr
+PASS live preview localized title Pages paisibles
+PASS live preview paragraph direction fr
+PASS live preview contains sample text and headings
+PASS live preview represents the current document
+PASS real preview frame contains rendered content
+PASS real preview frame has visible text rather than a blank background
+PASS fr-FR Ink preview has chapter navigation
+PASS fr-FR/01-preview-bamboo-light is 1600x1000 at 96 DPI
+PASS fr-FR/01-preview-bamboo-light composed preview has visible text and contrast
+PASS fr-FR/01-preview-bamboo-light PNG below 50 MB
+PNG screenshots/fr-FR/01-preview-bamboo-light.png 1600x1000 593621 bytes
+PASS live preview theme ink-dark
+PASS live preview language fr
+PASS live preview localized title Pages paisibles
+PASS live preview paragraph direction fr
+PASS live preview contains sample text and headings
+PASS live preview represents the current document
+PASS real preview frame contains rendered content
+PASS real preview frame has visible text rather than a blank background
+PASS fr-FR InkDark preview has chapter navigation
+PASS fr-FR/02-preview-bamboo-dark is 1600x1000 at 96 DPI
+PASS fr-FR/02-preview-bamboo-dark composed preview has visible text and contrast
+PASS fr-FR/02-preview-bamboo-dark PNG below 50 MB
+PNG screenshots/fr-FR/02-preview-bamboo-dark.png 1600x1000 582430 bytes
+PASS live preview theme light
+PASS live preview language fr
+PASS live preview localized title Pages paisibles
+PASS live preview paragraph direction fr
+PASS live preview contains sample text and headings
+PASS live preview represents the current document
+PASS real preview frame contains rendered content
+PASS real preview frame has visible text rather than a blank background
+PASS fr-FR Light preview has chapter navigation
+PASS fr-FR/03-preview-light is 1600x1000 at 96 DPI
+PASS fr-FR/03-preview-light composed preview has visible text and contrast
+PASS fr-FR/03-preview-light PNG below 50 MB
+PNG screenshots/fr-FR/03-preview-light.png 1600x1000 379943 bytes
+PASS live preview theme dark
+PASS live preview language fr
+PASS live preview localized title Pages paisibles
+PASS live preview paragraph direction fr
+PASS live preview contains sample text and headings
+PASS live preview represents the current document
+PASS real preview frame contains rendered content
+PASS real preview frame has visible text rather than a blank background
+PASS fr-FR Dark preview has chapter navigation
+PASS fr-FR/04-preview-dark is 1600x1000 at 96 DPI
+PASS fr-FR/04-preview-dark composed preview has visible text and contrast
+PASS fr-FR/04-preview-dark PNG below 50 MB
+PNG screenshots/fr-FR/04-preview-dark.png 1600x1000 387632 bytes
+PASS live preview theme ink
+PASS live preview language fr
+PASS live preview localized title Pages paisibles
+PASS live preview paragraph direction fr
+PASS live preview contains sample text and headings
+PASS live preview represents the current document
+PASS real preview frame contains rendered content
+PASS real preview frame has visible text rather than a blank background
+PASS fr-FR actual editor toolbar visible in split mode
+PASS fr-FR editor has no chapter sidebar
+PASS fr-FR split view places editor left and preview right
+PASS fr-FR/05-edit-bamboo-light is 1600x1000 at 96 DPI
+PASS fr-FR/05-edit-bamboo-light composed preview has visible text and contrast
+PASS fr-FR/05-edit-bamboo-light PNG below 50 MB
+PNG screenshots/fr-FR/05-edit-bamboo-light.png 1600x1000 690430 bytes
+PASS fr-FR original demo document was not edited
+PASS fr-FR source samples were not rewritten
+PASS fr-FR session state remains isolated and empty
+PASS ko-KR real WebView2 initialized
+PASS ko-KR isolated browser profile
+PASS ko-KR actual interface language
+PASS ko-KR three localized document tabs
+PASS ko-KR only isolated sample copies opened
+PASS ko-KR document has an actual chapter list
+PASS live preview theme ink
+PASS live preview language ko
+PASS live preview localized title 대나무 사이의 기록
+PASS live preview paragraph direction ko
+PASS live preview contains sample text and headings
+PASS live preview represents the current document
+PASS real preview frame contains rendered content
+PASS real preview frame has visible text rather than a blank background
+PASS ko-KR Ink preview has chapter navigation
+PASS ko-KR/01-preview-bamboo-light is 1600x1000 at 96 DPI
+PASS ko-KR/01-preview-bamboo-light composed preview has visible text and contrast
+PASS ko-KR/01-preview-bamboo-light PNG below 50 MB
+PNG screenshots/ko-KR/01-preview-bamboo-light.png 1600x1000 447607 bytes
+PASS live preview theme ink-dark
+PASS live preview language ko
+PASS live preview localized title 대나무 사이의 기록
+PASS live preview paragraph direction ko
+PASS live preview contains sample text and headings
+PASS live preview represents the current document
+PASS real preview frame contains rendered content
+PASS real preview frame has visible text rather than a blank background
+PASS ko-KR InkDark preview has chapter navigation
+PASS ko-KR/02-preview-bamboo-dark is 1600x1000 at 96 DPI
+PASS ko-KR/02-preview-bamboo-dark composed preview has visible text and contrast
+PASS ko-KR/02-preview-bamboo-dark PNG below 50 MB
+PNG screenshots/ko-KR/02-preview-bamboo-dark.png 1600x1000 433213 bytes
+PASS live preview theme light
+PASS live preview language ko
+PASS live preview localized title 대나무 사이의 기록
+PASS live preview paragraph direction ko
+PASS live preview contains sample text and headings
+PASS live preview represents the current document
+PASS real preview frame contains rendered content
+PASS real preview frame has visible text rather than a blank background
+PASS ko-KR Light preview has chapter navigation
+PASS ko-KR/03-preview-light is 1600x1000 at 96 DPI
+PASS ko-KR/03-preview-light composed preview has visible text and contrast
+PASS ko-KR/03-preview-light PNG below 50 MB
+PNG screenshots/ko-KR/03-preview-light.png 1600x1000 274967 bytes
+PASS live preview theme dark
+PASS live preview language ko
+PASS live preview localized title 대나무 사이의 기록
+PASS live preview paragraph direction ko
+PASS live preview contains sample text and headings
+PASS live preview represents the current document
+PASS real preview frame contains rendered content
+PASS real preview frame has visible text rather than a blank background
+PASS ko-KR Dark preview has chapter navigation
+PASS ko-KR/04-preview-dark is 1600x1000 at 96 DPI
+PASS ko-KR/04-preview-dark composed preview has visible text and contrast
+PASS ko-KR/04-preview-dark PNG below 50 MB
+PNG screenshots/ko-KR/04-preview-dark.png 1600x1000 277396 bytes
+PASS live preview theme ink
+PASS live preview language ko
+PASS live preview localized title 대나무 사이의 기록
+PASS live preview paragraph direction ko
+PASS live preview contains sample text and headings
+PASS live preview represents the current document
+PASS real preview frame contains rendered content
+PASS real preview frame has visible text rather than a blank background
+PASS ko-KR actual editor toolbar visible in split mode
+PASS ko-KR editor has no chapter sidebar
+PASS ko-KR split view places editor left and preview right
+PASS ko-KR/05-edit-bamboo-light is 1600x1000 at 96 DPI
+PASS ko-KR/05-edit-bamboo-light composed preview has visible text and contrast
+PASS ko-KR/05-edit-bamboo-light PNG below 50 MB
+PNG screenshots/ko-KR/05-edit-bamboo-light.png 1600x1000 511474 bytes
+PASS ko-KR original demo document was not edited
+PASS ko-KR source samples were not rewritten
+PASS ko-KR session state remains isolated and empty
+PASS all eight languages have five screenshots
+40 PNGs, captured from real MainWindow/AvalonEdit/WebView2 using isolated copies of repository sample documents; four preview themes and Bamboo Light editing per language.
 No Store authentication or purchase performed. No user settings or documents were used.

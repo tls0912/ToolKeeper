@@ -1,0 +1,5 @@
+01-preview-bamboo-light.png	Lee con el tema Bambú claro y un fondo inspirado en el papel xuan. El índice reúne los títulos H1–H6 seleccionados para facilitar la navegación.
+02-preview-bamboo-dark.png	El tema Bambú oscuro ofrece una superficie de lectura oscura con textura de papel y el índice de capítulos a la vista.
+03-preview-light.png	Previsualiza Markdown con el tema Claro. Navega por los capítulos y lee tablas y listas de tareas con formato.
+04-preview-dark.png	Lee Markdown con texto claro sobre el fondo del tema Oscuro. Usa el índice para ir directamente a un título.
+05-edit-bamboo-light.png	Escribe con Bambú claro: edita Markdown a la izquierda y consulta la vista previa a la derecha. Ajusta fuentes, tamaños y formato en la barra superior.

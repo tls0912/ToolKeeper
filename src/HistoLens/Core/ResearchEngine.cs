@@ -3,7 +3,7 @@ namespace HistoLens.Core;
 /// <summary>Pure synchronous computation over a fixed snapshot; call from a worker thread in a UI.</summary>
 public sealed class ResearchEngine
 {
-    public const string Version = "0.1.1-m0";
+    public const string Version = "0.2.0-twse-preview";
     public const int MaxLookback = 2500;
     public const int MaxHorizon = 2500;
 
@@ -16,13 +16,16 @@ public sealed class ResearchEngine
         // Records have init-only scalar fields; copy every collection before beginning a calculation.
         definition = definition with { Conditions = definition.Conditions.ToArray(), Horizons = definition.Horizons.ToArray() };
         if (snapshot.Calendar?.TradingDates is null || snapshot.ActionCoverage?.Gaps is null ||
-            snapshot.Bars is null || snapshot.CorporateActions is null)
+            snapshot.Bars is null || snapshot.CorporateActions is null ||
+            (snapshot.ComparabilityCoverage is { Gaps: null }))
             throw new ArgumentException("資料快照缺少必要集合。", nameof(snapshot));
         snapshot = snapshot with
         {
             Bars = snapshot.Bars.ToArray(), CorporateActions = snapshot.CorporateActions.ToArray(),
             Calendar = snapshot.Calendar with { TradingDates = snapshot.Calendar.TradingDates.ToArray() },
-            ActionCoverage = snapshot.ActionCoverage with { Gaps = snapshot.ActionCoverage.Gaps.ToArray() }
+            ActionCoverage = snapshot.ActionCoverage with { Gaps = snapshot.ActionCoverage.Gaps.ToArray() },
+            ComparabilityCoverage = snapshot.ComparabilityCoverage is { } comparison
+                ? comparison with { Gaps = comparison.Gaps.ToArray() } : null
         };
         var diagnostics = SnapshotValidator.Validate(snapshot, cancellationToken).ToList();
         if (definition.EventStart < snapshot.Calendar.CoverageStart || definition.EventEnd > snapshot.Calendar.CoverageEnd)
@@ -43,7 +46,8 @@ public sealed class ResearchEngine
         {
             EngineVersion = Version, DataSnapshotId = string.IsNullOrEmpty(snapshot.SnapshotId) ? hash : snapshot.SnapshotId,
             DataContentHash = hash, SourceId = snapshot.SourceId, CalendarVersion = snapshot.Calendar.Version,
-            CorporateActionVersion = snapshot.ActionCoverage.Version, Instrument = snapshot.Instrument,
+            CorporateActionVersion = snapshot.ActionCoverage.Version,
+            PriceComparisonVersion = snapshot.ComparabilityCoverage?.Version, Instrument = snapshot.Instrument,
             Definition = definition, IsSynthetic = snapshot.IsSynthetic, IsResearchAllowed = blocking.Length == 0,
             BlockingReasons = blocking, Diagnostics = diagnostics.ToArray()
         };
@@ -342,7 +346,12 @@ public sealed class ResearchEngine
         private void AddActionReasons(DateOnly start, DateOnly end, HashSet<ExclusionReason> reasons)
         {
             var coverage = _snapshot.ActionCoverage;
-            if (start < coverage.CoverageStart || end > coverage.CoverageEnd || coverage.Gaps.Any(g => g.Start <= end && g.End >= start))
+            var actionsKnown = coverage.IsVerified && start >= coverage.CoverageStart && end <= coverage.CoverageEnd &&
+                !coverage.Gaps.Any(g => g.Start <= end && g.End >= start);
+            var comparison = _snapshot.ComparabilityCoverage;
+            var pricesComparable = comparison is { IsVerified: true } && start >= comparison.CoverageStart && end <= comparison.CoverageEnd &&
+                !comparison.Gaps.Any(g => g.Start <= end && g.End >= start);
+            if (!actionsKnown && !pricesComparable)
                 reasons.Add(ExclusionReason.CorporateActionCoverageUnknown);
             if (_snapshot.CorporateActions.Any(a => a.AffectsPriceComparison && a.EffectiveDate >= start && a.EffectiveDate <= end))
                 reasons.Add(ExclusionReason.CorporateActionInWindow);

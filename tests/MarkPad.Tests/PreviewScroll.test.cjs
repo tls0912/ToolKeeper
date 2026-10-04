@@ -9,12 +9,13 @@ const vm = require('node:vm');
 
 const script = fs.readFileSync(path.join(__dirname, '../../src/MarkPad/Resources/Preview.js'), 'utf8');
 
-function preview({ blocks = [], lineCount = 100, height = 200, documentHeight = 2200, articleBottom = documentHeight, markdown } = {}) {
-  const messages = [], frames = [], listeners = new Map(), ids = new Map();
+function preview({ blocks = [], lineCount = 100, height = 200, documentHeight = 2200, articleBottom = documentHeight, markdown, config = {}, selectionText = '' } = {}) {
+  const messages = [], frames = [], listeners = new Map(), documentListeners = new Map(), ids = new Map(), bodyChildren = [];
   const window = {
     scrollY: 0,
-    markpadConfig: { language: 'en', token: 'test', markdown: markdown ?? Array(lineCount).fill('line').join('\n') },
+    markpadConfig: { language: 'en', token: 'test', markdown: markdown ?? Array(lineCount).fill('line').join('\n'), ...config },
     chrome: { webview: { postMessage: message => messages.push(message) } },
+    getSelection: () => ({ toString: () => selectionText }),
     addEventListener(name, callback) {
       if (!listeners.has(name)) listeners.set(name, []);
       listeners.get(name).push(callback);
@@ -25,13 +26,18 @@ function preview({ blocks = [], lineCount = 100, height = 200, documentHeight = 
     }
   };
   function element(spec = {}) {
-    const classes = new Set();
+    const classes = new Set(), attributes = {}, elementListeners = new Map();
     const result = {
       nodeType: 1, tagName: spec.tagName || 'P', dataset: { sourceLine: String(spec.line || 1) },
       parentElement: spec.parent || null, hidden: !!spec.hidden, folded: !!spec.folded,
       id: spec.id || '', top: spec.top || 0, bottom: spec.bottom ?? (spec.top || 0) + 100,
+      style: {}, children: [], offsetWidth: 180, offsetHeight: 160,
       classList: { add: value => classes.add(value), remove: value => classes.delete(value), contains: value => classes.has(value), toggle() {} },
-      addEventListener() {}, prepend() {}, append() {}, setAttribute() {}, normalize() {}, querySelector() { return null; },
+      addEventListener(name, callback) { elementListeners.set(name, callback); },
+      emit(name, event = {}) { elementListeners.get(name)?.(event); },
+      prepend(...children) { this.children.unshift(...children); }, append(...children) { this.children.push(...children); },
+      setAttribute(name, value) { attributes[name] = value; }, getAttribute(name) { return attributes[name]; },
+      remove() {}, normalize() {}, querySelector() { return null; },
       querySelectorAll() { return []; },
       getClientRects() { return this.hidden ? [] : [this.getBoundingClientRect()]; },
       getBoundingClientRect() { return { top: this.top - window.scrollY, bottom: this.bottom - window.scrollY }; },
@@ -53,19 +59,25 @@ function preview({ blocks = [], lineCount = 100, height = 200, documentHeight = 
   blocks.forEach((block, index) => { if (Number.isInteger(block.parentIndex)) nodes[index].parentElement = nodes[block.parentIndex]; });
   const article = element({ top: 0, bottom: articleBottom });
   article.contains = node => nodes.includes(node);
-  article.querySelectorAll = selector => selector === '[data-source-line]' ? nodes : [];
+  article.querySelectorAll = selector => selector === '[data-source-line]' ? nodes
+    : selector === 'h1,h2,h3,h4,h5,h6' ? nodes.filter(node => /^H[1-6]$/.test(node.tagName)) : [];
   const document = {
     documentElement: { scrollHeight: documentHeight },
+    body: { append: node => bodyChildren.push(node) },
     getElementById: id => id === 'document' ? article : ids.get(id),
-    addEventListener() {}, createElement: () => element()
+    addEventListener(name, callback) {
+      if (!documentListeners.has(name)) documentListeners.set(name, []);
+      documentListeners.get(name).push(callback);
+    }, createElement: () => element()
   };
   vm.runInNewContext(script, {
-    window, document, innerHeight: height, Node: { ELEMENT_NODE: 1 },
+    window, document, innerHeight: height, innerWidth: 1200, Node: { ELEMENT_NODE: 1 },
     requestAnimationFrame: callback => frames.push(callback), setTimeout: () => 1, clearTimeout() {}
   });
   return {
-    api: window.markpad, nodes, messages, window,
+    api: window.markpad, nodes, messages, window, bodyChildren,
     emit(name, event = {}) { for (const callback of listeners.get(name) || []) callback(event); },
+    emitDocument(name, event = {}) { for (const callback of documentListeners.get(name) || []) callback(event); },
     flush() { while (frames.length) frames.shift()(); },
     scroll(top) { window.scrollY = top; this.emit('scroll'); this.flush(); },
     lastScroll() { return messages.filter(message => message.type === 'scroll').at(-1); }
@@ -208,4 +220,38 @@ test('short/empty documents and CRLF or CR line endings return finite source pos
     page.scroll(1000);
     assert.equal(page.lastScroll().sourcePosition, 2);
   }
+});
+
+test('localized preview controls use injected labels and Arabic UI direction', () => {
+  const labels = { copy: 'نسخ', copied: 'تم النسخ', copyMarkdown: 'نسخ بصيغة Markdown', selectAll: 'تحديد الكل',
+    open: 'فتح الرابط', copyLink: 'نسخ الرابط', edit: 'التحرير هنا', fold: 'طي القسم', close: 'إغلاق الصورة' };
+  const page = preview({ blocks: [{ tagName: 'H1', id: 'chapter', line: 1, top: 20 }],
+    config: { language: 'ar', uiDirection: 'rtl', labels }, selectionText: 'English document' });
+  const heading = page.nodes[0];
+  assert.equal(heading.children[0].title, labels.fold);
+  assert.equal(heading.children[1].getAttribute('aria-label'), labels.copyLink);
+  page.emitDocument('contextmenu', { preventDefault() {}, target: heading, clientX: 1180, clientY: 190 });
+  const menu = page.bodyChildren.at(-1);
+  assert.equal(menu.dir, 'rtl');
+  assert.deepEqual(Array.from(menu.children, button => button.textContent), [labels.copy, labels.copyMarkdown, labels.selectAll, labels.edit]);
+  assert.equal(menu.children[0].disabled, false);
+  menu.children[0].emit('click');
+  assert.equal(page.messages.at(-1).type, 'copy');
+  assert.equal(page.messages.at(-1).text, 'English document');
+});
+
+test('read-only article disables Edit Here while retaining translated copy actions', () => {
+  const page = preview({ blocks: [{ line: 1, top: 20 }], config: { language: 'fr', labels: { edit: 'Modifier ici', copy: 'Copier' }, readOnly: true } });
+  page.emitDocument('contextmenu', { preventDefault() {}, target: page.nodes[0], clientX: 20, clientY: 20 });
+  const menu = page.bodyChildren.at(-1);
+  assert.equal(menu.children[0].textContent, 'Copier');
+  assert.equal(menu.children.at(-1).textContent, 'Modifier ici');
+  assert.equal(menu.children.at(-1).disabled, true);
+});
+
+test('older preview configuration retains traditional Chinese context labels', () => {
+  const page = preview({ blocks: [{ line: 1, top: 20 }], config: { language: 'zh-TW' } });
+  page.emitDocument('contextmenu', { preventDefault() {}, target: page.nodes[0], clientX: 20, clientY: 20 });
+  assert.deepEqual(Array.from(page.bodyChildren.at(-1).children, button => button.textContent), ['複製', '複製 Markdown', '全選', '在此編輯']);
+  assert.equal(page.bodyChildren.at(-1).dir, 'ltr');
 });

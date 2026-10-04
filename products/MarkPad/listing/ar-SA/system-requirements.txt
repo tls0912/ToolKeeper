@@ -1,0 +1,2 @@
+هذه الحزمة مصممة لنظام Windows بمعمارية 64 بت (x64).
+تتطلب المعاينة والتصدير إلى PDF وجود Microsoft Edge WebView2 Evergreen Runtime.

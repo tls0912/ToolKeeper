@@ -42,13 +42,17 @@ public partial class MainWindow : Window
     private AppSettings Settings => App.Preferences.Settings;
     private string UiLanguage => Settings.ResolveLanguage(CultureInfo.CurrentUICulture.Name);
 
-    public MainWindow()
+    public MainWindow(bool deferEmptyState = false)
     {
+        _deferEmptyState = deferEmptyState;
         InitializeComponent();
+        _emptyPreview = new PreviewPane(Path.Combine(App.Preferences.DataDirectory, "WebView2"));
+        _emptyPreview.MessageReceived += OnEmptyPreviewMessageReceived;
+        EmptyPreviewHost.Child = _emptyPreview;
         var workspace = (UIElement)Content;
         Content = null;
         TabsArea.Children.Add(TabsPanel);
-        _frame = new WindowFrame(this) { Workspace = workspace, CaptionContent = TabsArea, CaptionActions = OverflowButton };
+        _frame = new WindowFrame(this, captionTitle: "汗青") { Workspace = workspace, CaptionContent = TabsArea, CaptionActions = OverflowButton };
         Content = _frame;
         if (Settings.RememberWindowSize && Settings.WindowHeight > 0)
         {
@@ -66,6 +70,7 @@ public partial class MainWindow : Window
         _toastTimer.Tick += (_, _) => { _toastTimer.Stop(); StatusToast.Visibility = Visibility.Collapsed; };
         PreviewKeyDown += OnKeyDown;
         DocumentHost.PreviewMouseWheel += OnContentMouseWheel;
+        EmptyState.PreviewMouseWheel += OnContentMouseWheel;
         PreviewDragOver += OnDragOver;
         Drop += async (_, e) => await GuardAsync(() => DropAsync(e));
         Closing += OnClosing;
@@ -74,11 +79,13 @@ public partial class MainWindow : Window
             _disposed = true;
             _maintenance.Stop(); _autoSaveTimer.Stop(); _renderTimer.Stop(); _toastTimer.Stop(); _fullScreenTimer.Stop();
             foreach (var view in _documentViews.Values.ToArray()) ReleaseDocumentView(view.Document);
+            _emptyPreview.MessageReceived -= OnEmptyPreviewMessageReceived;
+            _emptyPreview.Dispose();
             _currentView = null;
             foreach (var tab in Documents) tab.PropertyChanged -= TabChanged;
             SystemEvents.UserPreferenceChanged -= SystemPreferenceChanged;
         };
-        Loaded += (_, _) => { ApplyPreferences(); BuildTabs(); _maintenance.Start(); };
+        Loaded += (_, _) => { BuildTabs(); _maintenance.Start(); _ = GuardAsync(RenderEmptyStateAsync); };
         Activated += async (_, _) => await MaintainAsync();
         SizeChanged += (_, _) => BuildTabs();
         TabsArea.SizeChanged += (_, _) => BuildTabs();
@@ -94,6 +101,8 @@ public partial class MainWindow : Window
     }
 
     public string T(string english, string chinese, string japanese) => ToolKeeper.UI.UiLanguage.Text(UiLanguage, english, chinese, japanese);
+    private string F(string english, string chinese, string japanese, params object[] arguments) =>
+        ToolKeeper.UI.UiLanguage.Format(UiLanguage, english, chinese, japanese, arguments);
     private Brush B(string key) => (Brush)FindResource(key);
     private static string Canonical(string path) => Path.GetFullPath(path);
 
@@ -176,6 +185,7 @@ public partial class MainWindow : Window
         _renderTimer.Stop();
         if (!ReferenceEquals(tab, _current)) _currentView?.SetActive(false);
         _current = tab;
+        if (tab is not null) _hasSelectedEmptyArticle = false;
         _currentView = tab is null ? null : GetDocumentView(tab);
         _currentView?.SetActive(true);
         _previewOverlay = _currentView?.PreviewOverlay == true;
@@ -188,6 +198,7 @@ public partial class MainWindow : Window
         ExpandReplaceButton.Visibility = tab?.IsPreviewMode == false ? Visibility.Visible : Visibility.Collapsed;
         BuildTabs(); BuildActions(); UpdateStatus();
         if (tab is not null) _ = GuardAsync(() => RenderAsync(sourceLine));
+        else _ = GuardAsync(RenderEmptyStateAsync);
         if (tab?.IsPreviewMode == false) { _editor.FocusEditor(); if (SearchPanel.IsVisible) _editor.Find(SearchBox.Text, Settings.MatchCase, restart: true); }
     }
 
@@ -261,7 +272,8 @@ public partial class MainWindow : Window
 
     private async Task OpenDialogAsync()
     {
-        var dialog = new OpenFileDialog { Filter = "Markdown|*.md;*.markdown;*.mdown;*.mkd|Text files|*.txt|All files|*.*", Multiselect = true };
+        var dialog = new OpenFileDialog { Filter = T("Markdown", "Markdown", "Markdown") + "|*.md;*.markdown;*.mdown;*.mkd|"
+            + T("Text files", "文字檔案", "テキストファイル") + "|*.txt|" + T("All files", "所有檔案", "すべてのファイル") + "|*.*", Multiselect = true };
         if (dialog.ShowDialog(this) == true) await OpenPathsAsync(dialog.FileNames);
     }
 
@@ -271,11 +283,14 @@ public partial class MainWindow : Window
         if (!_saving.Add(tab.Id)) return false;
         try
         {
+            var previousPath = tab.FilePath;
+            var wasReadOnly = tab.IsReadOnly;
             string? path = null;
             if (saveAs || tab.FilePath is null || tab.IsMissing || tab.IsReadOnly)
             {
                 if (automatic) return false;
-                var dialog = new SaveFileDialog { FileName = tab.DisplayName, DefaultExt = ".md", AddExtension = true, Filter = "Markdown|*.md|All files|*.*", OverwritePrompt = true };
+                var dialog = new SaveFileDialog { FileName = tab.DisplayName, DefaultExt = ".md", AddExtension = true,
+                    Filter = "Markdown|*.md|" + T("All files", "所有檔案", "すべてのファイル") + "|*.*", OverwritePrompt = true };
                 if (tab.FilePath is not null) dialog.InitialDirectory = Path.GetDirectoryName(tab.FilePath);
                 if (dialog.ShowDialog(this) != true) return false;
                 path = dialog.FileName;
@@ -287,6 +302,9 @@ public partial class MainWindow : Window
             if (!tab.IsDirty) App.Recovery.Delete(tab.Id);
             if (_disposed || !Documents.Contains(tab)) return !tab.IsDirty;
             UpdateStatus(); BuildTabs();
+            if (!_closing && !_closingDocuments.Contains(tab.Id) && ReferenceEquals(tab, _current)
+                && (tab.FilePath != previousPath || tab.IsReadOnly != wasReadOnly))
+                _ = GuardAsync(() => RenderAsync());
             if (!automatic) Toast(T("Saved", "已儲存", "保存しました"));
             return !tab.IsDirty;
         }
@@ -481,6 +499,7 @@ public partial class MainWindow : Window
                 Settings.WindowMaximized = WindowState == WindowState.Maximized;
                 App.Preferences.Save();
             }
+            RememberSessionOnClose();
             foreach (var tab in Documents) App.Recovery.Delete(tab.Id);
             _allowClose = true;
             // Clean documents reach here synchronously during Closing. Wait until that event
@@ -531,6 +550,7 @@ public partial class MainWindow : Window
 
     private async Task OpenLinkAsync(string url)
     {
+        if (!MarkdownRenderer.IsSafeLink(url)) return;
         if (url.StartsWith('#')) { await _preview.GoToAnchorAsync(url); return; }
         if (url.StartsWith("mailto:", StringComparison.OrdinalIgnoreCase))
         { Clipboard.SetText(Uri.UnescapeDataString(url[7..].Split('?')[0])); Toast(T("Email copied", "已複製 Email", "メールアドレスをコピーしました")); return; }
@@ -538,12 +558,10 @@ public partial class MainWindow : Window
         { Process.Start(new ProcessStartInfo(uri.AbsoluteUri) { UseShellExecute = true }); return; }
         var hash = url.IndexOf('#');
         var local = Uri.UnescapeDataString(hash < 0 ? url : url[..hash]);
-        if (string.IsNullOrEmpty(local)) return;
-        if (Uri.TryCreate(local, UriKind.Absolute, out var absolute))
-        { if (!absolute.IsFile) return; local = absolute.LocalPath; }
+        if (string.IsNullOrWhiteSpace(local) || Path.IsPathRooted(local) || local.Contains(':') || local.Any(char.IsControl)) return;
         if (Path.GetExtension(local).ToLowerInvariant() is not (".md" or ".markdown" or ".mdown" or ".mkd")) return;
-        if (!Path.IsPathRooted(local))
-        { if (_current?.FilePath is null) return; local = Path.Combine(Path.GetDirectoryName(_current.FilePath)!, local); }
+        if (_current?.FilePath is null) return;
+        local = Path.Combine(Path.GetDirectoryName(_current.FilePath)!, local);
         await OpenPathsAsync([local]);
         if (hash >= 0)
         {
@@ -616,7 +634,7 @@ public partial class MainWindow : Window
         if (_current?.IsLargeFile == true) EncodingLabel.Text += "\n" + T("Large file", "大型檔案", "大容量");
         CaretLabel.Text = _current?.IsPreviewMode == false ? $"Ln {_editor.Editor.TextArea.Caret.Line}\nCol {_editor.Editor.TextArea.Caret.Column}" : "";
         UpdateEditorToolbarSelection();
-        // Keep the product title and subtitle in the taskbar; filenames and dirty state belong to tabs.
+        Title = _current is null ? "汗青 - Markdown Writer" : "汗青 - " + _current.DisplayName;
     }
 
     private void Toast(string message) { StatusLabel.Text = message; StatusToast.Visibility = Visibility.Visible; _toastTimer.Stop(); _toastTimer.Start(); }

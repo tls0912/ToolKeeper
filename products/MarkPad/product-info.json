@@ -2,7 +2,7 @@
   "productName": "汗青 - Markdown Writer",
   "internalProject": "MarkPad",
   "executable": "Hanqing.exe",
-  "packageVersion": "1.0.2.0",
+  "packageVersion": "1.0.3.0",
   "sourceVersion": "0.1.19",
   "architecture": "x64",
   "storeId": "9NHF764PXW9C",
@@ -13,10 +13,15 @@
   "languages": [
     "zh-TW",
     "en-US",
-    "ja-JP"
+    "ja-JP",
+    "zh-CN",
+    "es-ES",
+    "ar-SA",
+    "fr-FR",
+    "ko-KR"
   ],
   "trialDaysConfiguredByPublisher": 7,
-  "generatedDate": "2026-09-28",
+  "generatedDate": "2026-10-04",
   "screenshotsPerLanguage": 5,
   "screenshotDimensions": [
     1600,
@@ -26,9 +31,9 @@
     "design": "Four green bamboo segments form the M; blue background and short lines retained",
     "sourceRenderer": "scripts/MarkPadIconRenderer.cs",
     "packageAssets": "assets/msix-package/",
-    "packageAssetsStatus": "Exact copies of the 23 icon PNGs in MSIX 1.0.2.0; SHA256 verified",
-    "includedInPackageVersion": "1.0.2.0",
-    "previousPackagePreserved": "1.0.1.0"
+    "packageAssetsStatus": "Exact copies of the 23 icon PNGs in MSIX 1.0.3.0; SHA256 verified",
+    "includedInPackageVersion": "1.0.3.0",
+    "previousPackagePreserved": "1.0.2.0"
   },
   "submissionStatus": {
     "assistantUploadedThisRound": false,
@@ -44,9 +49,15 @@
     "files": [
       "listing/zh-TW/privacy-policy.txt",
       "listing/en-US/privacy-policy.txt",
-      "listing/ja-JP/privacy-policy.txt"
+      "listing/ja-JP/privacy-policy.txt",
+      "listing/zh-CN/privacy-policy.txt",
+      "listing/es-ES/privacy-policy.txt",
+      "listing/ar-SA/privacy-policy.txt",
+      "listing/fr-FR/privacy-policy.txt",
+      "listing/ko-KR/privacy-policy.txt"
     ],
     "submissionOption": "Provide privacy policy text in the shown Partner Center form",
     "contactOmittedAtPublisherRequest": true
-  }
+  },
+  "currentSubmissionType": "Update of existing product; localized 1.0.3 release notes included"
 }

@@ -34,6 +34,33 @@ public sealed class LanguagePackTests : IDisposable
     }
 
     [Fact]
+    public async Task LegacyVocabularyIsHashVerifiedAndCannotAddArbitraryTextPayloads()
+    {
+        var installed = await Service.ImportAsync(MakePack(legacy: true));
+        await LanguagePackService.VerifyAsync(installed);
+        Assert.False(File.Exists(Path.Combine(installed.DirectoryPath, "model/config.json")));
+        var vocabularyPath = Path.Combine(installed.DirectoryPath, "model/shared_vocabulary.txt");
+        var bytes = File.ReadAllBytes(vocabularyPath);
+        bytes[0] ^= 1;
+        File.WriteAllBytes(vocabularyPath, bytes);
+        var error = await Assert.ThrowsAsync<TransLampException>(() => LanguagePackService.VerifyAsync(installed));
+        Assert.Equal("checksum-mismatch", error.Code);
+        await Assert.ThrowsAsync<TransLampException>(() => Service.ImportAsync(MakePack(legacy: true, extraPath: "model/extra.txt")));
+    }
+
+    [Fact]
+    public async Task JsonVocabularyStillRequiresItsOriginalConfig()
+    {
+        var archive = MakePack(manifest => manifest with
+        {
+            Files = manifest.Files.Where(file => file.Path != "model/config.json").ToList()
+        });
+        using (var zip = ZipFile.Open(archive, ZipArchiveMode.Update)) zip.GetEntry("model/config.json")!.Delete();
+        await Assert.ThrowsAsync<TransLampException>(() => Service.ImportAsync(archive));
+        Assert.Empty(Service.GetInstalledPacks());
+    }
+
+    [Fact]
     public async Task BadHashCannotReplaceExistingModel()
     {
         var original = await Service.ImportAsync(MakePack());
@@ -245,8 +272,10 @@ public sealed class LanguagePackTests : IDisposable
     }
 
     [Theory]
-    [InlineData("ja", "en")]
-    [InlineData("en", "ja")]
+    [InlineData("id", "en")]
+    [InlineData("en", "id")]
+    [InlineData("es", "en")]
+    [InlineData("ja", "zh")]
     [InlineData("en", "zh-hant")]
     public async Task RejectsDirectionsUnsupportedByBundledRuntime(string source, string target)
     {
@@ -449,6 +478,32 @@ public sealed class LanguagePackTests : IDisposable
         Assert.Empty(Service.GetInstalledPacks());
     }
 
+    public static IEnumerable<object[]> AdditionalDirections => LanguagePackCatalog.Packs
+        .Where(pack => pack.Id != "en-zh")
+        .Select(pack => new object[] { pack.SourceLanguage, pack.TargetLanguage });
+
+    [Theory]
+    [MemberData(nameof(AdditionalDirections))]
+    public async Task NewDirectionsRecoverInterruptedRemovalAndKeepOtherPacks(string source, string target)
+    {
+        await Service.ImportAsync(MakePack());
+        var id = source + "-" + target;
+        var pack = await Service.ImportAsync(MakePack(manifest => manifest with { Id = id, SourceLanguage = source, TargetLanguage = target }));
+        var backup = ".removing-" + id + "-" + Guid.NewGuid().ToString("N");
+        File.WriteAllText(Path.Combine(Service.RootDirectory, ".transaction-" + id + ".json"),
+            JsonSerializer.Serialize(new { id, kind = "remove", stagingDirectory = (string?)null, backupDirectory = backup, hadPrevious = true, hadRemovedMarker = false }));
+        Directory.Move(pack.DirectoryPath, Path.Combine(Service.RootDirectory, backup));
+        File.WriteAllText(Path.Combine(Service.RootDirectory, ".removed-" + id), "pending removal");
+        var recovered = new LanguagePackService(Service.RootDirectory, AcceptStructuralFixture);
+        Assert.Equal(2, recovered.GetInstalledPacks().Count);
+        await LanguagePackService.VerifyAsync(recovered.Find(source, target)!);
+        Assert.False(File.Exists(Path.Combine(Service.RootDirectory, ".removed-" + id)));
+        Assert.Empty(Directory.GetDirectories(Service.RootDirectory, ".removing-*"));
+        recovered.Remove(id);
+        Assert.Equal("en-zh", Assert.Single(recovered.GetInstalledPacks()).Manifest.Id);
+        AssertNoPendingTransaction();
+    }
+
     private void WriteJournal(string kind, string? staging, string backup, bool hadPrevious, bool hadRemovedMarker) =>
         File.WriteAllText(Path.Combine(Service.RootDirectory, ".transaction-en-zh.json"),
             JsonSerializer.Serialize(new { id = "en-zh", kind, stagingDirectory = staging, backupDirectory = backup, hadPrevious, hadRemovedMarker }));
@@ -460,7 +515,8 @@ public sealed class LanguagePackTests : IDisposable
         Assert.Empty(Directory.GetDirectories(Service.RootDirectory, ".previous-*"));
     }
 
-    private string MakePack(Func<LanguagePackManifest, LanguagePackManifest>? changeManifest = null, string? extraPath = null)
+    private string MakePack(Func<LanguagePackManifest, LanguagePackManifest>? changeManifest = null, string? extraPath = null,
+        bool legacy = false)
     {
         Directory.CreateDirectory(Path.Combine(_directory, "archives"));
         var payload = new Dictionary<string, string>
@@ -469,6 +525,12 @@ public sealed class LanguagePackTests : IDisposable
             ["sentencepiece.model"] = "test tokenizer", ["model/model.bin"] = "test model",
             ["model/config.json"] = "{}", ["model/shared_vocabulary.json"] = "[]"
         };
+        if (legacy)
+        {
+            payload.Remove("model/config.json");
+            payload.Remove("model/shared_vocabulary.json");
+            payload["model/shared_vocabulary.txt"] = "<unk>\n<s>\n</s>\n▁fixture\n";
+        }
         if (extraPath is not null) payload[extraPath] = "must be rejected";
         var manifest = new LanguagePackManifest
         {

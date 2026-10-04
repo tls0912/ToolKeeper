@@ -33,7 +33,7 @@ public partial class MainWindow
             var query = SearchBox.Text;
             var replacement = ReplaceBox.Text;
             var matchCase = Settings.MatchCase;
-            if (Choose(T($"Replace {_searchCount} occurrences?", $"將取代 {_searchCount} 處，是否繼續？", $"{_searchCount} 件を置換しますか？"),
+            if (Choose(F("Replace {0} occurrences?", "將取代 {0} 處，是否繼續？", "{0} 件を置換しますか？", _searchCount),
                 ("replace", T("Replace all", "全部取代", "すべて置換")), ("cancel", T("Cancel", "取消", "キャンセル"))) != "replace") return;
             // Modal dialogs pump the dispatcher: an incoming file request can switch tabs.
             if (_current != tab || !Documents.Contains(tab) || tab.IsReadOnly || tab.IsPreviewMode
@@ -43,7 +43,7 @@ public partial class MainWindow
                 return;
             }
             var count = _editor.ReplaceAll(query, replacement, matchCase);
-            Toast(T($"Replaced {count} occurrences", $"已取代 {count} 處", $"{count} 件を置換しました"));
+            Toast(F("Replaced {0} occurrences", "已取代 {0} 處", "{0} 件を置換しました", count));
         };
     }
 

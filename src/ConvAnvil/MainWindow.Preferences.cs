@@ -15,7 +15,6 @@ public partial class MainWindow
     private static readonly (string Key, string English, string Chinese, string Japanese)[] InterfaceText =
     [
         ("Conv.Description", """Inspect text encoding, preview conversions, and convert between text and bytes.""", """檢查文字編碼、預覽轉檔結果，並在文字與位元組之間轉換。""", """文字コードを調べ、変換結果を確認し、テキストとバイトを相互変換します。"""),
-        ("Conv.Offline", """Local processing · Works offline""", """本機處理 · 離線可用""", """ローカル処理 · オフライン対応"""),
         ("Conv.FileTab", """File""", """File · 檔案""", """File · ファイル"""),
         ("Conv.TextTab", """Text""", """Text · 文字""", """Text · テキスト"""),
         ("Conv.BytesTab", """Bytes""", """Bytes · 位元組""", """Bytes · バイト"""),

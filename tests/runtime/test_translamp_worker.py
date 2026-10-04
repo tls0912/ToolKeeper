@@ -78,6 +78,34 @@ class WorkerTests(unittest.TestCase):
         with self.assertRaises(WORKER.TranslationError):
             self.read({**request, "action": "translate"})
 
+    def test_reviewed_directions_are_supported_without_pivot_translation(self):
+        self.assertEqual(len(WORKER.SUPPORTED_DIRECTIONS), 27)
+        for source, target in WORKER.SUPPORTED_DIRECTIONS:
+            with self.subTest(source=source, target=target):
+                request = self.request(sourceLanguage=source, targetLanguage=target)
+                self.assertEqual(self.read(request), request)
+        for source, target in (("fr", "pt"), ("ja", "zh"), ("es", "en"), ("en", "id"), ("id", "en"), ("en", "xx"), ("fr", "fr")):
+            with self.subTest(source=source, target=target), self.assertRaises(WORKER.TranslationError):
+                self.read(self.request(sourceLanguage=source, targetLanguage=target))
+
+    def test_sentence_outputs_use_the_target_languages_spacing(self):
+        result = types.SimpleNamespace(hypotheses=[["▁Translated", "</s>"]])
+        translator = types.SimpleNamespace(translate_batch=lambda *args, **kwargs: [result])
+        for target, expected in (("fr", "Translated Translated"), ("pt", "Translated Translated"),
+                                 ("th", "Translated Translated"), ("ko", "Translated Translated"),
+                                 ("zh", "TranslatedTranslated"), ("zt", "TranslatedTranslated"), ("ja", "TranslatedTranslated")):
+            with self.subTest(target=target), patch.object(WORKER, "validate_model", return_value=Path("C:/Fixture")), \
+                    patch.object(WORKER, "load_engine", return_value=(Words(), translator)):
+                self.assertEqual(WORKER.translate(self.request(text="First sentence. Second sentence.", targetLanguage=target), progress=lambda _: None), expected)
+
+    def test_chinese_and_japanese_punctuation_has_no_tokenizer_space(self):
+        result = types.SimpleNamespace(hypotheses=[["▁譯文", "▁。", "</s>"]])
+        translator = types.SimpleNamespace(translate_batch=lambda *args, **kwargs: [result])
+        for target in ("zh", "zt", "ja"):
+            with self.subTest(target=target), patch.object(WORKER, "validate_model", return_value=Path("C:/Fixture")), \
+                    patch.object(WORKER, "load_engine", return_value=(Words(), translator)):
+                self.assertEqual(WORKER.translate(self.request(targetLanguage=target), progress=lambda _: None), "譯文。")
+
     def test_validate_action_loads_engine_and_emits_only_validation_result(self):
         request = self.request(action="validate")
         del request["text"]
@@ -185,6 +213,32 @@ class WorkerTests(unittest.TestCase):
             (root / "manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
             with self.assertRaisesRegex(WORKER.TranslationError, "引擎"):
                 WORKER.validate_model(self.request(modelPath=str(root)))
+
+    def test_legacy_and_current_layouts_are_validated_without_fabricating_files(self):
+        for legacy in (False, True):
+            with self.subTest(legacy=legacy), tempfile.TemporaryDirectory(prefix="translamp-layout-") as directory:
+                root = Path(directory)
+                manifest = {"schemaVersion": 1, "runtime": WORKER.RUNTIME_ID, "sourceLanguage": "en", "targetLanguage": "ja"}
+                (root / "manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+                (root / "model").mkdir()
+                for relative in ("model/model.bin", "sentencepiece.model", "LICENSE", "NOTICE"):
+                    (root / relative).write_text("structural fixture", encoding="utf-8")
+                vocabulary = root / "model" / ("shared_vocabulary.txt" if legacy else "shared_vocabulary.json")
+                vocabulary.write_text("<unk>\n" if legacy else "[]", encoding="utf-8")
+                config = root / "model/config.json"
+                if not legacy:
+                    config.write_text("{}", encoding="utf-8")
+                request = self.request(modelPath=str(root), targetLanguage="ja")
+                self.assertEqual(WORKER.validate_model(request), root)
+                self.assertEqual(config.exists(), not legacy)
+                if not legacy:
+                    config.unlink()
+                    with self.assertRaisesRegex(WORKER.TranslationError, "不完整"):
+                        WORKER.validate_model(request)
+                    config.write_text("{}", encoding="utf-8")
+                vocabulary.unlink()
+                with self.assertRaisesRegex(WORKER.TranslationError, "不完整"):
+                    WORKER.validate_model(request)
 
     def test_incomplete_decoding_is_never_reported_as_success(self):
         fake_result = types.SimpleNamespace(hypotheses=[["▁partial"]])

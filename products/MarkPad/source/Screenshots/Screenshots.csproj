@@ -1,7 +1,7 @@
 <Project>
   <PropertyGroup>
-    <BaseIntermediateOutputPath>../../../../artifacts/markpad-store-capture/obj/</BaseIntermediateOutputPath>
-    <BaseOutputPath>../../../../artifacts/markpad-store-capture/bin/</BaseOutputPath>
+    <UseArtifactsOutput>true</UseArtifactsOutput>
+    <ArtifactsPath>$(MSBuildThisFileDirectory)../../../../artifacts/markpad-store-capture</ArtifactsPath>
   </PropertyGroup>
   <Import Project="Sdk.props" Sdk="Microsoft.NET.Sdk" />
   <PropertyGroup>

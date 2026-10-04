@@ -80,12 +80,13 @@ public sealed class ProductCatalogTests
     }
 
     [Fact]
-    public void HistoLensIsExplicitlyASyntheticDataPreviewWithoutStandaloneOrStoreClaims()
+    public void HistoLensDescribesTwseAndSyntheticDataWithoutStandaloneOrStoreClaims()
     {
         var histolens = Assert.Single(ProductCatalogService.Definitions, product => product.Id == "006");
 
         Assert.Equal("HistoLens", histolens.Name);
         Assert.Contains("development preview", histolens.DescriptionEnglish);
+        Assert.Contains("TWSE downloads", histolens.DescriptionEnglish);
         Assert.Contains("synthetic data", histolens.DescriptionEnglish);
         Assert.Contains("開發預覽", histolens.DescriptionChinese);
         Assert.Contains("合成資料", histolens.DescriptionChinese);

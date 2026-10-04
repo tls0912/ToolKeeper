@@ -49,6 +49,7 @@ public sealed class ModuleWindowManagerTests
     [Fact]
     public Task HistoLensRoutesWithinTheHostReusesItsWindowAndClosesOnExit() => OnSta(() =>
     {
+        PlatformIcon.InitializeHostedWindows();
         var profile = Path.Combine(Path.GetTempPath(), "ToolKeeper.HistoLensHostTests", Guid.NewGuid().ToString("N"));
         var options = StartupOptions.Parse(["--data-directory", profile, "--activate", "toolkeeper://run/006"]);
         var expectedPreferences = Path.Combine(options.PlatformDataDirectory, "HistoLens", "ui.json");
@@ -75,6 +76,18 @@ public sealed class ModuleWindowManagerTests
             Assert.True(ToolActivationUri.TryParse(options.ActivationUri, out var productId));
             Assert.True(launcher.Launch(productId).Succeeded);
             var first = Assert.IsType<HistoLens.MainWindow>(Assert.Single(shown));
+            Assert.Same(HistoLens.ProductIcon.Source, first.Icon);
+            // The host's Loaded handler must not replace the module's product branding.
+            first.RaiseEvent(new RoutedEventArgs(FrameworkElement.LoadedEvent, first));
+            Assert.Same(HistoLens.ProductIcon.Source, first.Icon);
+            var unbranded = new Window();
+            try
+            {
+                unbranded.RaiseEvent(new RoutedEventArgs(FrameworkElement.LoadedEvent, unbranded));
+                Assert.NotNull(unbranded.Icon);
+                Assert.NotSame(first.Icon, unbranded.Icon);
+            }
+            finally { unbranded.Close(); }
             first.Tag = "preserved research state";
 
             Assert.True(launcher.Launch(productId).Succeeded);

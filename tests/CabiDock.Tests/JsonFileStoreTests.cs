@@ -108,6 +108,105 @@ public sealed class JsonFileStoreTests : IDisposable
         Assert.Single(loaded.Value.Items);
     }
 
+    [Theory]
+    [InlineData("all")]
+    [InlineData("items")]
+    [InlineData("groups")]
+    [InlineData("source")]
+    public void MissingRequiredStateMemberRecoversBackupAndKeepsItHealthy(string member)
+    {
+        var store = CreateStore();
+        var original = State("first.png", "archives", ClassificationSource.Manual);
+        original.Groups["archives"] = new GroupLayout { X = 70, Y = 90, Width = 440, Height = 350 };
+        Assert.True(store.Save(original).Success);
+        Assert.True(store.Save(State("second.png")).Success);
+        var backup = File.ReadAllBytes(store.BackupPath);
+        File.WriteAllText(store.FilePath, StateWithout(member));
+
+        var recoveredStore = CreateStore();
+        var loaded = recoveredStore.Load(() => new CabiDockState());
+
+        Assert.True(loaded.RecoveredFromBackup);
+        Assert.True(loaded.CanSave);
+        Assert.NotNull(loaded.Error);
+        var item = Assert.Single(loaded.Value.Items);
+        Assert.EndsWith("first.png", item.FullPath);
+        Assert.Equal("archives", item.CategoryId);
+        Assert.Equal(ClassificationSource.Manual, item.Source);
+        Assert.Equal(440, loaded.Value.Groups["archives"].Width);
+        Assert.True(recoveredStore.Save(loaded.Value).Success);
+        Assert.Equal(backup, File.ReadAllBytes(store.BackupPath));
+    }
+
+    [Theory]
+    [InlineData("all", false)]
+    [InlineData("items", false)]
+    [InlineData("groups", false)]
+    [InlineData("source", false)]
+    [InlineData("all", true)]
+    [InlineData("items", true)]
+    [InlineData("groups", true)]
+    [InlineData("source", true)]
+    public void MissingRequiredStateMemberWithoutHealthyBackupBlocksWrites(string member, bool hasBackup)
+    {
+        Directory.CreateDirectory(_directory);
+        var store = CreateStore();
+        var incomplete = StateWithout(member);
+        File.WriteAllText(store.FilePath, incomplete);
+        if (hasBackup) File.WriteAllText(store.BackupPath, incomplete);
+
+        var loaded = store.Load(() => new CabiDockState());
+
+        Assert.False(loaded.CanSave);
+        Assert.False(loaded.RecoveredFromBackup);
+        Assert.NotNull(loaded.Error);
+        Assert.False(store.Save(State("replacement.png")).Success);
+        Assert.Equal(incomplete, File.ReadAllText(store.FilePath));
+        if (hasBackup) Assert.Equal(incomplete, File.ReadAllText(store.BackupPath));
+        else Assert.False(File.Exists(store.BackupPath));
+    }
+
+    [Fact]
+    public void StateWithoutOptionalIdentityAndFingerprintStillLoadsSavedClassifications()
+    {
+        Directory.CreateDirectory(_directory);
+        var store = CreateStore();
+        File.WriteAllText(store.FilePath, """
+            {
+              "items": [
+                { "fullPath": "C:\\Desktop\\automatic.png", "categoryId": "images", "source": "auto" },
+                { "fullPath": "C:\\Desktop\\manual.png", "categoryId": "archives", "source": "manual" }
+              ],
+              "groups": { "archives": { "x": 70, "y": 90, "width": 440, "height": 350 } }
+            }
+            """);
+
+        var loaded = store.Load(() => new CabiDockState());
+
+        Assert.True(loaded.CanSave);
+        Assert.False(loaded.RecoveredFromBackup);
+        Assert.Null(loaded.Error);
+        Assert.Null(loaded.Value.ConfigurationFingerprint);
+        Assert.Equal(new[] { ClassificationSource.Auto, ClassificationSource.Manual }, loaded.Value.Items.Select(item => item.Source));
+        Assert.All(loaded.Value.Items, item => Assert.Null(item.Identity));
+        Assert.Equal(440, loaded.Value.Groups["archives"].Width);
+    }
+
+    [Fact]
+    public void ExplicitEmptyStateCollectionsAreValid()
+    {
+        Directory.CreateDirectory(_directory);
+        var store = CreateStore();
+        File.WriteAllText(store.FilePath, """{"items":[],"groups":{}}""");
+
+        var loaded = store.Load(() => new CabiDockState());
+
+        Assert.True(loaded.CanSave);
+        Assert.Null(loaded.Error);
+        Assert.Empty(loaded.Value.Items);
+        Assert.Empty(loaded.Value.Groups);
+    }
+
     [Fact]
     public void LockedDestinationReturnsFailureAndPreservesUsableRecords()
     {
@@ -201,6 +300,15 @@ public sealed class JsonFileStoreTests : IDisposable
     {
         Items = [new ClassifiedItem { FullPath = @"C:\Desktop\" + name, Identity = "test:" + name, CategoryId = category, Source = source }]
     };
+
+    private static string StateWithout(string member)
+    {
+        if (member == "all") return "{}";
+        var json = JsonSerializer.SerializeToNode(State("incomplete.png"), JsonFileStore<CabiDockState>.SerializerOptions)!.AsObject();
+        var owner = member == "source" ? json["items"]![0]!.AsObject() : json;
+        Assert.True(owner.Remove(member));
+        return json.ToJsonString();
+    }
 
     public void Dispose()
     {

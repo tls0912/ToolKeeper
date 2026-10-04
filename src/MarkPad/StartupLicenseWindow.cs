@@ -15,7 +15,7 @@ public sealed class StartupLicenseWindow : Window, IStartupLicenseDialogs
 
     public StartupLicenseWindow(AppSettings settings)
     {
-        _language = UiLanguage.Resolve(settings.Language);
+        _language = settings.ResolveLanguage(System.Globalization.CultureInfo.CurrentUICulture.Name);
         Title = "汗青 - Markdown Writer";
         Width = 440;
         SizeToContent = SizeToContent.Height;
@@ -37,7 +37,8 @@ public sealed class StartupLicenseWindow : Window, IStartupLicenseDialogs
                 Text = T("Checking your Microsoft Store license…", "正在檢查 Microsoft Store 授權…", "Microsoft Store のライセンスを確認しています…")
             }
         };
-        var frame = new WindowFrame(this) { Workspace = workspace };
+        workspace.FlowDirection = UiLanguage.IsRightToLeft(_language) ? FlowDirection.RightToLeft : FlowDirection.LeftToRight;
+        var frame = new WindowFrame(this, captionTitle: "汗青") { Workspace = workspace };
         frame.ApplyMetrics(settings.UiFontSize);
         frame.ApplyLanguage(_language);
         Content = frame;

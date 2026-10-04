@@ -122,7 +122,7 @@ public sealed class UiSmokeTests
     });
 
     [Fact]
-    public Task SharedShellShowsProductTitleDescriptionAndOfflineBadge() => OnSta(() =>
+    public Task SharedShellShowsProductTitleAndDescriptionWithoutHeaderActions() => OnSta(() =>
     {
         var window = CreateHiddenWindow();
         try
@@ -135,7 +135,7 @@ public sealed class UiSmokeTests
             var title = Assert.Single(labels, label => label.Name == "WindowTitleText" && label.Text == window.Title);
             var description = Assert.Single(labels, label =>
                 label.Text == "檢查文字編碼、預覽轉檔結果，並在文字與位元組之間轉換。");
-            var badge = Assert.Single(labels, label => label.Text == "本機處理 · 離線可用");
+            Assert.Null(window.HeaderActions);
             var workspace = Assert.IsAssignableFrom<FrameworkElement>(window.Workspace);
             var titlePosition = title.TransformToAncestor(host).Transform(new Point());
             Assert.InRange(titlePosition.Y, 1, 40);
@@ -143,7 +143,6 @@ public sealed class UiSmokeTests
             var workspacePosition = workspace.TransformToAncestor(host).Transform(new Point());
             Assert.True(title.ActualHeight > 0);
             Assert.True(description.ActualHeight > 0);
-            Assert.True(badge.ActualHeight > 0);
             Assert.True(descriptionPosition.Y >= titlePosition.Y + title.ActualHeight);
             Assert.True(workspacePosition.Y >= descriptionPosition.Y + description.ActualHeight);
             Assert.True(Get<TabControl>(window, "WorkspaceTabs").ActualHeight > 0);
@@ -308,6 +307,146 @@ public sealed class UiSmokeTests
         }
         finally { window.Close(); }
         return Task.CompletedTask;
+    });
+
+    [Fact]
+    public Task CrLfNormalizationRejectsExpansionPastLimitWithoutChangingTextSelectionOrUndo() => OnSta(() =>
+    {
+        var window = CreateHiddenWindow();
+        try
+        {
+            Get<TabControl>(window, "WorkspaceTabs").SelectedItem = Get<TabItem>(window, "TextTab");
+            var host = HostWindowContent(window);
+            Layout(host, 1160, 820);
+            var input = Get<TextBox>(window, "TextEntry");
+            var beforeEdit = new string('A', MainWindow.TextInputLimit - 1);
+            input.Text = beforeEdit;
+            input.Select(input.Text.Length, 0);
+            input.SelectedText = "\n";
+            var original = input.Text;
+            Assert.Equal(MainWindow.TextInputLimit, original.Length);
+            Assert.True(input.CanUndo);
+            input.Select(8, 3);
+            var normalize = LogicalDescendants<Button>(host).Single(button => Equals(button.Content, "換行 → CRLF"));
+
+            normalize.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+
+            Assert.Equal(original, input.Text);
+            Assert.Equal((8, 3), (input.SelectionStart, input.SelectionLength));
+            Assert.Contains("超過", Get<TextBlock>(window, "TextResult").Text);
+            Assert.Equal(((SolidColorBrush)window.Resources["ErrorBrush"]).Color,
+                ((SolidColorBrush)Get<TextBlock>(window, "TextResult").Foreground).Color);
+            Assert.True(input.CanUndo);
+            input.Undo();
+            Assert.Equal(beforeEdit, input.Text);
+        }
+        finally { window.Close(); }
+        return Task.CompletedTask;
+    });
+
+    [Fact]
+    public Task CrLfNormalizationAtExactLimitStillConvertsAndCanBeUndone() => OnSta(async () =>
+    {
+        var window = CreateHiddenWindow();
+        try
+        {
+            Get<TabControl>(window, "WorkspaceTabs").SelectedItem = Get<TabItem>(window, "TextTab");
+            var host = HostWindowContent(window);
+            Layout(host, 1160, 820);
+            var input = Get<TextBox>(window, "TextEntry");
+            var original = new string('A', MainWindow.TextInputLimit - 2) + "\n";
+            input.Text = original;
+            var normalize = LogicalDescendants<Button>(host).Single(button => Equals(button.Content, "換行 → CRLF"));
+
+            normalize.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+
+            Assert.Equal(MainWindow.TextInputLimit, input.Text.Length);
+            Assert.EndsWith("\r\n", input.Text);
+            await window.EncodeTextAsync();
+            Assert.True(Get<Button>(window, "CopyBytesButton").IsEnabled);
+            Assert.True(input.CanUndo);
+            input.Undo();
+            Assert.Equal(original, input.Text);
+        }
+        finally { window.Close(); }
+    });
+
+    [Theory]
+    [InlineData(false, false)]
+    [InlineData(false, true)]
+    [InlineData(true, false)]
+    [InlineData(true, true)]
+    public Task PendingSaveCannotOverwriteChangedFileState(bool changeOptions, bool failSave) => OnSta(async () =>
+    {
+        using var original = new Fixture("A\n");
+        using var replacement = new Fixture("B\r\n");
+        var completion = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        Task? save = null;
+        var window = CreateHiddenWindow();
+        try
+        {
+            await window.LoadFileAsync(original.Path);
+            save = window.SaveConvertedFileAsync(original.Path + ".converted", (destination, bytes, source) =>
+            {
+                Assert.Equal(original.Path + ".converted", destination);
+                Assert.Equal(original.Path, source);
+                Assert.Equal("A\n", EncodingConversionService.Decode(bytes, EncodingCatalog.Default));
+                return completion.Task;
+            });
+            Assert.False(Get<Button>(window, "SaveFileButton").IsEnabled);
+            if (changeOptions)
+            {
+                Get<ComboBox>(window, "FileLineEnding").SelectedIndex = 2;
+                await window.RebuildFilePreviewAsync();
+            }
+            else
+            {
+                await window.LoadFileAsync(replacement.Path);
+            }
+            var status = Get<TextBlock>(window, "StatusLabel").Text;
+            var result = Get<TextBlock>(window, "FileResult").Text;
+            var preview = Get<TextBox>(window, "TargetPreview").Text;
+            Assert.Equal(changeOptions ? "A\r\n" : "B\r\n", preview);
+            Assert.True(Get<Button>(window, "SaveFileButton").IsEnabled);
+
+            if (failSave) completion.SetException(new IOException("Simulated save failure"));
+            else completion.SetResult();
+            await save;
+
+            Assert.Equal(status, Get<TextBlock>(window, "StatusLabel").Text);
+            Assert.Equal(result, Get<TextBlock>(window, "FileResult").Text);
+            Assert.Equal(preview, Get<TextBox>(window, "TargetPreview").Text);
+            Assert.True(Get<Button>(window, "SaveFileButton").IsEnabled);
+        }
+        finally
+        {
+            completion.TrySetResult();
+            try { if (save is not null) await save; }
+            finally { window.Close(); }
+        }
+    });
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public Task CurrentSaveStillReportsItsOutcome(bool failSave) => OnSta(async () =>
+    {
+        using var fixture = new Fixture("A\n");
+        var window = CreateHiddenWindow();
+        try
+        {
+            await window.LoadFileAsync(fixture.Path);
+            await window.SaveConvertedFileAsync(fixture.Path + ".converted", (_, _, _) => failSave
+                ? Task.FromException(new IOException("Simulated save failure")) : Task.CompletedTask);
+
+            if (failSave)
+                Assert.Contains("未儲存：Simulated save failure", Get<TextBlock>(window, "FileResult").Text);
+            else
+                Assert.Contains(fixture.Path + ".converted", Get<TextBlock>(window, "StatusLabel").Text);
+            Assert.Equal("A\n", Get<TextBox>(window, "TargetPreview").Text);
+            Assert.True(Get<Button>(window, "SaveFileButton").IsEnabled);
+        }
+        finally { window.Close(); }
     });
 
     [Fact]

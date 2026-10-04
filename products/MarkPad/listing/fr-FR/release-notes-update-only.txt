@@ -1,0 +1,6 @@
+Nouveautés de la version 1.0.3
+L'interface accueille le chinois simplifié, l'espagnol, l'arabe, le français et le coréen, pour un total de huit langues.
+Lorsqu'aucun document n'est ouvert, trois articles intégrés s'affichent à tour de rôle, chacun disponible dans les huit langues.
+Une nouvelle option permet de mémoriser les fichiers ouverts à la fermeture et de rouvrir les documents enregistrés au prochain démarrage.
+Les niveaux H1–H6 sélectionnés s'appliquent au plan de l'aperçu et aux signets des PDF.
+La liste des fichiers récents, le titre dans la barre des tâches, le menu des polices et l'initialisation de l'application ont été ajustés.

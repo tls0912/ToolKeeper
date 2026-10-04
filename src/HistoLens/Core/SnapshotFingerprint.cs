@@ -28,7 +28,11 @@ public static class SnapshotFingerprint
             ActionCoverage = snapshot.ActionCoverage with
             {
                 Gaps = snapshot.ActionCoverage.Gaps.OrderBy(g => g.Start).ThenBy(g => g.End).ToArray()
-            }
+            },
+            ComparabilityCoverage = snapshot.ComparabilityCoverage is { } comparison ? comparison with
+            {
+                Gaps = comparison.Gaps.OrderBy(g => g.Start).ThenBy(g => g.End).ToArray()
+            } : null
         };
         return Convert.ToHexStringLower(SHA256.HashData(JsonSerializer.SerializeToUtf8Bytes(canonical, CanonicalOptions)));
     }

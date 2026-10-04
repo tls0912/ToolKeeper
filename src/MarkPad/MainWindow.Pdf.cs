@@ -44,8 +44,8 @@ public partial class MainWindow
                 return;
             }
             var overwrite = File.Exists(destination);
-            if (overwrite && Choose(T($"Replace the existing PDF?\n{destination}",
-                    $"要覆寫現有的 PDF 嗎？\n{destination}", $"既存の PDF を上書きしますか？\n{destination}"),
+            if (overwrite && Choose(F("Replace the existing PDF?\n{0}",
+                    "要覆寫現有的 PDF 嗎？\n{0}", "既存の PDF を上書きしますか？\n{0}", destination),
                     ("replace", T("Replace", "覆寫", "上書き")), ("cancel", T("Cancel", "取消", "キャンセル"))) != "replace") return;
             if (_disposed) return;
 
@@ -66,7 +66,7 @@ public partial class MainWindow
                 await export.ExportPdfAsync(markdown, sourcePath, options, destination, overwrite, outlineLevels);
             }
             finally { RootGrid.Children.Remove(export); }
-            Toast(T($"PDF exported: {Path.GetFileName(destination)}", $"已匯出 PDF：{Path.GetFileName(destination)}", $"PDF を書き出しました：{Path.GetFileName(destination)}"));
+            Toast(F("PDF exported: {0}", "已匯出 PDF：{0}", "PDF を書き出しました：{0}", Path.GetFileName(destination)));
         }
         finally
         {

@@ -1,5 +1,6 @@
-Adds startup license checks: valid trials can continue; expired licenses show a purchase prompt and close the app.
-After a full license is confirmed, later launches for the same Windows user and computer do not query the Store again.
-Includes Bamboo Light and Dark themes, xuan paper backgrounds, and traditional lettering options.
-Reading mode offers chapter navigation; editing mode provides a side-by-side live preview and font toolbar.
-
+Version 1.0.3
+Adds Simplified Chinese, Spanish, Arabic, French, and Korean, bringing the interface to eight languages.
+Shows three built-in reading articles in turn when no document is open, each available in all eight languages.
+Adds an option to remember open files when closing the app and reopen named files on the next launch.
+Applies the selected H1–H6 outline levels to both the preview chapter list and PDF bookmarks.
+Refines recent files, taskbar titles, the font menu, and startup initialization.

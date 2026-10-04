@@ -43,7 +43,7 @@ public sealed class DesktopRecoveryGuardTests
         var original = ReadRegion(window.Handle);
         Assert.NotNull(original);
 
-        Assert.True(DesktopRecoveryGuard.TryStartForOwnedWindow(window.Handle, System.IO.Path.Combine(AppContext.BaseDirectory, "ToolKeeper.exe"), out var guard, out var reason), reason);
+        var guard = new DpiAwareGuard(window.Handle);
         using (guard)
         {
             Assert.True(guard!.IsAlive);
@@ -58,7 +58,7 @@ public sealed class DesktopRecoveryGuardTests
     {
         using var window = new TestListView();
         Assert.Null(ReadRegion(window.Handle));
-        Assert.True(DesktopRecoveryGuard.TryStartForOwnedWindow(window.Handle, System.IO.Path.Combine(AppContext.BaseDirectory, "ToolKeeper.exe"), out var guard, out var reason), reason);
+        var guard = new DpiAwareGuard(window.Handle);
         using (guard) SetRegion(window.Handle, CreateRectRgn(10, 10, 20, 20));
         Assert.Null(ReadRegion(window.Handle));
     }
@@ -68,10 +68,10 @@ public sealed class DesktopRecoveryGuardTests
     {
         using var first = new TestListView();
         using var second = new TestListView();
-        Assert.True(DesktopRecoveryGuard.TryStartForOwnedWindow(first.Handle, System.IO.Path.Combine(AppContext.BaseDirectory, "ToolKeeper.exe"), out var firstGuard, out var reason), reason);
+        var firstGuard = new DpiAwareGuard(first.Handle);
         using (firstGuard)
         {
-            Assert.True(DesktopRecoveryGuard.TryStartForOwnedWindow(second.Handle, System.IO.Path.Combine(AppContext.BaseDirectory, "ToolKeeper.exe"), out var secondGuard, out reason), reason);
+            var secondGuard = new DpiAwareGuard(second.Handle);
             using (secondGuard)
             {
                 Assert.True(firstGuard!.IsAlive);
@@ -91,13 +91,13 @@ public sealed class DesktopRecoveryGuardTests
         using var window = new TestListView();
         SetRegion(window.Handle, CreateRectRgn(4, 7, 123, 145));
         var original = ReadRegion(window.Handle);
-        Assert.True(DesktopRecoveryGuard.TryStartForOwnedWindow(window.Handle, System.IO.Path.Combine(AppContext.BaseDirectory, "ToolKeeper.exe"), out var guard, out var reason), reason);
+        var guard = new DpiAwareGuard(window.Handle);
         using (guard)
         {
             SetRegion(window.Handle, CreateRectRgn(10, 10, 20, 20));
             // Simulate a broken parent connection without invoking the parent's restoration path.
             var pipe = (NamedPipeServerStream)typeof(DesktopRecoveryGuard)
-                .GetField("_pipe", BindingFlags.NonPublic | BindingFlags.Instance)!.GetValue(guard)!;
+                .GetField("_pipe", BindingFlags.NonPublic | BindingFlags.Instance)!.GetValue(guard.Value)!;
             pipe.Dispose();
             var deadline = Stopwatch.StartNew();
             while (!ReadRegion(window.Handle)!.SequenceEqual(original!) && deadline.Elapsed < TimeSpan.FromSeconds(10))
@@ -113,12 +113,12 @@ public sealed class DesktopRecoveryGuardTests
         using var window = new TestListView();
         SetRegion(window.Handle, CreateRectRgn(5, 8, 127, 149));
         var original = ReadRegion(window.Handle);
-        Assert.True(DesktopRecoveryGuard.TryStartForOwnedWindow(window.Handle, System.IO.Path.Combine(AppContext.BaseDirectory, "ToolKeeper.exe"), out var guard, out var reason), reason);
+        var guard = new DpiAwareGuard(window.Handle);
         using (guard)
         {
             SetRegion(window.Handle, CreateRectRgn(10, 10, 20, 20));
             var guardian = (Process)typeof(DesktopRecoveryGuard)
-                .GetField("_guardian", BindingFlags.NonPublic | BindingFlags.Instance)!.GetValue(guard)!;
+                .GetField("_guardian", BindingFlags.NonPublic | BindingFlags.Instance)!.GetValue(guard.Value)!;
             guardian.Kill();
             await guardian.WaitForExitAsync().WaitAsync(TimeSpan.FromSeconds(5));
             Assert.False(guard!.IsAlive);
@@ -129,6 +129,7 @@ public sealed class DesktopRecoveryGuardTests
     [Fact]
     public void ClipperPreservesOtherIconsAndRebuildsFromOriginalRegionOnUpdate()
     {
+        using var dpi = new NativeDpiScope();
         using var window = new TestListView();
         var originalRegion = CreateRectRgn(0, 0, 180, 180);
         var originalHole = CreateRectRgn(150, 0, 180, 30);
@@ -155,11 +156,11 @@ public sealed class DesktopRecoveryGuardTests
             return plan!;
         }
 
-        Assert.True(DesktopRecoveryGuard.TryStartForOwnedWindow(window.Handle, System.IO.Path.Combine(AppContext.BaseDirectory, "ToolKeeper.exe"), out var guard, out var reason), reason);
+        var guard = new DpiAwareGuard(window.Handle);
         using (guard)
         using (var clipper = new DesktopIconClipper(window.Handle, checked((uint)Environment.ProcessId)))
         {
-            Assert.True(clipper.TryApply(PlanAt(20), out reason), reason);
+            Assert.True(clipper.TryApply(PlanAt(20), out var reason), reason);
             AssertPointVisibility(window.Handle,
                 (30, 40, false), // Only the represented item is suppressed.
                 (100, 100, true), (5, 170, true), // System icon and background remain accessible.
@@ -177,6 +178,7 @@ public sealed class DesktopRecoveryGuardTests
     [Fact]
     public void ClipperHandlesNegativeWindowOriginAndSkipsFarOffscreenBoundsWithoutOverflow()
     {
+        using var dpi = new NativeDpiScope();
         using var window = new TestListView();
         Assert.True(NativeDesktop.SetWindowPos(window.Handle, 0, -400, -300, 0, 0, 0x0015));
         Assert.True(NativeDesktop.GetWindowRect(window.Handle, out var bounds));
@@ -199,7 +201,7 @@ public sealed class DesktopRecoveryGuardTests
             new("Recycle Bin", new System.Windows.Rect(bounds.Left + 90, bounds.Top + 90, 30, 30))
         ];
         Assert.True(DesktopClipPlan.TryCreate(shell, [localPath, distantPath], accessible, out var plan, out var reason), reason);
-        Assert.True(DesktopRecoveryGuard.TryStartForOwnedWindow(window.Handle, System.IO.Path.Combine(AppContext.BaseDirectory, "ToolKeeper.exe"), out var guard, out reason), reason);
+        var guard = new DpiAwareGuard(window.Handle);
         using (guard)
         using (var clipper = new DesktopIconClipper(window.Handle, checked((uint)Environment.ProcessId)))
         {
@@ -231,6 +233,7 @@ public sealed class DesktopRecoveryGuardTests
 
     private static void SetRegion(nint window, nint region)
     {
+        using var dpi = new NativeDpiScope();
         Assert.NotEqual(0, region);
         if (SetWindowRgn(window, region, false) == 0)
         {
@@ -241,6 +244,7 @@ public sealed class DesktopRecoveryGuardTests
 
     private static byte[]? ReadRegion(nint window)
     {
+        using var dpi = new NativeDpiScope();
         var region = CreateRectRgn(0, 0, 0, 0);
         try
         {
@@ -256,6 +260,7 @@ public sealed class DesktopRecoveryGuardTests
 
     private static void AssertPointVisibility(nint window, params (int X, int Y, bool Visible)[] points)
     {
+        using var dpi = new NativeDpiScope();
         var region = CreateRectRgn(0, 0, 0, 0);
         try
         {
@@ -265,6 +270,27 @@ public sealed class DesktopRecoveryGuardTests
                     $"Expected ({point.X}, {point.Y}) visible={point.Visible}.");
         }
         finally { DeleteObject(region); }
+    }
+
+    // Each guard operation has a synchronous DPI scope; async tests never carry it across await.
+    private sealed class DpiAwareGuard : IDisposable
+    {
+        public DesktopRecoveryGuard Value { get; }
+        public bool IsAlive => Value.IsAlive;
+
+        public DpiAwareGuard(nint window)
+        {
+            using var dpi = new NativeDpiScope();
+            Assert.True(DesktopRecoveryGuard.TryStartForOwnedWindow(window,
+                System.IO.Path.Combine(AppContext.BaseDirectory, "ToolKeeper.exe"), out var guard, out var reason), reason);
+            Value = guard!;
+        }
+
+        public void Dispose()
+        {
+            using var dpi = new NativeDpiScope();
+            Value.Dispose();
+        }
     }
 
     // The target has its own message pump so the helper can change its region cross-process.
@@ -283,6 +309,7 @@ public sealed class DesktopRecoveryGuardTests
                 nint window = 0;
                 try
                 {
+                    using var dpi = new NativeDpiScope();
                     var controls = new CommonControls { Size = 8, Classes = 1 };
                     if (!InitCommonControlsEx(ref controls)) throw new InvalidOperationException("Common controls initialization failed.");
                     window = CreateWindowEx(0, "SysListView32", "CabiDock recovery test", 0x80000000,

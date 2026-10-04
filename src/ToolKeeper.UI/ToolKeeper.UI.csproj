@@ -4,4 +4,9 @@
     <UseWPF>true</UseWPF>
     <Description>Shared ToolKeeper window, language, appearance, and About components.</Description>
   </PropertyGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Resources/Localization/*.json" Exclude="Resources/Localization/source.en.json" WithCulture="false">
+      <LogicalName>ToolKeeper.UI.Localization.%(Filename)%(Extension)</LogicalName>
+    </EmbeddedResource>
+  </ItemGroup>
 </Project>

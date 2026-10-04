@@ -1,0 +1,6 @@
+Novedades de la versión 1.0.3
+La interfaz incorpora chino simplificado, español, árabe, francés y coreano, y ahora ofrece ocho idiomas.
+Cuando no hay documentos abiertos, se muestran por turnos tres artículos integrados, cada uno disponible en los ocho idiomas.
+Una nueva opción permite recordar los archivos abiertos al salir y reabrir los documentos guardados en el próximo inicio.
+Los niveles H1–H6 seleccionados se aplican tanto al índice de la vista previa como a los marcadores del PDF.
+Se han ajustado la lista de archivos recientes, el título de la barra de tareas, el menú de fuentes y la inicialización de la aplicación.

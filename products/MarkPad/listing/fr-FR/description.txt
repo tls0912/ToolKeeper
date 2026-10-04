@@ -1,0 +1,13 @@
+汗青 - Markdown Writer vous aide à vous concentrer sur vos documents. Ouvrez des fichiers Markdown locaux dans un aperçu lisible, puis passez à l'édition lorsque vous souhaitez les modifier. Lisez des fichiers README, prenez des notes et rédigez des guides.
+
+En mode lecture, le plan des chapitres regroupe les titres H1–H6 pour accéder directement à une section. Choisissez les niveaux à afficher : cette sélection s'applique aussi aux signets des PDF exportés. En mode édition, rédigez le Markdown à gauche et consultez l'aperçu en temps réel à droite. Ouvrez plusieurs documents dans des onglets et révisez vos textes avec la recherche et le remplacement.
+
+Choisissez parmi quatre thèmes : Clair, Sombre, Bambou (clair) et Bambou (sombre). Les thèmes Bambou associent une interface inspirée du bambou à un fond de papier xuan. Réglez séparément la police et la taille du texte de l'interface, de l'aperçu et de l'éditeur. Utilisez l'écriture traditionnelle ou les polices installées sur votre ordinateur. La barre d'outils permet d'insérer des titres, du gras, de l'italique, du texte barré, du code en ligne et des liens.
+
+Travaillez avec des tableaux, des listes de tâches, des blocs de code, des notes de bas de page et des images locales. Enregistrez le fichier Markdown, puis exportez un PDF horodaté dans le même dossier. L'enregistrement automatique, les notifications de modifications externes et la récupération des brouillons après un arrêt inattendu facilitent le travail quotidien. Une option permet également de mémoriser les fichiers ouverts à la fermeture pour rouvrir, au prochain démarrage, les documents qui possèdent déjà un chemin d'enregistrement.
+
+Le traitement et l'aperçu des documents s'effectuent localement. L'interface est disponible en chinois traditionnel, anglais, japonais, chinois simplifié, espagnol, arabe, français et coréen. Lorsqu'aucun document n'est ouvert, trois articles intégrés s'affichent à tour de rôle, chacun dans les huit langues. L'article change au retour à l'écran sans document, sans interrompre la lecture en cours.
+
+Essayez l'application gratuitement pendant 7 jours. Microsoft Store gère la période d'essai et la licence. À la fin de l'essai, un achat unique de la version complète est nécessaire pour continuer à utiliser l'application. Aucun abonnement.
+
+L'aperçu et l'exportation en PDF nécessitent Microsoft Edge WebView2 Runtime.

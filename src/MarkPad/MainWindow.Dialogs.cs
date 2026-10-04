@@ -6,9 +6,9 @@ namespace MarkPad;
 
 public partial class MainWindow
 {
-    private Window Dialog(string title, UIElement body, StackPanel buttons)
+    private Window Dialog(string title, UIElement body, Panel buttons)
     {
-        var layout = new DockPanel { Margin = new Thickness(22) };
+        var layout = new DockPanel { Margin = new Thickness(22), FlowDirection = UiFlowDirection };
         DockPanel.SetDock(buttons, Dock.Bottom); buttons.Margin = new Thickness(0, 22, 0, 0); layout.Children.Add(buttons);
         layout.Children.Add(body);
         return new Window
@@ -23,7 +23,7 @@ public partial class MainWindow
     private string? Choose(string message, params (string Id, string Label)[] choices)
     {
         string? selected = null;
-        var buttons = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right };
+        var buttons = new WrapPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right };
         var text = new TextBlock { Text = message, TextWrapping = TextWrapping.Wrap };
         var dialog = Dialog("汗青", text, buttons);
         foreach (var (id, label) in choices)
@@ -49,7 +49,7 @@ public partial class MainWindow
             checks.Add((document, box)); list.Children.Add(box);
         }
         body.Children.Add(new ScrollViewer { Content = list, MaxHeight = 280, VerticalScrollBarVisibility = ScrollBarVisibility.Auto });
-        var buttons = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right };
+        var buttons = new WrapPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right };
         var dialog = Dialog("汗青", body, buttons);
         void Add(string label, Action action, bool cancel = false)
         {

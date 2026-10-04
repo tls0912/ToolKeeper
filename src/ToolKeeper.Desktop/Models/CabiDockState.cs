@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace CabiDock.Models;
 
 public enum ClassificationSource
@@ -11,6 +13,7 @@ public sealed class ClassifiedItem
     public string FullPath { get; set; } = string.Empty;
     public string? Identity { get; set; }
     public string CategoryId { get; set; } = string.Empty;
+    [JsonRequired]
     public ClassificationSource Source { get; set; }
 }
 
@@ -25,6 +28,8 @@ public sealed class GroupLayout
 public sealed class CabiDockState
 {
     public string? ConfigurationFingerprint { get; set; }
+    [JsonRequired]
     public List<ClassifiedItem> Items { get; set; } = [];
+    [JsonRequired]
     public Dictionary<string, GroupLayout> Groups { get; set; } = new(StringComparer.Ordinal);
 }

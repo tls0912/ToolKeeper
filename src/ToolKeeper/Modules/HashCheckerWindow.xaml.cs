@@ -166,7 +166,7 @@ public partial class HashCheckerWindow : AppWindow
         catch (ExternalException) { SetHashStatus(() => T("Clipboard is busy. Try again or select and copy a result.", "剪貼簿忙碌，請稍後重試，或選取結果後複製。", "クリップボードを使用中です。再試行するか、結果を選択してコピーしてください。")); }
     }
 
-    private void HashDragOver(object sender, DragEventArgs e) => UpdateDrag(sender, e, DroppedFiles(e).Length == 1);
+    private void HashDragOver(object sender, DragEventArgs e) => UpdateDrag(sender, e, IsSingleFile(DroppedFiles(e)));
 
     private async void HashDrop(object sender, DragEventArgs e)
     {
@@ -177,23 +177,18 @@ public partial class HashCheckerWindow : AppWindow
         ResetDropZone(sender);
         if (!e.AllowedEffects.HasFlag(DragDropEffects.Copy)) return;
         var paths = DroppedFiles(e);
-        if (paths.Length == 1)
+        if (IsSingleFile(paths))
         {
             e.Effects = DragDropEffects.Copy;
             await LoadHashFileAsync(paths[0]);
         }
-        else
+        else if (_hashCancellation is null && _hashResult is null)
         {
-            _hashCancellation?.Cancel();
-            _hashCancellation = null;
-            ClearHashResult();
-            HashProgress.Value = 0;
-            HashFileName.SetResourceReference(TextBlock.TextProperty, "ToolKeeper.OneFile");
-            HashFileName.ToolTip = null;
-            CancelHashButton.Visibility = Visibility.Collapsed;
-            SetHashStatus(() => T("Please drop one file at a time.", "請一次拖入一個檔案。", "一度に 1 ファイルをドロップしてください。"));
+            SetHashStatus(() => T("Please drop one existing file, not a folder.", "請拖入一個現有檔案，不接受資料夾。", "フォルダーではなく、存在するファイルを 1 つドロップしてください。"));
         }
     }
+
+    private static bool IsSingleFile(string[] paths) => paths.Length == 1 && File.Exists(paths[0]);
 
     private static string[] DroppedFiles(DragEventArgs e) =>
         e.Data.GetDataPresent(DataFormats.FileDrop) && e.Data.GetData(DataFormats.FileDrop) is string[] paths ? paths : [];
@@ -243,7 +238,6 @@ public partial class HashCheckerWindow : AppWindow
         ("ExpectedHash", "Expected hash", "預期雜湊值", "照合するハッシュ"),
         ("CompareEmpty", "Compare MD5, SHA-1 or SHA-256.", "可比對 MD5、SHA-1 或 SHA-256。", "MD5、SHA-1、SHA-256 を照合できます。"),
         ("NoFile", "No file selected.", "尚未選擇檔案。", "ファイルが選択されていません。"),
-        ("Badge", "Free · Local · Offline", "免費 · 本機處理 · 離線可用", "無料 · ローカル · オフライン"),
         ("Cancel", "Cancel", "取消", "キャンセル"),
         ("Privacy", "Your files stay on this computer. Every operation runs locally.", "檔案留在你的電腦，每次操作都在本機完成。", "ファイルはこのコンピューターに保持され、すべての処理はローカルで実行されます。"),
     ];

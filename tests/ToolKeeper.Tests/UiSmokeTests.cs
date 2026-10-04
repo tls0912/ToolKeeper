@@ -245,6 +245,51 @@ public sealed class UiSmokeTests
     });
 
     [Fact]
+    public Task RejectedHashDropsPreserveCompletedResultsAndRunningRequests() => OnSta(async () =>
+    {
+        using var fixture = new Fixture();
+        var path = fixture.WriteText("accepted.txt", "abc");
+        var folder = Path.GetDirectoryName(path)!;
+        var window = CreateHashWindow();
+        try
+        {
+            await window.LoadHashFileAsync(path);
+            var target = Get<Border>(window, "HashDropZone");
+            var rejected = new[]
+            {
+                new DataObject(DataFormats.FileDrop, new[] { folder }),
+                new DataObject(DataFormats.FileDrop, new[] { path, path }),
+                new DataObject(DataFormats.FileDrop, new[] { fixture.FilePath("missing.txt") }),
+                new DataObject(DataFormats.UnicodeText, "not a file")
+            };
+            foreach (var data in rejected)
+            {
+                Assert.Equal(DragDropEffects.None,
+                    RaiseDrag(target, DragDrop.PreviewDragOverEvent, data, DragDropEffects.Copy).Effects);
+                Assert.Equal(DragDropEffects.None,
+                    RaiseDrag(target, DragDrop.PreviewDropEvent, data, DragDropEffects.Copy).Effects);
+                AssertAbcHashes(window);
+                Assert.True(Get<Button>(window, "CopyHashesButton").IsEnabled);
+                Assert.Equal("accepted.txt", Get<TextBlock>(window, "HashFileName").Text);
+            }
+
+            var request = window.LoadHashFileAsync(path);
+            Assert.True(Get<Button>(window, "CancelHashButton").IsEnabled);
+            var status = Get<TextBlock>(window, "HashStatus").Text;
+            var folderDrop = new DataObject(DataFormats.FileDrop, new[] { folder });
+            Assert.Equal(DragDropEffects.None,
+                RaiseDrag(target, DragDrop.PreviewDropEvent, folderDrop, DragDropEffects.Copy).Effects);
+            Assert.True(Get<Button>(window, "CancelHashButton").IsEnabled);
+            Assert.Equal(status, Get<TextBlock>(window, "HashStatus").Text);
+            await request;
+            AssertAbcHashes(window);
+            Assert.True(Directory.Exists(folder));
+            Assert.Equal("abc", File.ReadAllText(path));
+        }
+        finally { window.Close(); }
+    });
+
+    [Fact]
     public Task BusyIconDropIsRejectedAndDoesNotConvertTheAdditionalImage() => OnSta(async () =>
     {
         using var fixture = new Fixture();

@@ -1,12 +1,17 @@
 using System.IO;
 using System.IO.Compression;
+using System.Net.Http;
 using System.Reflection;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
+using System.Windows.Data;
 using System.Windows.Documents;
+using System.Windows.Input;
+using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
@@ -79,7 +84,450 @@ public sealed class MainWindowTests
     });
 
     [Fact]
-    public Task MissingRuntimeUnsupportedJapaneseAndOversizeInputStayExplicit() => OnSta(async () =>
+    public Task DataManagementFiltersCatalogDirectionsAndTabSwitchingPreservesTranslation() => OnSta(async () =>
+    {
+        using var fixture = new UiFixture(runtimeAvailable: true);
+        await fixture.Service.ImportAsync(fixture.MakePack("installed.tlpack"));
+        var window = fixture.CreateWindow();
+        try
+        {
+            var source = Get<TextBox>(window, "SourceText");
+            source.Text = "Check D100 within 3000 ms.";
+            source.Select(6, 4);
+            ApplyResult(window, source.Text, "Check D100 within 3000 ms.");
+            Get<Button>(window, "CancelButton").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+            var frame = Assert.IsType<WindowFrame>(window.Content);
+            window.Content = null;
+            var host = new Border { Child = frame, Resources = window.Resources };
+            Assert.Equal(Visibility.Visible, Get<Grid>(window, "TranslationPage").Visibility);
+            Assert.Equal(Visibility.Collapsed, Get<ScrollViewer>(window, "DataPage").Visibility);
+            ShowPage(window, data: true);
+            Layout(host, 900, 720);
+            Assert.Equal(Visibility.Collapsed, Get<Grid>(window, "TranslationPage").Visibility);
+            Assert.Equal(Visibility.Visible, Get<ScrollViewer>(window, "DataPage").Visibility);
+            var downloadSource = Get<ComboBox>(window, "DownloadSourceLanguage");
+            var downloadTarget = Get<ComboBox>(window, "DownloadTargetLanguage");
+            var download = Get<Button>(window, "DownloadButton");
+            Assert.Equal(LanguagePackCatalog.Packs.Select(pack => pack.SourceLanguage).Distinct().Order(), OptionCodes(downloadSource).Order());
+            Assert.Contains($"{LanguagePackCatalog.Packs.SelectMany(pack => new[] { pack.SourceLanguage, pack.TargetLanguage }).Distinct().Count()} languages", Get<TextBlock>(window, "DownloadCatalogSummary").Text);
+            Assert.Contains($"{LanguagePackCatalog.Packs.Count} translation directions", Get<TextBlock>(window, "DownloadCatalogSummary").Text);
+            foreach (var sourceCode in OptionCodes(downloadSource))
+            {
+                downloadSource.SelectedValue = sourceCode;
+                var packs = LanguagePackCatalog.Packs.Where(pack => pack.SourceLanguage == sourceCode).ToArray();
+                Assert.Equal(packs.Select(pack => pack.TargetLanguage).Order(), OptionCodes(downloadTarget).Order());
+                Assert.DoesNotContain(sourceCode, OptionCodes(downloadTarget));
+                foreach (var pack in packs)
+                {
+                    downloadTarget.SelectedValue = pack.TargetLanguage;
+                    AssertDownloadDetailsMatchSelection(window, pack);
+                    Assert.Equal(pack.Id == "en-zh" ? "Installed" : "Download", download.Content);
+                    Assert.Equal(pack.Id != "en-zh", download.IsEnabled);
+                }
+            }
+            ShowPage(window, data: false);
+            Layout(host, 900, 720);
+            Assert.Equal("Check D100 within 3000 ms.", source.Text);
+            Assert.Equal((6, 4), (source.SelectionStart, source.SelectionLength));
+            Assert.Equal("Check D100 within 3000 ms.", Get<TextBox>(window, "TargetText").Text);
+            Get<ComboBox>(window, "TargetLanguage").SelectedValue = "fr";
+            Assert.Contains("Missing 1 language pack", Get<TextBlock>(window, "AvailabilityText").Text);
+            Assert.True(Get<Button>(window, "TranslateButton").IsEnabled);
+            Get<ComboBox>(window, "SourceLanguage").SelectedValue = "zh";
+            Assert.Contains("Via English", Get<TextBlock>(window, "AvailabilityText").Text);
+            Assert.Contains("Missing 2 language pack", Get<TextBlock>(window, "AvailabilityText").Text);
+            Assert.True(Get<Button>(window, "TranslateButton").IsEnabled);
+        }
+        finally { window.Close(); }
+    });
+
+    [Fact]
+    public Task DownloadSelectionPreferencesAndPagesKeepTranslationWithoutNetworkRequests() => OnSta(() =>
+    {
+        using var fixture = new UiFixture(runtimeAvailable: true);
+        using var transport = new CountingDownloadHandler();
+        using var client = new HttpClient(transport);
+        var window = fixture.CreateWindow(client);
+        try
+        {
+            var source = Get<TextBox>(window, "SourceText");
+            source.Text = "Keep D100 and 3000 ms.";
+            source.Select(5, 4);
+            ApplyResult(window, source.Text, "Retained translation D100 and 3000 ms.");
+            var downloadSource = Get<ComboBox>(window, "DownloadSourceLanguage");
+            var downloadTarget = Get<ComboBox>(window, "DownloadTargetLanguage");
+            downloadTarget.SelectedValue = "fr";
+            downloadSource.SelectedValue = "fr";
+            Assert.Equal("en", downloadTarget.SelectedValue);
+            downloadSource.SelectedValue = "en";
+            downloadTarget.SelectedValue = "fr";
+            foreach (var language in new[] { "en", "zh-TW", "ja" })
+            foreach (var theme in new[] { "Ink", "InkDark" })
+            {
+                window.SelectedLanguage = language;
+                window.SelectedTheme = theme;
+                ShowPage(window, data: true);
+                Activate(window);
+                Assert.Equal("en", downloadSource.SelectedValue);
+                Assert.Equal("fr", downloadTarget.SelectedValue);
+                AssertDownloadDetailsMatchSelection(window, LanguagePackCatalog.Packs.Single(pack => pack.Id == "en-fr"));
+                ShowPage(window, data: false);
+                Assert.Equal("en", Get<ComboBox>(window, "SourceLanguage").SelectedValue);
+                Assert.Equal("zh", Get<ComboBox>(window, "TargetLanguage").SelectedValue);
+                Assert.Equal("Keep D100 and 3000 ms.", source.Text);
+                Assert.Equal((5, 4), (source.SelectionStart, source.SelectionLength));
+                Assert.Equal("Retained translation D100 and 3000 ms.", Get<TextBox>(window, "TargetText").Text);
+                Assert.True(Get<Button>(window, "CopyButton").IsEnabled);
+                Assert.Empty(fixture.Service.GetInstalledPacks());
+                Assert.Equal(0, transport.RequestCount);
+                Assert.Equal(Visibility.Collapsed, Get<ProgressBar>(window, "OperationProgress").Visibility);
+            }
+        }
+        finally { window.Close(); }
+        return Task.CompletedTask;
+    });
+
+    [Fact]
+    public Task DownloadSelectionSurvivesImportRemovalAndExternalPackRefresh() => OnSta(async () =>
+    {
+        using var fixture = new UiFixture(runtimeAvailable: true);
+        var window = fixture.CreateWindow();
+        try
+        {
+            Get<ComboBox>(window, "DownloadTargetLanguage").SelectedValue = "fr";
+            var download = Get<Button>(window, "DownloadButton");
+            Assert.True(download.IsEnabled);
+            await window.ImportPackAsync(fixture.MakePack("unrelated.tlpack"));
+            Assert.Equal("en-fr", download.Tag);
+            Assert.Equal("Download", download.Content);
+            Assert.True(download.IsEnabled);
+
+            var external = new LanguagePackService(fixture.PackDirectory, NoModelValidation);
+            await external.ImportAsync(fixture.MakePack("external-fr.tlpack", "en", "fr"));
+            Activate(window);
+            Assert.Equal("en-fr", download.Tag);
+            Assert.Equal("Installed", download.Content);
+            Assert.False(download.IsEnabled);
+
+            var frame = Assert.IsType<WindowFrame>(window.Content);
+            window.Content = null;
+            var host = new Border { Child = frame, Resources = window.Resources };
+            Layout(host, 900, 720);
+            var remove = Assert.Single(Descendants(Get<ItemsControl>(window, "PacksList")).OfType<Button>(), button => Equals(button.Tag, "en-fr"));
+            remove.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+            await WaitUntilAsync(() => Get<ProgressBar>(window, "OperationProgress").Visibility == Visibility.Collapsed);
+            Assert.Equal("en-fr", download.Tag);
+            Assert.Equal("Download", download.Content);
+            Assert.True(download.IsEnabled);
+            Assert.DoesNotContain(fixture.Service.GetInstalledPacks(), pack => pack.Manifest.Id == "en-fr");
+
+            await window.ImportPackAsync(fixture.MakePack("ui-fr.tlpack", "en", "fr"));
+            Assert.Equal("en-fr", download.Tag);
+            Assert.Equal("Installed", download.Content);
+            Assert.False(download.IsEnabled);
+            external.Remove("en-fr");
+            ShowPage(window, data: true);
+            Assert.Equal("en", Get<ComboBox>(window, "DownloadSourceLanguage").SelectedValue);
+            Assert.Equal("fr", Get<ComboBox>(window, "DownloadTargetLanguage").SelectedValue);
+            Assert.Equal("en-fr", download.Tag);
+            Assert.Equal("Download", download.Content);
+            Assert.True(download.IsEnabled);
+        }
+        finally { window.Close(); }
+    });
+
+    [Fact]
+    public Task BusyOperationsDisableDownloadSelectorsAndRestoreTheirSelection() => OnSta(async () =>
+    {
+        using var fixture = new UiFixture(runtimeAvailable: true);
+        using var transport = new CountingDownloadHandler();
+        using var client = new HttpClient(transport);
+        var window = fixture.CreateWindow(client);
+        var release = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        try
+        {
+            var source = Get<ComboBox>(window, "DownloadSourceLanguage");
+            var target = Get<ComboBox>(window, "DownloadTargetLanguage");
+            target.SelectedValue = "fr";
+            var operation = InvokeTask(window, "RunOperationAsync", new Func<CancellationToken, Task>(_ => release.Task));
+            foreach (var language in new[] { "en", "zh-TW", "ja" })
+            {
+                window.SelectedLanguage = language;
+                ShowPage(window, data: true);
+                Activate(window);
+                Assert.False(source.IsEnabled);
+                Assert.False(target.IsEnabled);
+                Assert.False(Get<Button>(window, "DownloadButton").IsEnabled);
+                Assert.False(Get<Button>(window, "ImportButton").IsEnabled);
+                Assert.Equal("en", source.SelectedValue);
+                Assert.Equal("fr", target.SelectedValue);
+                await window.DownloadPackAsync("en-fr");
+                Assert.Equal(0, transport.RequestCount);
+            }
+            release.SetResult();
+            await operation;
+            Assert.True(source.IsEnabled);
+            Assert.True(target.IsEnabled);
+            Assert.True(Get<Button>(window, "DownloadButton").IsEnabled);
+            Assert.True(Get<Button>(window, "ImportButton").IsEnabled);
+            Assert.Equal("en", source.SelectedValue);
+            Assert.Equal("fr", target.SelectedValue);
+            Assert.Equal("en-fr", Get<Button>(window, "DownloadButton").Tag);
+        }
+        finally { release.TrySetResult(); window.Close(); }
+    });
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public Task AcceptingMissingPivotPacksDownloadsOnlyMissingDirectionsOnTheDataPage(bool firstPackInstalled) => OnSta(async () =>
+    {
+        using var fixture = new UiFixture(runtimeAvailable: true);
+        if (firstPackInstalled)
+            await fixture.Service.ImportAsync(fixture.MakePack("installed-zh-en.tlpack", "zh", "en"));
+        var prompts = new List<string[]>();
+        var downloads = new List<(string Id, object Source, object Target, Visibility Page)>();
+        MainWindow? window = null;
+        window = fixture.CreateWindow(confirmMissingPacks: packs =>
+        {
+            prompts.Add(packs.Select(pack => pack.Id).ToArray());
+            return true;
+        }, downloadPack: async (pack, progress, token) =>
+        {
+            downloads.Add((pack.Id, Get<ComboBox>(window!, "DownloadSourceLanguage").SelectedValue,
+                Get<ComboBox>(window!, "DownloadTargetLanguage").SelectedValue, Get<ScrollViewer>(window!, "DataPage").Visibility));
+            await fixture.Service.ImportAsync(fixture.MakePack("download-" + pack.Id + ".tlpack", pack.SourceLanguage, pack.TargetLanguage), null, token);
+        });
+        try
+        {
+            // The direction change must offer missing packs even before the user enters text.
+            Get<ComboBox>(window, "SourceLanguage").SelectedValue = "zh";
+            Get<ComboBox>(window, "TargetLanguage").SelectedValue = "fr";
+            await WaitUntilAsync(() => Get<ProgressBar>(window, "OperationProgress").Visibility == Visibility.Collapsed && fixture.Service.Find("en", "fr") is not null);
+            var expected = firstPackInstalled ? new[] { "en-fr" } : new[] { "zh-en", "en-fr" };
+            Assert.Equal(expected, Assert.Single(prompts));
+            Assert.Equal(expected, downloads.Select(download => download.Id).ToArray());
+            foreach (var download in downloads)
+            {
+                var pack = LanguagePackCatalog.Packs.Single(pack => pack.Id == download.Id);
+                Assert.Equal(pack.SourceLanguage, download.Source);
+                Assert.Equal(pack.TargetLanguage, download.Target);
+                Assert.Equal(Visibility.Visible, download.Page);
+            }
+            Assert.Equal(new[] { "en-fr", "zh-en" }, fixture.Service.GetInstalledPacks().Select(pack => pack.Manifest.Id).Order().ToArray());
+            Assert.Equal(Visibility.Visible, Get<ScrollViewer>(window, "DataPage").Visibility);
+            Assert.Equal(Visibility.Collapsed, Get<Grid>(window, "TranslationPage").Visibility);
+            Assert.Equal("en", Get<ComboBox>(window, "DownloadSourceLanguage").SelectedValue);
+            Assert.Equal("fr", Get<ComboBox>(window, "DownloadTargetLanguage").SelectedValue);
+            Assert.Empty(Get<TextBox>(window, "SourceText").Text);
+            Assert.Empty(Get<TextBox>(window, "TargetText").Text);
+            Assert.Contains("Offline ready", Get<TextBlock>(window, "AvailabilityText").Text);
+            Assert.Contains("Via English", Get<TextBlock>(window, "AvailabilityText").Text);
+        }
+        finally
+        {
+            window.Close();
+            // Wait for a cancelled import to release its archive before fixture cleanup.
+            await WaitUntilAsync(() => typeof(MainWindow).GetField("_operation", PrivateInstance)!.GetValue(window) is null);
+        }
+    });
+
+    [Fact]
+    public Task DecliningMissingPivotPacksPreservesInputAndSuppressesTypingPromptsUntilRetryOrDirectionChange() => OnSta(async () =>
+    {
+        using var fixture = new UiFixture(runtimeAvailable: true);
+        var prompts = new List<string[]>();
+        var downloads = new List<string>();
+        var window = fixture.CreateWindow(confirmMissingPacks: packs =>
+        {
+            prompts.Add(packs.Select(pack => pack.Id).ToArray());
+            return false;
+        }, downloadPack: (pack, _, _) =>
+        {
+            downloads.Add(pack.Id);
+            return Task.CompletedTask;
+        });
+        try
+        {
+            Get<ComboBox>(window, "SourceLanguage").SelectedValue = "zh";
+            Get<ComboBox>(window, "TargetLanguage").SelectedValue = "fr";
+            await WaitUntilAsync(() => prompts.Count == 1);
+            Assert.Equal(new[] { "zh-en", "en-fr" }, prompts[0]);
+            var source = Get<TextBox>(window, "SourceText");
+            source.Text = "原文 D100";
+            await Task.Delay(700);
+            source.AppendText(" 3000 ms");
+            await Task.Delay(700);
+            Assert.Single(prompts);
+            Assert.True(Get<Button>(window, "TranslateButton").IsEnabled);
+            await window.TranslateAsync();
+            Assert.Equal(2, prompts.Count);
+            Assert.Equal(prompts[0], prompts[1]);
+            Get<ComboBox>(window, "TargetLanguage").SelectedValue = "ja";
+            await WaitUntilAsync(() => prompts.Count == 3);
+            Assert.Equal(new[] { "zh-en", "en-ja" }, prompts[2]);
+            Assert.Empty(downloads);
+            Assert.Empty(fixture.Service.GetInstalledPacks());
+            Assert.Equal("原文 D100 3000 ms", source.Text);
+            Assert.Empty(Get<TextBox>(window, "TargetText").Text);
+            Assert.Equal(Visibility.Visible, Get<Grid>(window, "TranslationPage").Visibility);
+            Assert.False(Get<Button>(window, "CopyButton").IsEnabled);
+        }
+        finally { window.Close(); }
+    });
+
+    [Fact]
+    public Task MissingDirectPackConfirmationWaitsForTypingToPause() => OnSta(async () =>
+    {
+        using var fixture = new UiFixture(runtimeAvailable: true);
+        var prompts = new List<string[]>();
+        var window = fixture.CreateWindow(confirmMissingPacks: packs =>
+        {
+            prompts.Add(packs.Select(pack => pack.Id).ToArray());
+            return false;
+        });
+        try
+        {
+            var source = Get<TextBox>(window, "SourceText");
+            source.Text = "first input";
+            await Task.Delay(250);
+            Assert.Empty(prompts);
+            source.AppendText(" still typing");
+            await Task.Delay(250);
+            Assert.Empty(prompts);
+            source.Text = "Final pasted text";
+            await WaitUntilAsync(() => prompts.Count == 1);
+            Assert.Equal(new[] { "en-zh" }, Assert.Single(prompts));
+            Assert.Equal("Final pasted text", source.Text);
+            Assert.Empty(Get<TextBox>(window, "TargetText").Text);
+            Assert.Empty(fixture.Service.GetInstalledPacks());
+        }
+        finally { window.Close(); }
+    });
+
+    [Fact]
+    public Task CancellingAutomaticPackDownloadStopsRemainingDirectionsAndCannotReenterConfirmation() => OnSta(async () =>
+    {
+        using var fixture = new UiFixture(runtimeAvailable: true);
+        var downloads = new List<string>();
+        var prompts = 0;
+        var window = fixture.CreateWindow(confirmMissingPacks: _ => { prompts++; return true; }, downloadPack: async (pack, _, token) =>
+        {
+            downloads.Add(pack.Id);
+            await Task.Delay(Timeout.Infinite, token);
+        });
+        try
+        {
+            Get<TextBox>(window, "SourceText").Text = "Keep original D100";
+            Get<ComboBox>(window, "SourceLanguage").SelectedValue = "zh";
+            Get<ComboBox>(window, "TargetLanguage").SelectedValue = "fr";
+            await WaitUntilAsync(() => downloads.Count == 1);
+            Assert.True(Get<Button>(window, "CancelButton").IsEnabled);
+            Assert.False(Get<ComboBox>(window, "DownloadSourceLanguage").IsEnabled);
+            Assert.False(Get<ComboBox>(window, "DownloadTargetLanguage").IsEnabled);
+            await window.TranslateAsync();
+            Assert.Equal(1, prompts);
+            Get<Button>(window, "CancelButton").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+            await WaitUntilAsync(() => Get<ProgressBar>(window, "OperationProgress").Visibility == Visibility.Collapsed);
+            await Task.Delay(700);
+            Assert.Equal(new[] { "zh-en" }, downloads);
+            Assert.Equal(1, prompts);
+            Assert.Empty(fixture.Service.GetInstalledPacks());
+            Assert.Equal("Keep original D100", Get<TextBox>(window, "SourceText").Text);
+            Assert.Empty(Get<TextBox>(window, "TargetText").Text);
+            Assert.Contains("cancelled", Get<TextBlock>(window, "StatusText").Text);
+            Assert.False(Get<Button>(window, "CancelButton").IsEnabled);
+            Assert.True(Get<ComboBox>(window, "DownloadSourceLanguage").IsEnabled);
+            Assert.True(Get<ComboBox>(window, "DownloadTargetLanguage").IsEnabled);
+        }
+        finally { window.Close(); }
+    });
+
+    [Fact]
+    public Task FailedAutomaticPackDownloadStopsRemainingDirectionsAndPreservesOriginalText() => OnSta(async () =>
+    {
+        using var fixture = new UiFixture(runtimeAvailable: true);
+        var downloads = new List<string>();
+        var window = fixture.CreateWindow(confirmMissingPacks: _ => true, downloadPack: (pack, _, _) =>
+        {
+            downloads.Add(pack.Id);
+            return Task.FromException(new IOException("PRIVATE download fixture diagnostic"));
+        });
+        try
+        {
+            Get<TextBox>(window, "SourceText").Text = "Keep original D100";
+            Get<ComboBox>(window, "SourceLanguage").SelectedValue = "zh";
+            Get<ComboBox>(window, "TargetLanguage").SelectedValue = "fr";
+            await WaitUntilAsync(() => downloads.Count > 0 && Get<ProgressBar>(window, "OperationProgress").Visibility == Visibility.Collapsed);
+            await Task.Delay(700);
+            Assert.Equal(new[] { "zh-en" }, downloads);
+            Assert.Empty(fixture.Service.GetInstalledPacks());
+            Assert.Equal("Keep original D100", Get<TextBox>(window, "SourceText").Text);
+            Assert.Empty(Get<TextBox>(window, "TargetText").Text);
+            Assert.False(Get<Button>(window, "CopyButton").IsEnabled);
+            Assert.Equal(Visibility.Visible, Get<ScrollViewer>(window, "DataPage").Visibility);
+            Assert.Contains("Cannot read or save the language pack", Get<TextBlock>(window, "StatusText").Text);
+            Assert.DoesNotContain("PRIVATE", Get<TextBlock>(window, "StatusText").Text);
+            Assert.True(Get<Button>(window, "ImportButton").IsEnabled);
+            Assert.False(Get<TextBox>(window, "SourceText").IsReadOnly);
+        }
+        finally { window.Close(); }
+    });
+
+    [Fact]
+    public Task DownloadDropdownsShowReadableOptionsAndSupportKeyboardSelection() => OnSta(() =>
+    {
+        using var fixture = new UiFixture(runtimeAvailable: true);
+        var window = fixture.CreateWindow();
+        try
+        {
+            var frame = Assert.IsType<WindowFrame>(window.Content);
+            window.Content = null;
+            var host = new Border { Child = frame, Resources = window.Resources };
+            host.SetResourceReference(TextElement.FontFamilyProperty, "UiFontFamily");
+            host.SetResourceReference(TextElement.FontSizeProperty, "UiFontSize");
+            using var presentation = new HwndSource(new HwndSourceParameters("TransLamp dropdown verification")
+            {
+                Width = 900, Height = 720, PositionX = -10000, PositionY = -10000,
+                WindowStyle = unchecked((int)0x80000000)
+            }) { RootVisual = host };
+            ShowPage(window, data: true);
+            var source = Get<ComboBox>(window, "DownloadSourceLanguage");
+            var target = Get<ComboBox>(window, "DownloadTargetLanguage");
+            foreach (var language in new[] { "en", "zh-TW", "ja" })
+            foreach (var theme in new[] { "Ink", "InkDark" })
+            {
+                window.SelectedLanguage = language;
+                window.SelectedTheme = theme;
+                source.SelectedValue = "en";
+                target.SelectedValue = "zh";
+                Layout(host, 900, 720);
+                RaiseKey(source, presentation, Key.F4);
+                AssertReadablePopup(window, source, $"dropdown-{language}-{theme}-source.png");
+                RaiseKey(source, presentation, Key.F4);
+                Assert.False(source.IsDropDownOpen);
+                RaiseKey(source, presentation, Key.End);
+                Assert.Equal(OptionCodes(source).Last(), source.SelectedValue);
+                Assert.Equal("en", target.SelectedValue);
+                AssertDownloadDetailsMatchSelection(window, LanguagePackCatalog.Packs.Single(pack => pack.Id == Get<Button>(window, "DownloadButton").Tag as string));
+                RaiseKey(source, presentation, Key.Home);
+                Assert.Equal("en", source.SelectedValue);
+                Layout(host, 900, 720);
+                RaiseKey(target, presentation, Key.F4);
+                AssertReadablePopup(window, target, $"dropdown-{language}-{theme}-target.png");
+                RaiseKey(target, presentation, Key.F4);
+                Assert.False(target.IsDropDownOpen);
+                RaiseKey(target, presentation, Key.End);
+                Assert.Equal(OptionCodes(target).Last(), target.SelectedValue);
+                AssertDownloadDetailsMatchSelection(window, LanguagePackCatalog.Packs.Single(pack => pack.Id == Get<Button>(window, "DownloadButton").Tag as string));
+            }
+        }
+        finally { window.Close(); }
+        return Task.CompletedTask;
+    });
+
+    [Fact]
+    public Task MissingRuntimeUnsupportedDirectionAndOversizeInputStayExplicit() => OnSta(async () =>
     {
         var window = CreateWindow();
         try
@@ -92,10 +540,12 @@ public sealed class MainWindowTests
             Assert.Same(window.Resources["ErrorBrush"], Get<TextBlock>(window, "SourceCount").Foreground);
             Assert.False(Get<Button>(window, "TranslateButton").IsEnabled);
             Assert.Contains("runtime not found", Get<TextBlock>(window, "AvailabilityText").Text);
-            Get<ComboBox>(window, "TargetLanguage").SelectedValue = "ja";
-            Assert.Contains("Japanese packs are not available", Get<TextBlock>(window, "AvailabilityText").Text);
+            Get<ComboBox>(window, "SourceLanguage").SelectedValue = "es";
+            Get<ComboBox>(window, "TargetLanguage").SelectedValue = "en";
+            Assert.Contains("direction is not available", Get<TextBlock>(window, "AvailabilityText").Text);
             await window.TranslateAsync();
             Assert.Empty(Get<TextBox>(window, "TargetText").Text);
+            Get<ComboBox>(window, "SourceLanguage").SelectedValue = "en";
             Get<ComboBox>(window, "TargetLanguage").SelectedValue = "en";
             Assert.Contains("different source and target", Get<TextBlock>(window, "AvailabilityText").Text);
         }
@@ -173,7 +623,8 @@ public sealed class MainWindowTests
             var source = Get<TextBox>(window, "SourceText");
             source.Text = "Check device";
             Assert.Empty(Get<ItemsControl>(window, "PacksList").Items);
-            Assert.False(Get<Button>(window, "TranslateButton").IsEnabled);
+            Assert.Contains("Missing 1 language pack", Get<TextBlock>(window, "AvailabilityText").Text);
+            Assert.True(Get<Button>(window, "TranslateButton").IsEnabled);
             var externalService = new LanguagePackService(fixture.PackDirectory, NoModelValidation);
             await externalService.ImportAsync(fixture.MakePack("external.tlpack"));
             Assert.Empty(Get<ItemsControl>(window, "PacksList").Items);
@@ -184,10 +635,11 @@ public sealed class MainWindowTests
             externalService.Remove("en-zh");
             Activate(window);
             Assert.Empty(Get<ItemsControl>(window, "PacksList").Items);
-            Assert.False(Get<Button>(window, "TranslateButton").IsEnabled);
+            Assert.Contains("Missing 1 language pack", Get<TextBlock>(window, "AvailabilityText").Text);
+            Assert.True(Get<Button>(window, "TranslateButton").IsEnabled);
             Assert.Equal("Check device", source.Text);
             await externalService.ImportAsync(fixture.MakePack("external-reimport.tlpack"));
-            Get<Expander>(window, "PacksExpander").IsExpanded = true;
+            Get<Button>(window, "DataTab").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
             Assert.Single(Get<ItemsControl>(window, "PacksList").Items);
             Assert.True(Get<Button>(window, "TranslateButton").IsEnabled);
         }
@@ -233,7 +685,7 @@ public sealed class MainWindowTests
                 Assert.False(Get<Button>(window, "TranslateButton").IsEnabled);
                 Assert.Contains("Another TransLamp window", Get<TextBlock>(window, "StatusText").Text);
                 Assert.DoesNotContain(fixture.RootDirectory, Get<TextBlock>(window, "StatusText").Text);
-                Get<Expander>(window, "PacksExpander").IsExpanded = true;
+                Get<Button>(window, "DataTab").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
                 Assert.Empty(Get<ItemsControl>(window, "PacksList").Items);
             }
             Activate(window);
@@ -283,7 +735,7 @@ public sealed class MainWindowTests
     });
 
     [Fact]
-    public Task LiteralWarningAndExpandedPacksFitTheMinimumSizeInThreeLanguages() => OnSta(async () =>
+    public Task LiteralWarningAndBothPagesFitTheMinimumSizeInThreeLanguages() => OnSta(async () =>
     {
         using var fixture = new UiFixture();
         await fixture.Service.ImportAsync(fixture.MakePack("en-zh.tlpack"));
@@ -306,11 +758,11 @@ public sealed class MainWindowTests
             {
                 window.SelectedLanguage = language;
                 window.SelectedTheme = theme;
-                Get<Expander>(window, "PacksExpander").IsExpanded = true;
+                ShowPage(window, data: false);
                 Layout(host, 900, 720);
-                foreach (var name in new[] { "PasteButton", "CopyButton", "CancelButton", "PacksExpander", "StatusText", "QualityWarning" })
+                foreach (var name in new[] { "PasteButton", "CopyButton", "CancelButton", "TranslationTab", "DataTab", "StatusText", "QualityWarning" })
                     AssertWithinViewport(Get<FrameworkElement>(window, name), host, 900, 720);
-                var qualityNotice = Assert.IsType<Grid>(window.Workspace).Children.OfType<TextBlock>().Single(text => Grid.GetRow(text) == 5);
+                var qualityNotice = Get<TextBlock>(window, "QualityNotice");
                 AssertWithinViewport(qualityNotice, host, 900, 720);
                 AssertWithinVisibleAncestors(qualityNotice, host);
                 AssertWithinVisibleAncestors(Get<Button>(window, "CopyButton"), host);
@@ -330,7 +782,22 @@ public sealed class MainWindowTests
                 Assert.True(warningScroll.VerticalOffset > 0);
                 Assert.True(warningScroll.VerticalOffset + warningScroll.ViewportHeight >= warningScroll.ExtentHeight - 1);
                 Assert.True(Get<TextBlock>(window, "QualityWarningText").ActualWidth <= warningScroll.ViewportWidth + 1);
-                SaveImage(host, $"literal-warning-{language}-{theme}-packs.png");
+                SaveImage(host, $"literal-warning-{language}-{theme}-translation.png");
+                ShowPage(window, data: true);
+                Get<ScrollViewer>(window, "DataPage").ScrollToTop();
+                Layout(host, 900, 720);
+                Assert.Equal(Visibility.Collapsed, Get<Grid>(window, "TranslationPage").Visibility);
+                AssertWithinViewport(Get<ScrollViewer>(window, "DataPage"), host, 900, 720);
+                AssertWithinVisibleAncestors(Get<Border>(window, "QualityWarning"), host);
+                AssertDownloadTitleUsesThemeForeground(window);
+                foreach (var name in new[] { "DownloadSourceLanguage", "DownloadTargetLanguage", "DownloadDetails", "DownloadButton", "ImportButton" })
+                    AssertWithinViewport(Get<FrameworkElement>(window, name), host, 900, 720);
+                SaveImage(host, $"literal-warning-{language}-{theme}-data.png");
+                Get<ScrollViewer>(window, "DataPage").ScrollToEnd();
+                Layout(host, 900, 720);
+                AssertWithinViewport(Get<Button>(window, "ImportButton"), host, 900, 720);
+                AssertPackTitlesUseThemeForeground(window, "PacksList", expectedCount: 2);
+                SaveImage(host, $"literal-warning-{language}-{theme}-data-installed.png");
             }
         }
         finally { window.Close(); }
@@ -406,7 +873,8 @@ public sealed class MainWindowTests
     [Fact]
     public Task ThreeLanguagesAndBambooThemesRenderAtMinimumSize() => OnSta(() =>
     {
-        var window = CreateWindow();
+        using var fixture = new UiFixture(runtimeAvailable: true);
+        var window = fixture.CreateWindow();
         try
         {
             Get<TextBox>(window, "SourceText").Text = "Error E104: The connection timed out.\nCheck the cable and try again.";
@@ -417,23 +885,58 @@ public sealed class MainWindowTests
             host.SetResourceReference(TextElement.FontSizeProperty, "UiFontSize");
             foreach (var language in new[] { "en", "zh-TW", "ja" })
             foreach (var theme in new[] { "Ink", "InkDark" })
-            foreach (var expanded in new[] { false, true })
             {
                 window.SelectedLanguage = language;
                 window.SelectedTheme = theme;
-                Get<Expander>(window, "PacksExpander").IsExpanded = expanded;
+                Get<ComboBox>(window, "SourceLanguage").SelectedValue = "en";
+                Get<ComboBox>(window, "TargetLanguage").SelectedValue = "zh";
+                ShowPage(window, data: false);
                 Layout(host, 900, 720);
-                foreach (var name in new[] { "PasteButton", "CopyButton", "CancelButton", "PacksExpander", "StatusText" })
+                foreach (var name in new[] { "PasteButton", "CopyButton", "CancelButton", "TranslationTab", "DataTab", "StatusText" })
                 {
-                    var element = Get<FrameworkElement>(window, name);
-                    var origin = element.TransformToAncestor(host).Transform(new Point());
-                    Assert.InRange(origin.X, 0, 900);
-                    Assert.InRange(origin.Y, 0, 720);
-                    Assert.InRange(origin.X + element.ActualWidth, 1, 901);
-                    Assert.InRange(origin.Y + element.ActualHeight, 1, 721);
+                    AssertWithinViewport(Get<FrameworkElement>(window, name), host, 900, 720);
+                    AssertWithinVisibleAncestors(Get<FrameworkElement>(window, name), host);
                 }
                 Assert.True(Get<TextBox>(window, "SourceText").ActualHeight >= 70);
-                SaveImage(host, $"{language}-{theme}-{(expanded ? "packs" : "translation")}.png");
+                AssertWithinVisibleAncestors(Get<TextBox>(window, "SourceText"), host);
+                AssertWithinVisibleAncestors(Get<TextBox>(window, "TargetText"), host);
+                SaveImage(host, $"{language}-{theme}-translation.png");
+
+                Get<ComboBox>(window, "SourceLanguage").SelectedValue = "zh";
+                Get<ComboBox>(window, "TargetLanguage").SelectedValue = "fr";
+                Layout(host, 900, 720);
+                var availability = Get<TextBlock>(window, "AvailabilityText");
+                Assert.Equal(TextWrapping.Wrap, availability.TextWrapping);
+                AssertWithinViewport(availability, host, 900, 720);
+                AssertWithinVisibleAncestors(availability, host);
+                AssertWithinVisibleAncestors(Get<TextBox>(window, "SourceText"), host);
+                AssertWithinVisibleAncestors(Get<TextBox>(window, "TargetText"), host);
+                Assert.True(Get<TextBox>(window, "SourceText").ActualHeight >= 70);
+                SaveImage(host, $"pivot-{language}-{theme}.png");
+
+                ShowPage(window, data: true);
+                var data = Get<ScrollViewer>(window, "DataPage");
+                data.ScrollToTop();
+                Layout(host, 900, 720);
+                Assert.Equal(Visibility.Collapsed, Get<Grid>(window, "TranslationPage").Visibility);
+                Assert.Equal(Visibility.Visible, data.Visibility);
+                foreach (var name in new[] { "TranslationTab", "DataTab", "DataPage", "CancelButton", "StatusText" })
+                {
+                    AssertWithinViewport(Get<FrameworkElement>(window, name), host, 900, 720);
+                    AssertWithinVisibleAncestors(Get<FrameworkElement>(window, name), host);
+                }
+                AssertDownloadTitleUsesThemeForeground(window);
+                foreach (var name in new[] { "DownloadSourceLanguage", "DownloadTargetLanguage", "DownloadDetails", "DownloadButton", "ImportButton" })
+                {
+                    AssertWithinViewport(Get<FrameworkElement>(window, name), host, 900, 720);
+                    AssertWithinVisibleAncestors(Get<FrameworkElement>(window, name), host);
+                }
+                SaveImage(host, $"{language}-{theme}-data.png");
+                data.ScrollToEnd();
+                Layout(host, 900, 720);
+                AssertWithinViewport(Get<Button>(window, "ImportButton"), host, 900, 720);
+                AssertWithinViewport(Get<TextBlock>(window, "PackLocation"), host, 900, 720);
+                SaveImage(host, $"{language}-{theme}-data-installed.png");
             }
         }
         finally { window.Close(); }
@@ -473,13 +976,97 @@ public sealed class MainWindowTests
     private static MainWindow CreateWindow()
     {
         var root = Path.Combine(Path.GetTempPath(), "TransLamp.UiTests", Guid.NewGuid().ToString("N"));
-        return new MainWindow(new LanguagePackService(Path.Combine(root, "packs"), NoModelValidation), new TranslationEngine(Path.Combine(root, "runtime")), Path.Combine(root, "bundled"))
+        return new MainWindow(new LanguagePackService(Path.Combine(root, "packs"), NoModelValidation), new TranslationEngine(Path.Combine(root, "runtime")), Path.Combine(root, "bundled"), _ => false, null)
         {
             PreferencesPath = null, ShowActivated = false, ShowInTaskbar = false
         };
     }
 
     private static T Get<T>(MainWindow window, string name) where T : class => Assert.IsAssignableFrom<T>(window.FindName(name));
+
+    private static void ShowPage(MainWindow window, bool data) =>
+        Get<Button>(window, data ? "DataTab" : "TranslationTab").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+
+    private static IEnumerable<DependencyObject> Descendants(DependencyObject parent)
+    {
+        for (var index = 0; index < VisualTreeHelper.GetChildrenCount(parent); index++)
+        {
+            var child = VisualTreeHelper.GetChild(parent, index);
+            yield return child;
+            foreach (var descendant in Descendants(child)) yield return descendant;
+        }
+    }
+
+    private static void AssertPackTitlesUseThemeForeground(MainWindow window, string listName, int expectedCount)
+    {
+        var titles = Descendants(Get<ItemsControl>(window, listName)).OfType<TextBlock>()
+            .Where(text => BindingOperations.GetBinding(text, TextBlock.TextProperty)?.Path.Path == "Title").ToArray();
+        Assert.Equal(expectedCount, titles.Length);
+        var expected = Assert.IsType<SolidColorBrush>(window.Resources["TextBrush"]);
+        Assert.All(titles, title => Assert.Equal(expected.Color, Assert.IsType<SolidColorBrush>(title.Foreground).Color));
+    }
+
+    private static string[] OptionCodes(ComboBox combo) => combo.Items.Cast<object>()
+        .Select(item => (string)item.GetType().GetProperty("Code")!.GetValue(item)!).ToArray();
+
+    private static string OptionLabel(object item) => (string)item.GetType().GetProperty("Label")!.GetValue(item)!;
+
+    private static void AssertDownloadDetailsMatchSelection(MainWindow window, DownloadableLanguagePack pack)
+    {
+        Assert.Equal(pack.Id, Get<Button>(window, "DownloadButton").Tag);
+        Assert.Equal($"{OptionLabel(Get<ComboBox>(window, "DownloadSourceLanguage").SelectedItem)} → {OptionLabel(Get<ComboBox>(window, "DownloadTargetLanguage").SelectedItem)}", Get<TextBlock>(window, "DownloadPackTitle").Text);
+        Assert.Contains(pack.Version, Get<TextBlock>(window, "DownloadPackDetails").Text);
+        Assert.Contains(pack.License, Get<TextBlock>(window, "DownloadPackDetails").Text);
+        Assert.Contains(pack.Source, Get<TextBlock>(window, "DownloadPackSource").Text);
+    }
+
+    private static void AssertDownloadTitleUsesThemeForeground(MainWindow window) =>
+        Assert.Equal(Assert.IsType<SolidColorBrush>(window.Resources["TextBrush"]).Color,
+            Assert.IsType<SolidColorBrush>(Get<TextBlock>(window, "DownloadPackTitle").Foreground).Color);
+
+    private static void RaiseKey(ComboBox combo, PresentationSource presentation, Key key) =>
+        combo.RaiseEvent(new KeyEventArgs(Keyboard.PrimaryDevice, presentation, Environment.TickCount, key) { RoutedEvent = Keyboard.KeyDownEvent });
+
+    private static void AssertReadablePopup(MainWindow window, ComboBox combo, string imageName)
+    {
+        Assert.True(combo.IsDropDownOpen);
+        Dispatcher.CurrentDispatcher.Invoke(() => { }, DispatcherPriority.ContextIdle);
+        var popup = Assert.IsType<Popup>(combo.Template.FindName("PART_Popup", combo));
+        var surface = Assert.IsType<Border>(popup.Child);
+        surface.UpdateLayout();
+        Assert.True(popup.IsOpen);
+        Assert.InRange(surface.ActualHeight, 1, combo.MaxDropDownHeight);
+        Assert.True(surface.ActualWidth >= combo.ActualWidth);
+        var background = Assert.IsType<SolidColorBrush>(surface.Background).Color;
+        var foreground = Assert.IsType<SolidColorBrush>(window.Resources["TextBrush"]).Color;
+        Assert.Equal(Assert.IsType<SolidColorBrush>(window.Resources["SurfaceBrush"]).Color, background);
+        Assert.True(ContrastRatio(foreground, background) >= 4.5, "Dropdown option text must remain readable against its popup surface.");
+        foreach (var item in combo.Items)
+        {
+            var container = Assert.IsType<ComboBoxItem>(combo.ItemContainerGenerator.ContainerFromItem(item));
+            Assert.Equal(foreground, Assert.IsType<SolidColorBrush>(container.Foreground).Color);
+            var label = Assert.Single(Descendants(container).OfType<TextBlock>(), text => text.Text == OptionLabel(item));
+            Assert.Equal(foreground, Assert.IsType<SolidColorBrush>(label.Foreground).Color);
+            Assert.True(label.ActualWidth > 0 && label.ActualHeight > 0);
+            Assert.True(label.ActualWidth <= container.ActualWidth);
+        }
+        SaveImage(surface, imageName, (int)Math.Ceiling(surface.ActualWidth), (int)Math.Ceiling(surface.ActualHeight));
+    }
+
+    private static double ContrastRatio(Color first, Color second)
+    {
+        static double Channel(byte value) => value / 255d <= 0.04045 ? value / 255d / 12.92 : Math.Pow((value / 255d + 0.055) / 1.055, 2.4);
+        static double Luminance(Color color) => 0.2126 * Channel(color.R) + 0.7152 * Channel(color.G) + 0.0722 * Channel(color.B);
+        var a = Luminance(first);
+        var b = Luminance(second);
+        return (Math.Max(a, b) + 0.05) / (Math.Min(a, b) + 0.05);
+    }
+
+    private static async Task WaitUntilAsync(Func<bool> condition)
+    {
+        using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+        while (!condition()) await Task.Delay(10, timeout.Token);
+    }
 
     private static readonly BindingFlags PrivateInstance = BindingFlags.Instance | BindingFlags.NonPublic;
     private static void Activate(MainWindow window) => typeof(MainWindow).GetMethod("OnActivated", PrivateInstance)!.Invoke(window, [EventArgs.Empty]);
@@ -496,6 +1083,8 @@ public sealed class MainWindowTests
 
     private static void AssertWithinViewport(FrameworkElement element, FrameworkElement host, int width, int height)
     {
+        Assert.Equal(Visibility.Visible, element.Visibility);
+        Assert.True(element.ActualWidth > 0 && element.ActualHeight > 0, $"{element.Name} has no rendered size.");
         var origin = element.TransformToAncestor(host).Transform(new Point());
         Assert.InRange(origin.X, 0, width);
         Assert.InRange(origin.Y, 0, height);
@@ -545,10 +1134,18 @@ public sealed class MainWindowTests
             Service = new LanguagePackService(PackDirectory, validator ?? NoModelValidation);
         }
 
-        public MainWindow CreateWindow() => new(Service, Engine, BundledDirectory)
+        public MainWindow CreateWindow(HttpClient? downloadClient = null,
+            Func<IReadOnlyList<DownloadableLanguagePack>, bool>? confirmMissingPacks = null,
+            Func<DownloadableLanguagePack, IProgress<LanguagePackDownloadProgress>?, CancellationToken, Task>? downloadPack = null)
         {
-            PreferencesPath = null, ShowActivated = false, ShowInTaskbar = false, SelectedLanguage = "en"
-        };
+            var window = new MainWindow(Service, Engine, BundledDirectory, confirmMissingPacks ?? (_ => false), downloadPack)
+            {
+                PreferencesPath = null, ShowActivated = false, ShowInTaskbar = false, SelectedLanguage = "en"
+            };
+            if (downloadClient is not null)
+                typeof(MainWindow).GetField("_downloads", PrivateInstance)!.SetValue(window, new LanguagePackDownloadService(Service, downloadClient));
+            return window;
+        }
 
         public string MakePack(string fileName, string source = "en", string target = "zh")
         {
@@ -564,7 +1161,8 @@ public sealed class MainWindowTests
             var manifest = new LanguagePackManifest
             {
                 SchemaVersion = 1, Id = source + "-" + target, SourceLanguage = source, TargetLanguage = target,
-                DisplayName = "UI fixture " + source + " → " + target, PackageVersion = "1.0.0", ModelName = "UI fixture", ModelVersion = "1",
+                DisplayName = "UI fixture " + source + " → " + target, PackageVersion = "1.0.0", ModelName = "UI fixture",
+                ModelVersion = LanguagePackCatalog.Packs.Single(pack => pack.Id == source + "-" + target).Version,
                 Runtime = LanguagePackService.SupportedRuntime, ModelSource = "https://example.test/fixture", LicenseIdentifier = "MIT",
                 Files = files.Select(pair => new LanguagePackFile { Path = pair.Key, Size = pair.Value.LongLength, Sha256 = Convert.ToHexString(SHA256.HashData(pair.Value)).ToLowerInvariant() }).ToList()
             };
@@ -589,6 +1187,17 @@ public sealed class MainWindowTests
         }
     }
 
+    private sealed class CountingDownloadHandler : HttpMessageHandler
+    {
+        public int RequestCount { get; private set; }
+
+        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+        {
+            RequestCount++;
+            throw new HttpRequestException("An ordinary UI selection must not send a download request.");
+        }
+    }
+
     private static void Layout(FrameworkElement host, int width, int height)
     {
         host.Measure(new Size(width, height));
@@ -598,14 +1207,14 @@ public sealed class MainWindowTests
         host.UpdateLayout();
     }
 
-    private static void SaveImage(FrameworkElement host, string name)
+    private static void SaveImage(FrameworkElement host, string name, int width = 900, int height = 720)
     {
         var root = new DirectoryInfo(AppContext.BaseDirectory);
         while (root is not null && !File.Exists(Path.Combine(root.FullName, "ToolKeeper.sln"))) root = root.Parent;
         Assert.NotNull(root);
         var directory = Path.Combine(root.FullName, "artifacts", "translamp-ui");
         Directory.CreateDirectory(directory);
-        var bitmap = new RenderTargetBitmap(900, 720, 96, 96, PixelFormats.Pbgra32);
+        var bitmap = new RenderTargetBitmap(width, height, 96, 96, PixelFormats.Pbgra32);
         bitmap.Render(host);
         var encoder = new PngBitmapEncoder();
         encoder.Frames.Add(BitmapFrame.Create(bitmap));

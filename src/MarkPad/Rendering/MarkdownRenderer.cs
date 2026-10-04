@@ -20,7 +20,7 @@ namespace MarkPad.Rendering;
 
 public sealed record PreviewOptions(bool Dark = false, string FontFamily = "Segoe UI", double FontSize = 16,
     bool CodeLineNumbers = false, bool EmojiShortcodes = false, string Language = "en", bool ReadOnly = false,
-    string? DocumentTitle = null, bool Ink = false);
+    string? DocumentTitle = null, bool Ink = false, bool? RightToLeft = null);
 
 public sealed record PreviewHeading(string Id, string Title, int Level, int Line);
 
@@ -123,14 +123,29 @@ public sealed class MarkdownRenderer
         var font = new string(options.FontFamily.Where(c => char.IsLetterOrDigit(c) || " -_,".Contains(c)).Take(120).ToArray());
         if (string.IsNullOrWhiteSpace(font)) font = "Segoe UI";
         var size = double.IsFinite(options.FontSize) ? Math.Clamp(options.FontSize, 8, 72) : 16;
-        var config = JsonSerializer.Serialize(new { token, markdown, language = options.Language, codeLineNumbers = options.CodeLineNumbers, readOnly = options.ReadOnly });
+        var uiDirection = UiLanguage.IsRightToLeft(options.Language) ? "rtl" : "ltr";
+        var documentDirection = options.RightToLeft is { } rightToLeft ? rightToLeft ? "rtl" : "ltr" : "auto";
+        var labels = new
+        {
+            copy = Translate(options.Language, "Copy", "複製", "コピー"),
+            copied = Translate(options.Language, "Copied", "已複製", "コピーしました"),
+            copyMarkdown = Translate(options.Language, "Copy as Markdown", "複製 Markdown", "Markdown としてコピー"),
+            selectAll = Translate(options.Language, "Select All", "全選", "すべて選択"),
+            open = Translate(options.Language, "Open Link", "開啟連結", "リンクを開く"),
+            copyLink = Translate(options.Language, "Copy Link", "複製連結", "リンクをコピー"),
+            edit = Translate(options.Language, "Edit Here", "在此編輯", "ここを編集"),
+            fold = Translate(options.Language, "Fold section", "折疊段落", "セクションを折りたたむ"),
+            close = Translate(options.Language, "Close image", "關閉圖片", "画像を閉じる")
+        };
+        var config = JsonSerializer.Serialize(new { token, markdown, language = options.Language, uiDirection, labels,
+            codeLineNumbers = options.CodeLineNumbers, readOnly = options.ReadOnly });
         var html = $$"""
-            <!doctype html><html lang="{{WebUtility.HtmlEncode(options.Language)}}" class="{{(options.Dark ? "dark" : "light")}}{{(options.Ink ? " ink" : "")}}" data-theme="{{(options.Ink ? options.Dark ? "ink-dark" : "ink" : options.Dark ? "dark" : "light")}}">
+            <!doctype html><html lang="{{WebUtility.HtmlEncode(options.Language)}}" dir="{{uiDirection}}" class="{{(options.Dark ? "dark" : "light")}}{{(options.Ink ? " ink" : "")}}" data-theme="{{(options.Ink ? options.Dark ? "ink-dark" : "ink" : options.Dark ? "dark" : "light")}}">
             <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
             <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'nonce-{{nonce}}'; style-src 'nonce-{{nonce}}'; img-src {{Origin}}; connect-src 'none'; frame-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
             <title>{{WebUtility.HtmlEncode(options.DocumentTitle ?? "汗青")}}</title><style nonce="{{nonce}}">{{Styles.Value}}
             :root { --reading-font: '{{font}}', 'Segoe UI', sans-serif; --reading-size: {{size.ToString(CultureInfo.InvariantCulture)}}px; }
-            </style></head><body><main id="document" aria-label="Markdown">{{body.InnerHtml}}</main>
+            </style></head><body><main id="document" dir="{{documentDirection}}" aria-label="Markdown">{{body.InnerHtml}}</main>
             <script nonce="{{nonce}}">window.markpadConfig={{config}};{{Script.Value}}</script></body></html>
             """;
         return new RenderedPreview(html, token, images, headings);
@@ -204,7 +219,12 @@ public sealed class MarkdownRenderer
         if (href.StartsWith("//", StringComparison.Ordinal) || href.StartsWith('\\')) return false;
         if (Uri.TryCreate(href, UriKind.Absolute, out var uri))
             return uri.Scheme is "http" or "https" or "mailto";
-        return !href.Contains(':');
+        // The host decodes local links before opening them. Validate that same path,
+        // so escaped UNC roots, drive names and file: URLs cannot become local links.
+        var fragment = href.IndexOf('#');
+        var local = Uri.UnescapeDataString(fragment < 0 ? href : href[..fragment]);
+        return !string.IsNullOrWhiteSpace(local) && !Path.IsPathRooted(local)
+            && !local.Contains(':') && !local.Any(char.IsControl);
     }
 
     /// <summary>Restricts preview images to the document directory tree; network paths and reparse points are rejected.</summary>

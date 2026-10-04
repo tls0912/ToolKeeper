@@ -16,6 +16,15 @@ public static class SnapshotValidator
         var instrument = snapshot.Instrument;
         var calendar = snapshot.Calendar;
         var coverage = snapshot.ActionCoverage;
+        var comparison = snapshot.ComparabilityCoverage;
+        var comparisonVerified = comparison is { IsVerified: true } &&
+            snapshot.SourceId == "TWSE" && instrument.Market == "TWSE" && !snapshot.IsSynthetic &&
+            instrument.SecurityType == SecurityType.CommonStock && comparison.SourceId == "TWSE/STOCK_DAY" &&
+            !string.IsNullOrWhiteSpace(comparison.Version) && comparison.CoverageStart <= comparison.CoverageEnd;
+        if (comparison is not null && (!comparisonVerified || comparison.Gaps is null ||
+            comparison.Gaps.Any(g => g is null || g.Start > g.End ||
+                g.Start < comparison.CoverageStart || g.End > comparison.CoverageEnd)))
+            Add("PriceComparisonCoverageInvalid", "原價可比性覆蓋的來源、版本或缺口格式不正確。", true);
         if (string.IsNullOrWhiteSpace(instrument.InstrumentId) || string.IsNullOrWhiteSpace(instrument.Market) ||
             string.IsNullOrWhiteSpace(instrument.Code) || string.IsNullOrWhiteSpace(snapshot.SourceId) ||
             string.IsNullOrWhiteSpace(snapshot.DataVersion))
@@ -31,7 +40,9 @@ public static class SnapshotValidator
             Add("CalendarEmpty", "缺少明確的市場交易日序列。", true);
         if (!coverage.IsVerified || string.IsNullOrWhiteSpace(coverage.Version) ||
             string.IsNullOrWhiteSpace(coverage.SourceId) || coverage.CoverageStart > coverage.CoverageEnd)
-            Add("CorporateActionCoverageUnknown", "公司行動覆蓋未經確認，不能把查不到資料視為沒有行動。", true);
+            Add("CorporateActionCoverageUnknown", comparisonVerified
+                ? "公司行動目錄未確認完整；僅使用官方價差核對的原價可比區段，不跨越不比價或公司行動邊界。"
+                : "公司行動覆蓋未經確認，且沒有已確認的原價可比性覆蓋，不能把查不到資料視為沒有行動。", !comparisonVerified);
         if (coverage.Gaps is null || coverage.Gaps.Any(g => g is null || g.Start > g.End ||
             g.Start < coverage.CoverageStart || g.End > coverage.CoverageEnd))
             Add("CorporateActionCoverageInvalid", "公司行動覆蓋缺口格式不正確。", true);
@@ -99,8 +110,8 @@ public static class SnapshotValidator
         ExclusionReason.InvalidBar => "價格、OHLC 關係或數量異常",
         ExclusionReason.MissingVolume => "條件所需成交量缺值",
         ExclusionReason.UndefinedFeature => "特徵分母為零，無法計算",
-        ExclusionReason.CorporateActionCoverageUnknown => "公司行動覆蓋不足或有缺口",
-        ExclusionReason.CorporateActionInWindow => "研究窗口跨越公司行動",
+        ExclusionReason.CorporateActionCoverageUnknown => "公司行動或原價可比性覆蓋不足或有缺口",
+        ExclusionReason.CorporateActionInWindow => "研究窗口跨越公司行動或不比價邊界",
         ExclusionReason.InsufficientFutureData => "截止日前後續交易日資料不足",
         ExclusionReason.EventStartUnknown => "前一交易日不可判定，事件起點不確定",
         ExclusionReason.ConsecutiveMatch => "同一連續成立期間已合併",

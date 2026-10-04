@@ -1,0 +1,13 @@
+汗青 - Markdown Writer te ayuda a centrarte en tus documentos. Abre archivos Markdown locales en una vista previa fácil de leer y pasa al modo de edición cuando quieras hacer cambios. Es útil para leer archivos README, tomar notas y redactar guías.
+
+En el modo de lectura, el índice de capítulos reúne los títulos H1–H6 para que puedas ir directamente a una sección. Elige qué niveles se muestran: la misma selección se aplica a los marcadores de los PDF exportados. En el modo de edición, escribe Markdown a la izquierda y consulta la vista previa en tiempo real a la derecha. Abre varios documentos en pestañas y revisa el texto con la búsqueda y sustitución.
+
+Elige entre cuatro temas: Claro, Oscuro, Bambú claro y Bambú oscuro. Los temas de bambú combinan una interfaz inspirada en el bambú con un fondo de papel xuan. Ajusta por separado la fuente y el tamaño del texto de la interfaz, la vista previa y el editor. Usa la tipografía tradicional o las fuentes instaladas en tu equipo. La barra de herramientas permite insertar títulos, negrita, cursiva, texto tachado, código en línea y enlaces.
+
+Trabaja con tablas, listas de tareas, bloques de código, notas al pie e imágenes locales. Guarda el archivo Markdown y exporta un PDF con fecha y hora en la misma carpeta. El guardado automático, los avisos de cambios externos y la recuperación de borradores tras un cierre inesperado te acompañan en el trabajo diario. También puedes activar la opción de recordar los archivos abiertos al salir para reabrir los documentos que ya tienen una ruta guardada en el próximo inicio.
+
+Los documentos se procesan y se previsualizan localmente. La interfaz está disponible en chino tradicional, inglés, japonés, chino simplificado, español, árabe, francés y coreano. Cuando no hay documentos abiertos, se muestran por turnos tres artículos integrados, cada uno disponible en los ocho idiomas. El artículo cambia al volver a la pantalla sin documentos, sin interrumpir la lectura.
+
+Prueba la aplicación gratis durante 7 días. Microsoft Store gestiona el período de prueba y la licencia. Al terminar la prueba, se requiere una compra única de la versión completa para seguir usando la aplicación. No hay suscripción.
+
+La vista previa y la exportación a PDF requieren Microsoft Edge WebView2 Runtime.

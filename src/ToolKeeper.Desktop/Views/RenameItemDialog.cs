@@ -72,7 +72,7 @@ internal sealed class RenameItemDialog : Window
 
     internal static void Show(FrameworkElement anchor, DesktopItem item)
     {
-        var dialog = new RenameItemDialog(item, anchor.TryFindResource("DesktopTheme") as string ?? "Light");
+        var dialog = new RenameItemDialog(item, anchor.TryFindResource("DesktopTheme") as string ?? "Ink");
         if (PresentationSource.FromVisual(anchor) is HwndSource source)
             new WindowInteropHelper(dialog).Owner = source.Handle;
         dialog.ShowDialog();

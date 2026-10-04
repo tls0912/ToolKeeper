@@ -49,6 +49,8 @@ frame.ApplyLanguage(language);
 
 汗青的全螢幕模式用 `IsFullScreen`、`IsCaptionVisible`、`CaptionLeftInset` 與 `CaptionRevealRequested` 接上共用標題列；螢幕範圍、還原位置、側欄與文件狀態仍由汗青管理。不要為不同布局再複製一套標題列或視窗按鈕。
 
+需要固定頂列、動態工作列標題時，可用 `new WindowFrame(this, captionTitle: "汗青")`。指定文字僅套用到頂列及其提示；`Window.Title` 繼續供 Windows 工作列使用。省略 `captionTitle` 的工具仍跟隨 `Window.Title`。
+
 `UiAppearance.ApplyResources` 一次更新調色盤、竹材／紙紋、介面字型及 `ChromeTextShadow` 資源，只作用於指定字典。`ChromeTextShadow` 與 `Resources/ChromeTextStyles.xaml` 已從汗青移至 `ToolKeeper.UI`，保留既有陰影開關、厚度、資源 key 與繪製方式。閱讀和編輯字型不是視窗介面字型，仍由文件產品處理。
 
 ## 模組與宿主的責任
@@ -100,7 +102,9 @@ var language = UiLanguage.Resolve(Settings.Language);
 var label = UiLanguage.Text(language, "Theme", "主題", "テーマ");
 ```
 
-可保存的語言值為 `System`、`en`、`zh-TW`、`ja`。`Resolve` 預設讀取 `CultureInfo.CurrentUICulture.Name`，也可傳入第二個參數指定系統語言供測試。系統語言為 `zh-TW`、`zh-HK`、`zh-MO` 或 `zh-Hant*` 時解析為繁體中文，`ja*` 解析為日文，其餘為英文。
+預設可保存的語言值為 `System`、`en`、`zh-TW`、`ja`。`Resolve` 預設讀取 `CultureInfo.CurrentUICulture.Name`，也可傳入第二個參數指定系統語言供測試。系統語言為 `zh-TW`、`zh-HK`、`zh-MO` 或 `zh-Hant*` 時解析為繁體中文，`ja*` 解析為日文，其餘為英文。
+
+汗青另外在 `IsSupported`、`Resolve`、`Choices` 與 `PreferenceMenus.AddLanguageChoices` 明確傳入 `includeAdditionalLanguages: true`，啟用 `zh-CN`、`es`、`ar`、`fr`、`ko`。其他產品沿用原 API 時維持原有語系範圍。新增語系的 `Text` 從 `Resources/Localization/{code}.json` 讀取並快取；英文原文是穩定鍵，`source.en.json` 保存完整鍵清單及繁中對照，供翻譯與驗證使用，不打包進產品。包含執行期資料的字串以 `UiLanguage.Format` 及 `{0}` 等參數處理，不用字串插值作為查詢鍵。`IsRightToLeft` 可用於阿拉伯文閱讀與選單，文件及程式碼方向由宿主分別處理。
 
 `Settings.Language` 必須保留使用者選擇的原始值；例如 `System` 解析成 `zh-TW` 後，仍保存 `System`。把解析後的值傳給 `Text`、字體解析與選項標籤，把原始值傳給選單的 `selected` 參數，才能正確勾選「跟隨系統」。模組不修改執行緒文化設定。
 

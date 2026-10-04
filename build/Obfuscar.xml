@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Obfuscator>
+  <!-- Preserve public cross-assembly, XAML, binding and serialized contracts. -->
+  <Var name="KeepPublicApi" value="true" />
+  <Var name="HidePrivateApi" value="true" />
+  <Var name="HideStrings" value="true" />
+  <Var name="RenameProperties" value="false" />
+  <Var name="KeepProperties" value="true" />
+  <Var name="RenameEvents" value="false" />
+  <Var name="AnalyzeXaml" value="true" />
+  <Var name="SkipGenerated" value="true" />
+  <Var name="RegenerateDebugInfo" value="false" />
+  <Var name="XmlMapping" value="true" />
+  <Module file="ToolKeeper.dll" />
+  <Module file="ToolKeeper.Desktop.dll" />
+  <Module file="ToolKeeper.UI.dll" />
+  <Module file="Hanqing.dll" />
+  <Module file="ConvAnvil.dll" />
+  <Module file="HistoLens.dll" />
+  <Module file="TransLamp.dll" />
+</Obfuscator>

@@ -293,7 +293,7 @@ public sealed class LanguagePackService
             if (info.Length is <= 0 or > MaximumManifestBytes || info.Attributes.HasFlag(FileAttributes.ReparsePoint)) throw InvalidPack();
             var transaction = JsonSerializer.Deserialize<PackTransaction>(File.ReadAllText(path), LanguagePackManifest.JsonOptions)
                 ?? throw InvalidPack();
-            if (transaction.Id is not ("en-zh" or "zh-en") || path != TransactionPath(transaction.Id) ||
+            if (!LanguagePackCatalog.SupportsId(transaction.Id) || path != TransactionPath(transaction.Id) ||
                 transaction.Kind is not ("install" or "remove") ||
                 !OwnedDirectoryName(transaction.BackupDirectory, transaction.Kind == "install" ? ".previous-" : ".removing-") ||
                 !transaction.BackupDirectory.StartsWith((transaction.Kind == "install" ? ".previous-" : ".removing-") + transaction.Id + "-", StringComparison.Ordinal) ||
@@ -359,7 +359,8 @@ public sealed class LanguagePackService
     }
 
     private static bool OwnedDirectoryName(string? name, string prefix) => name is not null &&
-        Regex.IsMatch(name, "\\A" + Regex.Escape(prefix) + (prefix == ".install-" ? "" : "(?:(?:en-zh|zh-en)-)?") + "[0-9a-f]{32}\\z");
+        Regex.IsMatch(name, "\\A" + Regex.Escape(prefix) + (prefix == ".install-" ? "" :
+            "(?:(?:" + string.Join('|', LanguagePackCatalog.Packs.Select(pack => Regex.Escape(pack.Id))) + ")-)?") + "[0-9a-f]{32}\\z");
 
     private static void WriteDurableFile(string path, string value)
     {
@@ -408,8 +409,8 @@ public sealed class LanguagePackService
             new[] { manifest.DisplayName, manifest.ModelName, manifest.ModelVersion, manifest.LicenseIdentifier }
                 .Any(value => string.IsNullOrWhiteSpace(value) || value.Length > 512) ||
             !Uri.TryCreate(manifest.ModelSource, UriKind.Absolute, out var source) || source.Scheme != "https") throw InvalidPack();
-        if ((manifest.SourceLanguage, manifest.TargetLanguage) is not (("en", "zh") or ("zh", "en")))
-            throw new TransLampException("unsupported-direction", "目前僅支援中文與 English 之間的雙向語言包。");
+        if (!LanguagePackCatalog.SupportsDirection(manifest.SourceLanguage, manifest.TargetLanguage))
+            throw new TransLampException("unsupported-direction", "目前不支援這個方向，請使用資料管理中列出的語言包。");
         if (manifest.Files is null || manifest.Files.Count is < 5 or > 100) throw InvalidPack();
         var paths = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         long total = 0;
@@ -420,9 +421,14 @@ public sealed class LanguagePackService
             total += file.Size;
             if (total > MaximumPackBytes) throw InvalidPack();
         }
-        foreach (var required in new[] { "LICENSE", "NOTICE", "model/model.bin", "model/config.json", "sentencepiece.model" })
+        foreach (var required in new[] { "LICENSE", "NOTICE", "model/model.bin", "sentencepiece.model" })
             if (!manifest.Files.Any(file => file.Path == required)) throw InvalidPack();
-        if (!manifest.Files.Any(file => file.Path is "model/shared_vocabulary.json" or "model/vocabulary.json" or "model/source_vocabulary.json")) throw InvalidPack();
+        // Official legacy CT2 models carry settings in model.bin and a text vocabulary.
+        // Keep the established JSON layout intact; the real CPU loader validates either layout before commit.
+        var legacyVocabulary = paths.Contains("model/shared_vocabulary.txt");
+        var currentVocabulary = manifest.Files.Any(file => file.Path is "model/shared_vocabulary.json" or
+            "model/vocabulary.json" or "model/source_vocabulary.json");
+        if (!legacyVocabulary && (!paths.Contains("model/config.json") || !currentVocabulary)) throw InvalidPack();
     }
 
     private static bool ValidLanguage(string? value) => value is not null && Regex.IsMatch(value, "\\A[a-z]{2,3}(?:-[a-z]{2,4})?\\z");
@@ -432,7 +438,7 @@ public sealed class LanguagePackService
     }
 
     private static bool ValidPayloadPath(string? path) => path is "LICENSE" or "NOTICE" or "sentencepiece.model" or
-        "model/model.bin" or "model/config.json" or "model/shared_vocabulary.json" or "model/vocabulary.json" or
+        "model/model.bin" or "model/config.json" or "model/shared_vocabulary.json" or "model/shared_vocabulary.txt" or "model/vocabulary.json" or
         "model/source_vocabulary.json" or "model/target_vocabulary.json";
 
     private static void VerifyStream(Stream input, LanguagePackFile file, Stream? output, CancellationToken cancellationToken)

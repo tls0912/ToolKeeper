@@ -37,7 +37,10 @@ public sealed class WindowFrame : Grid
     private bool _closed;
     private string _language = "en";
 
-    public WindowFrame(Window owner)
+    public WindowFrame(Window owner) : this(owner, null) { }
+
+    /// <summary>An optional fixed caption leaves the owner's native taskbar title independent.</summary>
+    public WindowFrame(Window owner, string? captionTitle)
     {
         ArgumentNullException.ThrowIfNull(owner);
         _owner = owner;
@@ -80,8 +83,16 @@ public sealed class WindowFrame : Grid
             VerticalAlignment = VerticalAlignment.Center, TextWrapping = TextWrapping.NoWrap,
             TextTrimming = TextTrimming.CharacterEllipsis
         };
-        title.SetBinding(TextBlock.TextProperty, new Binding(nameof(Window.Title)) { Source = owner });
-        title.SetBinding(ToolTipProperty, new Binding(nameof(Window.Title)) { Source = owner });
+        if (captionTitle is null)
+        {
+            title.SetBinding(TextBlock.TextProperty, new Binding(nameof(Window.Title)) { Source = owner });
+            title.SetBinding(ToolTipProperty, new Binding(nameof(Window.Title)) { Source = owner });
+        }
+        else
+        {
+            title.Text = captionTitle;
+            title.ToolTip = captionTitle;
+        }
         title.SetResourceReference(TextBlock.ForegroundProperty, "TextBrush");
         var titleShadow = new ChromeTextShadow(title);
         SetColumn(titleShadow, 1);

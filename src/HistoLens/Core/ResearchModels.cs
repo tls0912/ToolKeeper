@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace HistoLens.Core;
 
 public enum SecurityType { CommonStock, Synthetic }
@@ -81,6 +83,17 @@ public sealed record CorporateActionCoverage
     public IReadOnlyList<DateRange> Gaps { get; init; } = [];
 }
 
+/// <summary>Verified raw-price comparison intervals, not a complete corporate-action inventory.</summary>
+public sealed record PriceComparisonCoverage
+{
+    public bool IsVerified { get; init; }
+    public DateOnly CoverageStart { get; init; }
+    public DateOnly CoverageEnd { get; init; }
+    public string Version { get; init; } = "";
+    public string SourceId { get; init; } = "";
+    public IReadOnlyList<DateRange> Gaps { get; init; } = [];
+}
+
 public sealed record DataSnapshot
 {
     public string SnapshotId { get; init; } = "";
@@ -93,6 +106,8 @@ public sealed record DataSnapshot
     public bool IsSynthetic { get; init; }
     public TradingCalendar Calendar { get; init; } = new();
     public CorporateActionCoverage ActionCoverage { get; init; } = new();
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public PriceComparisonCoverage? ComparabilityCoverage { get; init; }
     public IReadOnlyList<CorporateAction> CorporateActions { get; init; } = [];
     public IReadOnlyList<DailyBar> Bars { get; init; } = [];
 }
@@ -243,6 +258,8 @@ public sealed record ResearchRun
     public string SourceId { get; init; } = "";
     public string CalendarVersion { get; init; } = "";
     public string CorporateActionVersion { get; init; } = "";
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? PriceComparisonVersion { get; init; }
     public Instrument Instrument { get; init; } = new();
     public ResearchDefinition Definition { get; init; } = new();
     public bool IsSynthetic { get; init; }

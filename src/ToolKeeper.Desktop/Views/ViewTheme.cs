@@ -20,7 +20,7 @@ internal static class ViewTheme
         return brush;
     }
 
-    public static void Apply(Window window, string theme = "Light")
+    public static void Apply(Window window, string theme = "Ink")
     {
         window.FontFamily = new FontFamily("Segoe UI, Microsoft JhengHei UI");
         window.FontSize = 14;

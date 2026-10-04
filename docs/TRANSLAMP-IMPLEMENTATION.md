@@ -1,10 +1,84 @@
 # TransLamp 007 實作與待辦紀錄
 
-更新：2026-10-03。目前開發版：0.1.1。此文件保留原型能力及 0.1.0 的驗證紀錄；本輪修正與新版驗收集中於[優化實作紀錄](TRANSLAMP-OPTIMIZATION-IMPLEMENTATION.md)。
+更新：2026-10-04。目前開發版：0.1.6。此文件保留原型能力及過去版本的驗證紀錄；0.1.1 修正與驗收見[優化實作紀錄](TRANSLAMP-OPTIMIZATION-IMPLEMENTATION.md)。
+
+## 0.1.6 英文中轉與缺包下載
+
+翻譯方向優先使用目錄中的直譯模型；沒有直譯時，若來源→英文與英文→目標均受支援，便自動串接兩個模型。介面顯示完整路徑與兩段進度，只在最後一段完成後顯示譯文；任何一段失敗、取消或輸入已更動，都不會把英文中間結果當成最終譯文。原文與中間文字各限制 20,000 字元。
+
+在翻譯頁選擇方向或停止輸入約 500 ms 後，若缺少必要語言包，顯示「是／否」對話框，列出缺少方向、個別大小及總大小。選「是」立即切換資料管理，依序下載缺少的包，且同步選取目前下載的語言；已有的包不重複下載。全部完成後保留資料管理頁，若原文非空會自動接續翻譯。取消或失敗停止後續下載，已成功安裝的包仍保留。選「否」後同一方向不因繼續打字反覆詢問；按「立即翻譯」或改變方向可再次詢問。
+
+中轉使用原有的離線 CPU 引擎、語言包驗證與取消機制，不增加線上翻譯服務。仍需目錄提供完整方向；例如目前西班牙文只有英→西模型，因此可以翻成西班牙文，不能以西班牙文為來源中轉。
+
+2026-10-04 驗證：核心路徑選擇、兩段完整文字傳遞、20,000 字元上限、任一段取消／失敗、不顯示過期或中間結果皆通過。介面測試 38/38 通過，包含兩包／單包下載、拒絕後不重複詢問、下載中取消／失敗、原文保留。完整 TransLamp 測試的其餘案例通過，官方全目錄與即時網路下載兩項選擇性測試本次未重跑。三種介面語言、亮／暗竹子最小 900×720 畫面檢查通過，另目視確認中文亮色與英文暗色中轉提示完整。
+
+真實 CPU 中轉驗證另使用已快取的四個官方模型，經正式下載轉檔／安裝流程及 `TranslateRouteAsync`，確認中文→英文→法文與法文→英文→中文兩段均完成。範例「连接失败。请重新启动计算机。」產生「La connexion a échoué. S'il vous plaît redémarrez l'ordinateur.」；法文原文產生「连接失败。请重新启动计算机。」。這是管線與基本目標語言驗證，不代表所有內容的語意品質已驗收。證據位於 `artifacts/translamp-pivot/tests/*.trx`，圖像位於 `artifacts/translamp-ui/pivot-*.png`。
+
+## 0.1.5 程式圖示
+
+另提供一般 Windows 單一 EXE 離線安裝版，包含完整引擎與預載中英語言包；安裝及重建方式見[離線安裝檔說明](TRANSLAMP-OFFLINE-INSTALLER.md)。
+
+採用使用者選定的深竹綠底、金色提燈與「文／A」對話框圖案。核准的原圖完整保存在 [TransLamp.png](../src/TransLamp/Resources/TransLamp.png)，未重繪或裁切；由原圖等比例縮製的 [TransLamp.ico](../src/TransLamp/Resources/TransLamp.ico) 包含 16、24、32、48、64、128、256 像素七種尺寸，保留透明背景。
+
+EXE 透過 `ApplicationIcon` 嵌入 Windows 圖示；同一 ICO 作為 WPF Resource，供主視窗、共享標題列與工作列使用，關於視窗沿用主視窗圖示。無須隨執行檔另外擺放圖示檔案。
+
+圖案來源：2026-10-04 以內建 `image_gen` 依「竹綠圓角方底、金色提燈、奶油色文／A 對話框、外部透明、適合 Windows 小圖示」描述生成，再由使用者選定。轉檔僅使用 WPF 高品質縮放與 PNG 格式 ICO frames。
+
+既有介面測試 **32／32 通過、無跳過**；已檢查亮／暗竹主畫面，標題列圖示可見且未影響布局。見[介面 TRX](../artifacts/translamp-icon/tests/icon-ui.trx)。原圖副本與核准來源的 SHA-256 相同；原图 `C66CBFDBEC6E0246523321963817A5D517F7F38D1CC033157AC87DD9911C3DB1`，ICO `9CCAF34F51A0666C225E985FB853D7C487915B1404776D66EEB7F31FF663A1DA`。
+
+獨立程式：[0.1.5 TransLamp.exe](../artifacts/TransLamp-OfflineKit-0.1.5/TransLamp.exe)。根目錄 [Start-TransLamp.cmd](../Start-TransLamp.cmd) 會依目前版本啟動，請保留整個 Offline Kit 資料夾。
+
+## 0.1.4 開啟語言檔資料夾
+
+「資料管理」的語言包目錄旁新增「開啟語言檔資料夾」按鈕，以 Windows 檔案總管開啟目前使用的語言包目錄；指定 `--data-dir` 時也使用該實際位置。空目錄尚未建立時會先建立，無法建立或開啟時顯示介面語言對應的錯誤訊息。保留中／英／日標籤，作業忙碌時與匯入按鈕一同停用。
+
+既有介面測試 **32／32 通過、無跳過**，三語與亮／暗竹最小 900×720 畫面已檢查新按鈕可見且未遮擋路徑或匯入操作。見[介面 TRX](../artifacts/translamp-folder/tests/folder-ui.trx)。本輪未實際呼叫檔案總管；開啟流程經程式檢查，使用實際目錄路徑與 Windows shell。
+
+當版獨立程式：[0.1.4 TransLamp.exe](../artifacts/TransLamp-OfflineKit-0.1.4/TransLamp.exe)。根目錄啟動入口會依專案目前版本選擇 Offline Kit。
+
+## 0.1.3 擴充語言與下載下拉選單
+
+- 資料管理改成來源／目標兩個下拉選單，目標只列出固定目錄已提供的直接方向。選擇後顯示單一語言包的版本、下載大小、來源、授權與下載／已安裝按鈕，下方保留已安裝清單。
+- 固定目錄擴充為 15 種語言選項、27 個方向：英語與簡體中文、繁體中文、法文、葡萄牙文、日文、韓文、德文、義大利文、俄文、阿拉伯文、印地文、泰文、越南文各自雙向翻譯，另有「英語→西班牙文」單向。各方向分別安裝，此版本尚未自動中轉（0.1.6 已加入英文中轉）；Offline Kit 仍只預載原有中英兩包。
+- 選單與翻譯頁的語言、原文及譯文互相獨立；切換頁面、風格或介面語言會保留選取的下載方向，僅按下下載才連線。下載／匯入等作業中停用下載選單，完成後更新所選包狀態。
+- 支援官方舊版 CTranslate2 的 `shared_vocabulary.txt` 資料檔案及內含設定的模型，保留原始模型／tokenizer 位元組，不補造設定；既有 JSON 格式仍受原規則驗證。兩種格式皆經原有大小／SHA-256、路徑白名單及真實 CPU 模型載入驗證，才提交安裝。各包保留原始 README、來源與授權。
+- 中文（簡／繁）及日文的分句結果不額外插入空格；泰文保留句間空格。印尼文及「西班牙文→英語」官方包需要額外 BPE 相依，本輪不擴充該引擎，也不將這些方向列入目錄。
+- 既有即時翻譯與專案根目錄 `Start-TransLamp.cmd` 入口保留；入口依專案版本啟動 0.1.3 的完整 Offline Kit。
+
+模型授權標示依各包 README，以及 [Argos 維護者對模型二進位 MIT／CC0 的明確說明](https://github.com/argosopentech/argos-translate/issues/533#issuecomment-5160080718)。原始 README 中的訓練語料來源與個別說明完整保留於 NOTICE；不將語料授權直接改寫為模型授權。俄文雙向包的 README 標題分別為 2.2（英翻俄）與 1.3（俄翻英），但官方目錄與 metadata 均為 1.9，本版以後兩者作為包版本，保留原 README 的差異。
+
+`Prepare-TransLampResources.ps1 -Offline` 通過 **23 項 worker、7 項資源清單及 10 項真實 worker／協定檢查**。正式預設 .NET HttpClient 也已直接從官方 HTTPS 下載英翻阿拉伯文包，完成轉換、暫存驗證、安裝及真實 CPU 翻譯，見[線上下載驗證](../artifacts/translamp-expanded/network-verification.json)。此驗證不代表各電腦的代理／防火牆或翻譯語意品質均已驗收。
+
+最終 C# 回歸 **179／179 通過、無跳過**，另有已單獨通過的 **1 項真實網路下載案例**。前者涵蓋 27 个正式模型檔經下載服務的本機 HTTP transport 完成大小／雜湊檢查、轉換、安裝、真實 CPU 翻譯，以及即時翻譯、取消、失敗復原與三語／兩主題的完整下拉選單。見[整合 TRX](../artifacts/translamp-expanded/tests/translamp-0.1.3.trx)、[27 方向安裝與翻譯結果](../artifacts/translamp-expanded/installation-verification.json)、[來源與驗證彙整](../artifacts/translamp-expanded/verification.json)。UI 以最小 900×720 重渲染，主畫面與長清單 popup 已目視檢查；截圖中的缺少 runtime 提示屬隔離測試 fixture。
+
+各方向的例句驗證確認流程可執行，並非語意品質認證。例如泰文→英語例句將「重新啟動」譯為 `reset`；原有中英模型的已知品質限制亦仍存在，見下方原型紀錄。
+
+0.1.3 Windows x64 self-contained 歷史產物：[TransLamp.exe](../artifacts/TransLamp-OfflineKit-0.1.3/TransLamp.exe)。請保留整個 Offline Kit 資料夾；根目錄啟動入口會依目前專案版本選取最新產物。發布腳本會另以實際隨附的 runtime 執行中英雙向 smoke，並記錄完整產物雜湊。
+
+下方 0.1.2 與原型段落保留當時的支援範圍與驗證紀錄。
+
+## 0.1.2 即時翻譯與資料管理
+
+- 原文輸入／貼上後暫停 500 毫秒便自動翻譯，切換方向也會重新排程；輸入法組字期間不觸發。保留立即翻譯與 Ctrl+Enter。
+- 翻譯時可繼續編輯、貼上、清除及切換方向。新的輸入會取消舊工作，並以輸入版本檢查阻止過期結果及進度回寫；取消／Esc 會清除待執行工作，下一次編輯才重新排程。
+- 「翻譯」與「資料管理」分頁保留原文及方向。資料管理提供下載清單、已安裝語言包、離線匯入與移除；進度與取消操作共用。
+- 固定下載目錄提供 English ⇄ 中文、English ⇄ 法文、English ⇄ 葡萄牙文，每個方向分別下載。顯示版本、真實下載大小、來源及授權。中文與法文／葡萄牙文之間沒有直接模型，不自動轉接翻譯。
+- 下載明確由使用者啟動；翻譯仍完全在本機執行。下載後核對固定大小與 SHA-256，轉換為資料專用 `.tlpack`，沿用既有安全匯入、模型載入驗證及交易復原。
+- 官方舊版日本語模型不符合現有 runtime 格式，本次未擴充相容層或將其列為可下載語言。
+
+0.1.2 建置成功，完整 C# 回歸 **144／144 通過、無跳過**，包括實際中英自動翻譯、新增四方向的真模型安裝與推論、下載錯誤／取消／舊包保留、輸入節流／IME／關窗及兩頁版面。見 [整合 TRX](../artifacts/translamp-live/tests/translamp-0.1.2.trx)。
+
+`Prepare-TransLampResources.ps1 -Offline` 通過 21 項 worker、7 項資源清單及 10 項真實 worker／協定檢查；`Publish-TransLamp.ps1` 產出 self-contained Windows x64 [0.1.2 可執行檔](../artifacts/TransLamp-OfflineKit-0.1.2/TransLamp.exe)，實際隨附 runtime 另通過中英雙向 smoke。整個資料夾需一起保留。
+
+已目視檢查最小 900×720 的翻譯／下載／已安裝區，保留三語與亮竹／暗竹渲染驗收；深色語言卡標題前景色已修正並加入實際色彩斷言。圖片使用測試文字及合成包資料，見 `artifacts/translamp-ui`。
+
+新語言的官方檔案實際透過 curl 取得；.NET 下載服務以這些真實檔案的 HTTP transport 測試，完成 size／SHA-256、轉換、模型驗證及 CPU 推論，見 [模型與來源驗證](../artifacts/translamp-downloads/verification.json)。另核對官方法文 URL 直接回應 HTTP 200 與預期大小。尚未逐一驗證各電腦的網路代理／防火牆，也不把流程通過視為翻譯語意品質已驗收。
+
+下方各原型章節保留當時狀態，不代表 0.1.2 的功能清單。
 
 後續檢查：[全面優化檢查](TRANSLAMP-OPTIMIZATION-REVIEW.md)，包含 12 項已確認問題、隔離重現證據、效能量測與修正順序。
 
-## 本次交付
+## 0.1.0 原型交付
 
 已建立可實際執行的 Windows x64 離線中英翻譯產品，使用真實 OPUS-MT／Argos 模型及 CTranslate2 CPU 推論，不使用示範字典或線上翻譯服務。
 
@@ -18,6 +92,8 @@
 - 工具番目錄加入 007，平台入口 `toolkeeper://run/007`，獨立產品入口 `translamp://open`。
 
 ## 執行與重建
+
+專案根目錄提供 [Start-TransLamp.cmd](../Start-TransLamp.cmd) 雙擊入口，呼叫 `scripts/Start-TransLamp.ps1`，依 `.csproj` 目前版本啟動相應 Offline Kit 的獨立 EXE，並將工作目錄設為包目錄。檢查必要程式／runtime／隨附語言包是否存在；缺件時提示準備及發布步驟，不自動下載、不回退到舊版本。`-CheckOnly` 可只驗證目標而不啟動視窗；此入口不需要工具番宿主或協定註冊。
 
 Offline Kit 的預設輸出已改為 `artifacts/TransLamp-OfflineKit-<產品版本>`。0.1.0 原型保留於 `artifacts/TransLamp-OfflineKit-0.1.0`；0.1.1 產物與當次驗證見優化實作紀錄。完整資料夾需一起搬移，不能只複製 EXE。
 

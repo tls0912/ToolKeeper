@@ -1,0 +1,17 @@
+{
+  "packageVersion": "1.0.3.0",
+  "reviewDate": "2026-10-04",
+  "status": "passed",
+  "method": "Rendered the generated index.html in the in-app browser through a loopback-only HTTP server; inspected the page and Arabic section and checked DOM state.",
+  "checks": {
+    "languageNavigationLinks": 8,
+    "textFields": 96,
+    "screenshotImages": 40,
+    "arabicTextFieldsWithRtlDirection": 12,
+    "horizontalPageOverflow": false,
+    "arabicDescriptionSelectsAllOnClick": true,
+    "arabicDescriptionCharacterCount": 2011,
+    "visualInspection": "Language navigation, field layout, screenshot gallery and connected Arabic glyphs rendered correctly."
+  },
+  "scope": "Local listing-pack preview only; no Partner Center upload or submission was performed."
+}

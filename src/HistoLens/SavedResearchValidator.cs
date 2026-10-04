@@ -11,14 +11,16 @@ internal static class SavedResearchValidator
     {
         cancellationToken.ThrowIfCancellationRequested();
         Require(snapshot is not null && run is not null, "Missing snapshot or run.");
-        Require(snapshot.IsSynthetic && run.IsSynthetic && snapshot.Instrument is not null &&
-            snapshot.Instrument.SecurityType == SecurityType.Synthetic, "This preview supports synthetic research only.");
+        Require(snapshot.Instrument is not null && snapshot.IsSynthetic == run.IsSynthetic,
+            "Research and snapshot data types do not match.");
+        SupportedResearchData.ValidateIdentity(snapshot);
         Require(snapshot.SnapshotId is not null && snapshot.ContentHash is not null && snapshot.Instrument.Name is not null &&
             snapshot.Instrument.Currency is not null, "Missing snapshot metadata.");
         Require(snapshot.Calendar is not null && snapshot.ActionCoverage is not null &&
             snapshot.Calendar.TradingDates is not null, "Missing snapshot coverage.");
         Items(snapshot.Bars, "bars"); Items(snapshot.CorporateActions, "corporate actions");
         Items(snapshot.ActionCoverage.Gaps, "coverage gaps");
+        if (snapshot.ComparabilityCoverage is { } comparison) Items(comparison.Gaps, "comparison coverage gaps");
         Require(!SnapshotValidator.Validate(snapshot, cancellationToken).Any(issue => issue.BlocksResearch), "Snapshot structure or identity is invalid.");
         var hash = SnapshotFingerprint.Compute(snapshot);
         cancellationToken.ThrowIfCancellationRequested();
@@ -26,7 +28,8 @@ internal static class SavedResearchValidator
             (string.IsNullOrEmpty(snapshot.ContentHash) || string.Equals(hash, snapshot.ContentHash, StringComparison.OrdinalIgnoreCase)) &&
             run.DataSnapshotId == (string.IsNullOrEmpty(snapshot.SnapshotId) ? hash : snapshot.SnapshotId), "Research and snapshot hashes or IDs do not match.");
         Require(run.Instrument == snapshot.Instrument && run.SourceId == snapshot.SourceId &&
-            run.CalendarVersion == snapshot.Calendar.Version && run.CorporateActionVersion == snapshot.ActionCoverage.Version,
+            run.CalendarVersion == snapshot.Calendar.Version && run.CorporateActionVersion == snapshot.ActionCoverage.Version &&
+            run.PriceComparisonVersion == snapshot.ComparabilityCoverage?.Version,
             "Research and snapshot identities or coverage versions do not match.");
         Require(!string.IsNullOrWhiteSpace(run.EngineVersion) && run.Definition is not null && run.Funnel is not null,
             "Missing research metadata.");

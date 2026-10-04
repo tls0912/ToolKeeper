@@ -11,6 +11,7 @@ public partial class App : Application
     public static SettingsService Preferences { get; private set; } = null!;
     public static DocumentFileService Files { get; } = new();
     public static RecoveryService Recovery { get; private set; } = null!;
+    internal static DocumentSessionService Session { get; } = new();
     private SingleInstanceService? _instance;
 
     protected override async void OnStartup(StartupEventArgs e)
@@ -33,15 +34,16 @@ public partial class App : Application
             if (!_instance.IsPrimary)
             {
                 if (!await _instance.ForwardAsync(paths, newWindow))
-                    MessageBox.Show("汗青 is still starting. Please try opening the file again.", "汗青");
+                    MessageBox.Show(ToolKeeper.UI.UiLanguage.Text(Preferences.Settings.ResolveLanguage(System.Globalization.CultureInfo.CurrentUICulture.Name),
+                        "汗青 is still starting. Please try opening the file again.", "汗青仍在啟動中，請稍後再開啟檔案。", "汗青は起動中です。しばらくしてからもう一度ファイルを開いてください。"), "汗青");
                 Shutdown();
                 return;
             }
-            var window = new MainWindow();
+            Session.Reset();
+            var window = new MainWindow(deferEmptyState: true);
             MainWindow = window;
             window.Show();
             ShutdownMode = ShutdownMode.OnLastWindowClose;
-            ApplyPreferences();
             _instance.StartListening((files, separate) => Dispatcher.BeginInvoke(new Action(async () =>
             {
                 var target = separate ? CreateWindow() : Windows.OfType<MainWindow>().LastOrDefault(w => w.IsActive)
@@ -60,7 +62,9 @@ public partial class App : Application
                     foreach (var document in recoverable) window.AddDocument(document);
                 else Recovery.Clear();
             }
+            await window.RestoreSessionAsync();
             await window.OpenPathsAsync(paths);
+            window.CompleteStartup();
         }
         catch (Exception ex)
         {
@@ -82,6 +86,7 @@ public partial class App : Application
 
     internal static void ApplyPreferences()
     {
+        if (!Preferences.Settings.RememberOpenFiles) Session.Reset();
         try { Preferences.Save(); } catch (Exception ex) { LocalLog.Write(ex); }
         foreach (var window in Current.Windows.OfType<MainWindow>()) window.ApplyPreferences();
     }

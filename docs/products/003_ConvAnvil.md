@@ -16,7 +16,7 @@
 
 它不是一般文字編輯器，也不是大型 IDE 的附屬功能集合。
 
-主視窗採用 `ToolKeeper.UI` 共用外觀，原生標題列為 `ConvAnvil - Text, Encoding & Byte Converter`。內容左上以 30 DIP 顯示 `ConvAnvil`，下方以 14 DIP 顯示獨立的產品簡介；右側保留產品操作區，File／Text／Bytes 介面放在下方工作區。產品簡介與副標題分開定義，應反映目前可用功能；JSON Viewer 尚未實作。共用視窗不共用編碼、轉檔或位元組處理邏輯。
+主視窗依 [工具番介面標準](../UI-STANDARD.md) 採用 `ToolKeeper.UI.AppWindow` 與共用 `WindowFrame`，自訂竹紋頂列顯示 `ConvAnvil - Text, Encoding & Byte Converter`，不顯示 Windows 原生標題列。標頭左側為產品簡介，右側「風格／語言／關於」與簡介同列；內容區不重複顯示大型產品名稱，File／Text／Bytes 介面放在下方工作區。產品簡介與副標題分開定義，應反映目前可用功能；JSON Viewer 尚未實作。共用視窗不共用編碼、轉檔或位元組處理邏輯。
 
 主要解決以下實際問題：
 

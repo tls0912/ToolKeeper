@@ -1,0 +1,55 @@
+<Project>
+  <PropertyGroup>
+    <ObfuscateOnPublish Condition="'$(ObfuscateOnPublish)' == '' and '$(Configuration)' == 'Release'">true</ObfuscateOnPublish>
+    <ObfuscateOnPublish Condition="'$(ObfuscateOnPublish)' == ''">false</ObfuscateOnPublish>
+    <_ObfuscarRepositoryRoot>$(MSBuildThisFileDirectory)..\</_ObfuscarRepositoryRoot>
+    <_ObfuscarAssemblyNames>;ToolKeeper;ToolKeeper.Desktop;ToolKeeper.UI;Hanqing;ConvAnvil;HistoLens;TransLamp;</_ObfuscarAssemblyNames>
+  </PropertyGroup>
+
+  <!-- Pin the build tool, never expose it as a runtime/transitive dependency. -->
+  <ItemGroup>
+    <PackageDownload Include="Obfuscar" Version="[2.2.50]" />
+  </ItemGroup>
+
+  <!-- Replace publish inputs, not bin/ or obj/'s normal compiler outputs.
+       This also runs when building is skipped and before single-file bundling. -->
+  <Target Name="ObfuscateToolKeeperPublish"
+          AfterTargets="ComputeResolvedFilesToPublishList"
+          Condition="'$(ObfuscateOnPublish)' == 'true' and '$(IsTestProject)' != 'true'">
+    <PropertyGroup>
+      <_ObfuscarToolPath>$(NuGetPackageRoot)\obfuscar\2.2.50\tools\Obfuscar.Console.exe</_ObfuscarToolPath>
+    </PropertyGroup>
+    <Error Condition="'$(PublishTrimmed)' == 'true' or '$(PublishAot)' == 'true' or '$(PublishReadyToRun)' == 'true'"
+           Text="Obfuscar publishing currently supports IL assemblies only. Disable PublishTrimmed, PublishAot and PublishReadyToRun, or explicitly set ObfuscateOnPublish=false for a diagnostic publish." />
+    <Error Condition="!Exists('$(_ObfuscarToolPath)')"
+           Text="Obfuscar 2.2.50 is missing. Run dotnet restore before publishing (including --no-build/--no-restore)." />
+    <ItemGroup>
+      <_ObfuscarInput Include="@(ResolvedFileToPublish)"
+                      Condition="'%(Extension)' == '.dll' and $([System.String]::Copy('$(_ObfuscarAssemblyNames)').Contains(';%(Filename);'))" />
+    </ItemGroup>
+    <Error Condition="'@(_ObfuscarInput)' == ''" Text="No first-party assemblies found to obfuscate; refusing an unprotected publish." />
+    <Error Condition="!$([System.String]::Copy('$(_ObfuscarAssemblyNames)').Contains(';$(AssemblyName);'))"
+           Text="The publishing project $(AssemblyName) is not registered in build/Obfuscar.targets and build/Obfuscar.xml. Add it before publishing." />
+    <PropertyGroup>
+      <_ObfuscarWorkDirectory>$([System.IO.Path]::GetFullPath('$(IntermediateOutputPath)obfuscar\$([System.Guid]::NewGuid())'))</_ObfuscarWorkDirectory>
+    </PropertyGroup>
+    <MakeDir Directories="$(_ObfuscarWorkDirectory)" />
+    <WriteLinesToFile File="$(_ObfuscarWorkDirectory)\assemblies.txt"
+                      Lines="@(_ObfuscarInput->'%(FullPath)')" Overwrite="true" Encoding="UTF-8" />
+    <WriteLinesToFile File="$(_ObfuscarWorkDirectory)\references.txt"
+                      Lines="@(ResolvedFileToPublish->'%(FullPath)');@(ReferencePath->'%(FullPath)')"
+                      Overwrite="true" Encoding="UTF-8" />
+    <Exec Command="powershell.exe -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass -File &quot;$(_ObfuscarRepositoryRoot)scripts\Invoke-Obfuscar.ps1&quot; -ToolPath &quot;$(_ObfuscarToolPath)&quot; -WorkDirectory &quot;$(_ObfuscarWorkDirectory)&quot;"
+          WorkingDirectory="$(MSBuildProjectDirectory)" />
+    <ItemGroup>
+      <ResolvedFileToPublish Remove="@(_ObfuscarInput)" />
+      <ResolvedFileToPublish Include="@(_ObfuscarInput->'$(_ObfuscarWorkDirectory)\output\%(Filename)%(Extension)')">
+        <CopyToPublishDirectory>Always</CopyToPublishDirectory>
+      </ResolvedFileToPublish>
+      <!-- Original symbols/documentation disclose names and do not match rewritten IL. -->
+      <ResolvedFileToPublish Remove="@(ResolvedFileToPublish)"
+                             Condition="('%(Extension)' == '.pdb' or '%(Extension)' == '.xml') and $([System.String]::Copy('$(_ObfuscarAssemblyNames)').Contains(';%(Filename);'))" />
+    </ItemGroup>
+    <Message Importance="high" Text="Obfuscar: @(_ObfuscarInput->'%(Filename)%(Extension)', ', '). Private mapping/evidence: $(_ObfuscarWorkDirectory)" />
+  </Target>
+</Project>

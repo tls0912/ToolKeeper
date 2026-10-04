@@ -1,6 +1,8 @@
+using System.Reflection;
 using System.Windows;
 using System.Windows.Controls;
 using MarkPad.Models;
+using MarkPad.Rendering;
 using Xunit;
 
 namespace MarkPad.Tests;
@@ -125,6 +127,106 @@ public sealed class DocumentViewTests
     });
 
     [Fact]
+    public Task OutlineLevelsFilterOnlySidebarAndKeepAllPreviewHeadingsAndDocumentContent() => StaTest.Run(() =>
+    {
+        const string markdown = "# One\n\n## Two\n\n### Three\n\n#### Four\n\n##### Five\n\n###### Six\n";
+        var document = new DocumentTab { Content = markdown, IsPreviewMode = true, IsDirty = false };
+        using var view = new DocumentView(document);
+        var headings = RenderHeadings(markdown);
+        PublishHeadings(view.Preview, headings);
+        var outline = OutlineList(view);
+        Assert.Equal(headings, OutlineHeadings(outline));
+
+        view.ApplyOutlineLevels([2, 4, 6, 2, 0, 7]);
+
+        Assert.Equal([2, 4, 6], OutlineHeadings(outline).Select(heading => heading.Level));
+        Assert.Same(headings, view.Preview.Headings);
+        Assert.Equal(["one", "two", "three", "four", "five", "six"], view.Preview.Headings.Select(heading => heading.Id));
+        Assert.Equal(markdown, document.Content);
+        Assert.False(document.IsDirty);
+        return Task.CompletedTask;
+    });
+
+    [Fact]
+    public Task DisablingAllOutlineLevelsShowsLocalizedFilteredMessageAndCanRestoreHeadings() => StaTest.Run(() =>
+    {
+        var document = new DocumentTab { Content = "# One\n## Two", IsPreviewMode = true };
+        using var view = new DocumentView(document);
+        var headings = RenderHeadings(document.Content);
+        PublishHeadings(view.Preview, headings);
+        var outline = OutlineList(view);
+        var panel = Assert.IsType<Grid>(outline.Parent);
+        var empty = Assert.Single(panel.Children.OfType<TextBlock>(), text => Grid.GetRow(text) == 1);
+        view.ApplyLanguage("zh-TW");
+
+        view.ApplyOutlineLevels([]);
+
+        Assert.Empty(outline.Items);
+        Assert.Equal(Visibility.Visible, empty.Visibility);
+        Assert.Equal("所選層級沒有章節標題。", empty.Text);
+        view.ApplyLanguage("en");
+        Assert.Equal("No headings match the selected levels.", empty.Text);
+        view.ApplyLanguage("ja");
+        Assert.Equal("選択したレベルの見出しがありません。", empty.Text);
+
+        view.ApplyOutlineLevels([1, 2, 3, 4, 5, 6]);
+
+        Assert.Equal(headings, OutlineHeadings(outline));
+        Assert.Equal(Visibility.Collapsed, empty.Visibility);
+        PublishHeadings(view.Preview, []);
+        Assert.Equal(Visibility.Visible, empty.Visibility);
+        Assert.Equal("見出しがありません。\n見出しを追加するとここに表示されます。", empty.Text);
+        return Task.CompletedTask;
+    });
+
+    [Fact]
+    public Task OutlineLevelsRemainAppliedWhenNewHeadingsArePublished() => StaTest.Run(() =>
+    {
+        var document = new DocumentTab { Content = "# First\n## Second", IsPreviewMode = true };
+        using var view = new DocumentView(document);
+        view.ApplyOutlineLevels([2]);
+        PublishHeadings(view.Preview, RenderHeadings(document.Content));
+        var outline = OutlineList(view);
+        Assert.Equal("Second", Assert.Single(OutlineHeadings(outline)).Title);
+
+        PublishHeadings(view.Preview, []);
+        document.Content = "# New first\n## New second\n### New third\n## Last second";
+        var headings = RenderHeadings(document.Content);
+        PublishHeadings(view.Preview, headings);
+
+        Assert.Equal(["New second", "Last second"], OutlineHeadings(outline).Select(heading => heading.Title));
+        Assert.Same(headings, view.Preview.Headings);
+        return Task.CompletedTask;
+    });
+
+    [Fact]
+    public Task OutlineLevelChangesSelectTheLastVisibleHeadingBeforeCurrentPreviewLine() => StaTest.Run(() =>
+    {
+        var document = new DocumentTab { Content = "# One\n\n## Two\n\n### Three\n\n# Four", IsPreviewMode = true };
+        using var view = new DocumentView(document);
+        var headings = RenderHeadings(document.Content);
+        PublishHeadings(view.Preview, headings);
+        var outline = OutlineList(view);
+        var messages = new List<PreviewMessage>();
+        view.PreviewMessageReceived += (_, message) => messages.Add(message);
+        typeof(DocumentView).GetMethod("ForwardPreviewMessage", BindingFlags.Instance | BindingFlags.NonPublic)!
+            .Invoke(view, [view.Preview, new PreviewMessage("scroll", Line: 5)]);
+        Assert.Same(headings[2], Assert.IsType<PreviewHeading>(Assert.IsType<ListBoxItem>(outline.SelectedItem).Tag));
+        messages.Clear();
+
+        view.ApplyOutlineLevels([1, 2]);
+        Assert.Same(headings[1], Assert.IsType<PreviewHeading>(Assert.IsType<ListBoxItem>(outline.SelectedItem).Tag));
+        view.ApplyOutlineLevels([1]);
+        Assert.Same(headings[0], Assert.IsType<PreviewHeading>(Assert.IsType<ListBoxItem>(outline.SelectedItem).Tag));
+        view.ApplyOutlineLevels([]);
+        Assert.Null(outline.SelectedItem);
+        view.ApplyOutlineLevels([1, 2, 3, 4, 5, 6]);
+        Assert.Same(headings[2], Assert.IsType<PreviewHeading>(Assert.IsType<ListBoxItem>(outline.SelectedItem).Tag));
+        Assert.Empty(messages);
+        return Task.CompletedTask;
+    });
+
+    [Fact]
     public Task ClosingContainerDetachesEditorWithoutChangingDocument() => StaTest.Run(async () =>
     {
         var document = new DocumentTab { Content = "keep this", IsPreviewMode = false };
@@ -142,4 +244,20 @@ public sealed class DocumentViewTests
         Assert.Throws<ObjectDisposedException>(() => view.SetActive(true));
         await Assert.ThrowsAsync<ObjectDisposedException>(() => view.Preview.ExportPdfAsync("text", null, new(), "unused.pdf"));
     });
+
+    private static ListBox OutlineList(DocumentView view) =>
+        Assert.Single(Assert.Single(view.Children.OfType<Grid>(), panel => panel.Children.OfType<ListBox>().Any()).Children.OfType<ListBox>());
+
+    private static PreviewHeading[] OutlineHeadings(ListBox outline) =>
+        outline.Items.OfType<ListBoxItem>().Select(item => Assert.IsType<PreviewHeading>(item.Tag)).ToArray();
+
+    private static IReadOnlyList<PreviewHeading> RenderHeadings(string markdown)
+    {
+        var rendered = typeof(MarkdownRenderer).GetMethod("Build", BindingFlags.Instance | BindingFlags.NonPublic)!
+            .Invoke(new MarkdownRenderer(), [markdown, new PreviewOptions(), null])!;
+        return Assert.IsAssignableFrom<IReadOnlyList<PreviewHeading>>(rendered.GetType().GetProperty("Headings")!.GetValue(rendered));
+    }
+
+    private static void PublishHeadings(PreviewPane preview, IReadOnlyList<PreviewHeading> headings) =>
+        typeof(PreviewPane).GetMethod("PublishHeadings", BindingFlags.Instance | BindingFlags.NonPublic)!.Invoke(preview, [headings]);
 }

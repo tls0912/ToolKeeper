@@ -4,14 +4,18 @@
     <TargetFramework>net10.0-windows</TargetFramework>
     <UseWPF>true</UseWPF>
     <ApplicationManifest>app.manifest</ApplicationManifest>
-    <Version>0.1.1</Version>
+    <ApplicationIcon>Resources/TransLamp.ico</ApplicationIcon>
+    <Version>0.1.6</Version>
     <Description>Offline Language Translator</Description>
     <TransLampResourceDirectory Condition="'$(TransLampResourceDirectory)' == ''">$(MSBuildThisFileDirectory)..\..\artifacts\translamp</TransLampResourceDirectory>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="../ToolKeeper.UI/ToolKeeper.UI.csproj" />
+    <Resource Include="Resources/TransLamp.ico" />
     <None Update="LanguagePacks/**/*.tlpack" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
     <None Update="Runtime/**/*" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <EmbeddedResource Include="../../runtime/TransLamp/licenses/Argos-MIT.txt" LogicalName="TransLamp.DownloadLicenses.Argos-MIT.txt" />
+    <EmbeddedResource Include="../../runtime/TransLamp/licenses/CC-BY-4.0.txt" LogicalName="TransLamp.DownloadLicenses.CC-BY-4.0.txt" />
   </ItemGroup>
   <!-- Prepared resources stay out of source control; ordinary development builds become usable from ToolKeeper. -->
   <ItemGroup Condition="Exists('$(TransLampResourceDirectory)/Runtime/python.exe')">

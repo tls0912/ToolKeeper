@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.IO;
 using System.Text;
+using System.ComponentModel;
 using MarkPad.Models;
 using MarkPad.Services;
 using Xunit;
@@ -161,6 +162,114 @@ public sealed class DocumentFileServiceTests
         first.Document.UndoStack.Redo();
         Assert.True(first.IsDirty);
     });
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("saved snapshot")]
+    public Task UndoReturnsToTheSnapshotSavedBeforeAnInterleavedEdit(string content) => StaTest.Run(async () =>
+    {
+        using var directory = new TestDirectory();
+        var tab = new MarkPad.Models.DocumentTab { Content = content };
+        var service = new DocumentFileService();
+        var path = directory.FilePath("snapshot.md");
+        await SaveWithInterleavedEditAsync(service, tab, path);
+
+        Assert.Equal(content, await File.ReadAllTextAsync(path));
+        Assert.Equal(content + " later", tab.Content);
+        Assert.True(tab.IsDirty);
+        tab.Document.UndoStack.Undo();
+        Assert.Equal(content, tab.Content);
+        Assert.False(tab.IsDirty);
+        tab.Document.UndoStack.Redo();
+        Assert.Equal(content + " later", tab.Content);
+        Assert.True(tab.IsDirty);
+    });
+
+    [Fact]
+    public Task LaterSaveReplacesTheInterleavedSaveBaseline() => StaTest.Run(async () =>
+    {
+        using var directory = new TestDirectory();
+        var tab = new MarkPad.Models.DocumentTab { Content = "first" };
+        var service = new DocumentFileService();
+        await SaveWithInterleavedEditAsync(service, tab, directory.FilePath("first.md"));
+        await SaveWithInterleavedEditAsync(service, tab, directory.FilePath("second.md"));
+
+        tab.Document.UndoStack.Undo();
+        Assert.Equal("first later", tab.Content);
+        Assert.False(tab.IsDirty);
+        tab.Document.UndoStack.Undo();
+        Assert.Equal("first", tab.Content);
+        Assert.True(tab.IsDirty);
+        tab.Document.UndoStack.Redo();
+        Assert.False(tab.IsDirty);
+        tab.Document.UndoStack.Redo();
+        await service.SaveAsync(tab);
+        Assert.False(tab.IsDirty);
+        tab.Document.UndoStack.Undo();
+        Assert.True(tab.IsDirty);
+        tab.Document.UndoStack.Redo();
+        Assert.False(tab.IsDirty);
+    });
+
+    [Fact]
+    public Task FailedSavePreservesTheLastSuccessfulInterleavedSnapshot() => StaTest.Run(async () =>
+    {
+        using var directory = new TestDirectory();
+        var tab = new MarkPad.Models.DocumentTab { Content = "saved" };
+        var service = new DocumentFileService();
+        var path = directory.FilePath("failed.md");
+        await SaveWithInterleavedEditAsync(service, tab, path);
+        tab.Encoding = Encoding.ASCII;
+        tab.Document.Insert(tab.Document.TextLength, "中文");
+
+        await Assert.ThrowsAsync<EncoderFallbackException>(() => service.SaveAsync(tab));
+        Assert.Equal("saved", await File.ReadAllTextAsync(path));
+        Assert.True(tab.IsDirty);
+        tab.Document.UndoStack.Undo();
+        Assert.True(tab.IsDirty);
+        tab.Document.UndoStack.Undo();
+        Assert.Equal("saved", tab.Content);
+        Assert.False(tab.IsDirty);
+    });
+
+    [Fact]
+    public Task ExplicitDirtyAndReloadDecisionsReplaceTheInterleavedSnapshot() => StaTest.Run(async () =>
+    {
+        using var directory = new TestDirectory();
+        var tab = new MarkPad.Models.DocumentTab { Content = "saved" };
+        var service = new DocumentFileService();
+        await SaveWithInterleavedEditAsync(service, tab, directory.FilePath("forced.md"));
+        tab.IsDirty = true;
+        tab.Document.UndoStack.Undo();
+        Assert.Equal("saved", tab.Content);
+        Assert.True(tab.IsDirty);
+
+        await SaveWithInterleavedEditAsync(service, tab, directory.FilePath("reload.md"));
+        tab.Content = "reloaded";
+        tab.Document.UndoStack.ClearAll();
+        tab.IsDirty = false;
+        tab.Document.Insert(tab.Document.TextLength, " changed");
+        tab.Document.UndoStack.Undo();
+        Assert.Equal("reloaded", tab.Content);
+        Assert.False(tab.IsDirty);
+    });
+
+    private static async Task SaveWithInterleavedEditAsync(DocumentFileService service, MarkPad.Models.DocumentTab tab, string path)
+    {
+        // FilePath changes after writing the captured bytes but before updating dirty state.
+        // Editing at that public notification makes the race deterministic without timing sleeps.
+        var edited = false;
+        PropertyChangedEventHandler changed = (_, args) =>
+        {
+            if (args.PropertyName != nameof(tab.FilePath)) return;
+            tab.Document.Insert(tab.Document.TextLength, " later");
+            edited = true;
+        };
+        tab.PropertyChanged += changed;
+        try { await service.SaveAsync(tab, path); }
+        finally { tab.PropertyChanged -= changed; }
+        Assert.True(edited);
+    }
 
     [Fact]
     public Task LargeFilesOpenInEditMode() => StaTest.Run(async () =>

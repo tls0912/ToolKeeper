@@ -21,6 +21,7 @@ public sealed partial class DocumentView : Grid, IDisposable
     private readonly ListBox _outlineList = new() { BorderThickness = new Thickness(0), Padding = new Thickness(4), HorizontalContentAlignment = HorizontalAlignment.Stretch };
     private readonly TextBlock _outlineTitle = new() { FontWeight = FontWeights.SemiBold, Margin = new Thickness(12, 12, 8, 10) };
     private readonly TextBlock _emptyOutline = new() { TextWrapping = TextWrapping.Wrap, Margin = new Thickness(12), VerticalAlignment = VerticalAlignment.Top };
+    private readonly HashSet<int> _outlineLevels = [1, 2, 3, 4, 5, 6];
     private readonly GridSplitter _splitter = new()
     {
         Width = 6, HorizontalAlignment = HorizontalAlignment.Stretch, VerticalAlignment = VerticalAlignment.Stretch,
@@ -129,12 +130,23 @@ public sealed partial class DocumentView : Grid, IDisposable
     public void ApplyLanguage(string language)
     {
         _language = language;
+        _outlinePanel.FlowDirection = UiLanguage.IsRightToLeft(language) ? FlowDirection.RightToLeft : FlowDirection.LeftToRight;
         _outlineTitle.Text = Translate("Outline", "章節大綱", "見出し一覧");
-        _emptyOutline.Text = Translate("No headings yet.\nAdd headings to see chapters here.", "尚無章節標題。\n加入標題後會顯示在這裡。", "見出しがありません。\n見出しを追加するとここに表示されます。");
+        UpdateEmptyOutlineMessage();
         System.Windows.Automation.AutomationProperties.SetName(_outlineList, _outlineTitle.Text);
         UpdateSplitterLabel();
         foreach (var item in _outlineList.Items.OfType<ListBoxItem>())
             if (item.Tag is PreviewHeading heading) SetHeadingLabel(item, heading);
+    }
+
+    public void ApplyOutlineLevels(IEnumerable<int> levels)
+    {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        var selected = levels.Where(level => level is >= 1 and <= 6).ToHashSet();
+        if (_outlineLevels.SetEquals(selected)) return;
+        _outlineLevels.Clear();
+        _outlineLevels.UnionWith(selected);
+        RefreshOutline();
     }
 
     private string Translate(string english, string chinese, string japanese) =>
@@ -191,7 +203,7 @@ public sealed partial class DocumentView : Grid, IDisposable
         try
         {
             _outlineList.Items.Clear();
-            foreach (var heading in Preview.Headings)
+            foreach (var heading in Preview.Headings.Where(heading => _outlineLevels.Contains(heading.Level)))
             {
                 var text = new TextBlock
                 {
@@ -208,14 +220,19 @@ public sealed partial class DocumentView : Grid, IDisposable
                 _outlineList.Items.Add(item);
             }
             _emptyOutline.Visibility = _outlineList.Items.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
+            UpdateEmptyOutlineMessage();
         }
         finally { _updatingOutlineSelection = false; }
         UpdateActiveHeading();
     }
 
+    private void UpdateEmptyOutlineMessage() => _emptyOutline.Text = Preview.Headings.Count > 0 && _outlineList.Items.Count == 0
+        ? Translate("No headings match the selected levels.", "所選層級沒有章節標題。", "選択したレベルの見出しがありません。")
+        : Translate("No headings yet.\nAdd headings to see chapters here.", "尚無章節標題。\n加入標題後會顯示在這裡。", "見出しがありません。\n見出しを追加するとここに表示されます。");
+
     private void SetHeadingLabel(ListBoxItem item, PreviewHeading heading) =>
         System.Windows.Automation.AutomationProperties.SetName(item,
-            Translate($"Heading {heading.Level}: {heading.Title}", $"第 {heading.Level} 級標題：{heading.Title}", $"見出し {heading.Level}：{heading.Title}"));
+            ToolKeeper.UI.UiLanguage.Format(_language, "Heading {0}: {1}", "第 {0} 級標題：{1}", "見出し {0}：{1}", heading.Level, heading.Title));
 
     private void UpdateActiveHeading()
     {

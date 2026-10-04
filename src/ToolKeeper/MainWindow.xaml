@@ -24,7 +24,20 @@
                             <Grid Margin="0,0,0,12">
                                 <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
                                 <StackPanel VerticalAlignment="Center">
-                                    <TextBlock Text="{Binding Name}" FontWeight="SemiBold" />
+                                    <StackPanel Orientation="Horizontal">
+                                        <Image Source="{Binding Icon}" Width="20" Height="20" Margin="0,0,6,0" RenderOptions.BitmapScalingMode="HighQuality">
+                                            <Image.Style>
+                                                <Style TargetType="Image">
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding Icon}" Value="{x:Null}">
+                                                            <Setter Property="Visibility" Value="Collapsed" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Image.Style>
+                                        </Image>
+                                        <TextBlock Text="{Binding Name}" FontWeight="SemiBold" VerticalAlignment="Center" />
+                                    </StackPanel>
                                     <TextBlock Text="{Binding Description}" Style="{StaticResource Muted}" Margin="0,2,12,0" />
                                 </StackPanel>
                                 <Button Grid.Column="1" Content="{Binding ActionText}" IsEnabled="{Binding CanActivate}" Click="ProductActivationClick" MinWidth="100" VerticalAlignment="Center" ToolTipService.ShowOnDisabled="True" ToolTip="{Binding ActionHelp}" AutomationProperties.Name="{Binding ActionName}" />

@@ -7,7 +7,7 @@ Image → ICO 將圖片轉為多尺寸 Windows 圖示，已從 ToolKeeper 主視
 ## 入口與視窗
 
 - 產品 ID：`005`；正式名稱：`Image → ICO`；副標題：`Icon Converter`。
-- 原生標題列：`Image → ICO - Icon Converter`。
+- 共用 `WindowFrame` 自訂竹紋頂列：`Image → ICO - Icon Converter`，不顯示 Windows 原生標題列，工作區不重複顯示大型產品名；配置依 [工具番介面標準](../UI-STANDARD.md)。
 - 從 ToolKeeper 工具列表或「工具番」桌面群組開啟；平台入口 URI 為 `toolkeeper://run/005`。
 - 宿主持有模組視窗，再次開啟時喚回既有視窗；主視窗隱藏不影響轉換，平台退出時一併關閉。
 - 視窗只包含 ICO 功能，不載入或隱藏 HASH 工具。主視窗只保留工具列表。

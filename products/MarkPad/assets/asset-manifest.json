@@ -1,8 +1,8 @@
 {
-    "generatedUtc":  "2026-09-28T07:35:25.0709839Z",
+    "generatedUtc":  "2026-10-04T06:13:44.4591955Z",
     "sourceBrand":  "src/MarkPad/Assets/MarkPad.svg",
     "sourceRenderer":  "scripts/MarkPadIconRenderer.cs",
-    "packageAssetsSource":  "artifacts/msix/Hanqing-1.0.2.0-x64-store/Layout/Assets",
+    "packageAssetsSource":  "artifacts/msix/Hanqing-1.0.3.0-x64-store/Layout/Assets",
     "officialGuidance":  "https://learn.microsoft.com/en-us/windows/apps/publish/publish-your-app/msix/screenshots-and-images",
     "notes":  [
                   "app-icon-300.png is the Store listing icon.",

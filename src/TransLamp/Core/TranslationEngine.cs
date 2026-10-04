@@ -32,6 +32,47 @@ public sealed class TranslationEngine
         }, validateOnly: false, progress, cancellationToken).ConfigureAwait(false))!;
     }
 
+    public Task<string> TranslateRouteAsync(string text, IReadOnlyList<InstalledLanguagePack> packs,
+        IProgress<TranslationRouteProgress>? progress = null, CancellationToken cancellationToken = default) =>
+        TranslateRouteAsync(text, packs, TranslateAsync, progress, cancellationToken);
+
+    // The delegate permits deterministic orchestration tests; production always uses TranslateAsync's
+    // pack lease, hash verification and bundled worker for each segment.
+    internal async Task<string> TranslateRouteAsync(string text, IReadOnlyList<InstalledLanguagePack> packs,
+        Func<string, InstalledLanguagePack, IProgress<TranslationProgress>?, CancellationToken, Task<string>> translate,
+        IProgress<TranslationRouteProgress>? progress = null, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(text)) throw new TransLampException("empty-input", "請先輸入要翻譯的文字。");
+        if (text.Length > MaximumInputCharacters) throw new TransLampException("input-too-long", "一次最多翻譯 20,000 個字元，請分次處理。");
+        var steps = packs?.ToArray();
+        if (steps is null || steps.Length is < 1 or > 2 || steps.Any(pack => pack?.Manifest is null ||
+            pack.Manifest.SourceLanguage == pack.Manifest.TargetLanguage ||
+            !LanguagePackCatalog.SupportsDirection(pack.Manifest.SourceLanguage, pack.Manifest.TargetLanguage)) ||
+            (steps.Length == 2 && (steps[0].Manifest.TargetLanguage != "en" ||
+                steps[1].Manifest.SourceLanguage != "en" ||
+                steps[0].Manifest.SourceLanguage == steps[1].Manifest.TargetLanguage)))
+            throw new TransLampException("unsupported-direction", "目前不支援這個翻譯方向，請使用資料管理中列出的語言包。");
+
+        var output = text;
+        for (var index = 0; index < steps.Length; index++)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            var segmentProgress = progress is null ? null : new RouteProgress(progress, index + 1, steps.Length);
+            output = await translate(output, steps[index], segmentProgress, cancellationToken).ConfigureAwait(false);
+            cancellationToken.ThrowIfCancellationRequested();
+            if (index < steps.Length - 1 && output.Length > MaximumInputCharacters)
+                throw new TransLampException("intermediate-too-long", "英文中繼文字超過 20,000 個字元，請縮短原文或分次翻譯。");
+        }
+        return output;
+    }
+
+    // Forward synchronously so segment callbacks do not capture a context and outlive their stage.
+    private sealed class RouteProgress(IProgress<TranslationRouteProgress> progress, int stage, int stages)
+        : IProgress<TranslationProgress>
+    {
+        public void Report(TranslationProgress value) => progress.Report(new(stage, stages, value));
+    }
+
     /// <summary>Loads a staged model in the bundled worker. The installer holds its exclusive directory lease.</summary>
     public async Task ValidatePackAsync(InstalledLanguagePack pack, CancellationToken cancellationToken = default)
     {

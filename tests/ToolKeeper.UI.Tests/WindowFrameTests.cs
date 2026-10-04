@@ -10,6 +10,25 @@ namespace ToolKeeper.UI.Tests;
 public sealed class WindowFrameTests
 {
     [Fact]
+    public Task FixedCaptionRemainsIndependentOfTheTaskbarTitle() => StaTest.Run(() =>
+    {
+        var owner = NewOwner("汗青 - first.md");
+        var frame = new WindowFrame(owner, captionTitle: "汗青");
+        owner.Content = frame;
+        try
+        {
+            var title = Named<TextBlock>(frame, "WindowTitleText");
+            Assert.Equal("汗青", title.Text);
+            Assert.Equal("汗青", title.ToolTip);
+            owner.Title = "汗青 - second.md";
+            Assert.Equal("汗青 - second.md", owner.Title);
+            Assert.Equal("汗青", title.Text);
+            Assert.Equal("汗青", title.ToolTip);
+        }
+        finally { owner.Close(); }
+    });
+
+    [Fact]
     public Task CaptionTracksFullOwnerTitleAndKeepsWindowControlsInsideNarrowWidths() => StaTest.Run(() =>
     {
         var owner = NewOwner("ConvAnvil - Text, Encoding & Byte Converter");
