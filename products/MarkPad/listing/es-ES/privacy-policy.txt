@@ -1,0 +1,21 @@
+Política de privacidad de 汗青 - Markdown Writer
+Actualizada: 4 de octubre de 2026
+Editor: 不告訴你
+
+1. Documentos y procesamiento local
+Hanqing lee los documentos Markdown que eliges abrir, sus rutas y las imágenes locales permitidas a las que hacen referencia para editarlos, previsualizarlos, guardarlos y exportarlos a PDF. Este contenido puede incluir información personal que hayas añadido a tus documentos. La aplicación no incluye ninguna función para subir documentos o PDF a un servidor del editor y no requiere una cuenta de Hanqing.
+
+2. Datos almacenados en tu dispositivo
+La aplicación guarda preferencias como el idioma, el tema y las fuentes, rutas de archivos recientes, rutas de documentos abiertos si activas su restauración, borradores de recuperación de documentos sin guardar, registros de errores, datos locales de WebView2 y un registro de confirmación de la licencia completa en el área de datos de aplicaciones del usuario actual de Windows. También se conserva la posición de rotación de los artículos integrados; al recordar los archivos abiertos se guarda qué documento estaba activo. Desactivar esta opción borra la lista guardada. Los borradores pueden contener el texto completo del documento; los registros de errores pueden incluir rutas y detalles de excepciones. Hanqing no envía automáticamente estos archivos al editor. Se crean borradores de recuperación incluso si desactivas el guardado automático. La lista de archivos recientes tiene un límite de 20 rutas; los registros de errores se rotan sin un período de conservación fijo. Otros datos locales pueden persistir entre sesiones hasta que la aplicación los elimine o tú los borres.
+
+3. Servicios de Microsoft
+La edición de Microsoft Store comprueba la licencia y consulta si está activa, si es de prueba y cuándo caduca. Tras confirmar una compra completa, guarda un registro local protegido para el usuario actual de Windows que se utiliza en los siguientes inicios. Microsoft gestiona el inicio de sesión, las compras y el pago. Hanqing no solicita ni almacena la contraseña de tu cuenta de Microsoft ni los datos de tu tarjeta de crédito. La vista previa y la exportación a PDF utilizan Microsoft Edge WebView2 Runtime. Las prácticas de Microsoft Store, Windows y WebView2 en materia de datos de servicio y diagnóstico se rigen por la Declaración de privacidad de Microsoft: https://privacy.microsoft.com/privacystatement
+
+4. Enlaces, conexiones y uso compartido
+La vista previa bloquea las imágenes remotas y las solicitudes de red iniciadas por el contenido del documento. Al pulsar un enlace web, se abre el navegador predeterminado; el sitio de destino puede tratar información conforme a su propia política. Copiar texto, enlaces o direcciones de correo electrónico utiliza el portapapeles de Windows; su historial y sincronización dependen de la configuración de Windows. La opción de visitar la tienda abre la página de este producto en Microsoft Store. Si guardas documentos en una ubicación de red o en una carpeta sincronizada con la nube, ese servicio puede tratar los archivos por separado. La aplicación no incorpora publicidad ni seguimiento para analizar el uso.
+
+5. Tu control y la seguridad de los datos
+Puedes ver, editar o eliminar tus documentos guardados y PDF exportados, y cambiar las preferencias y el guardado automático desde la aplicación. Restablecer la configuración restablece las preferencias y borra las listas de archivos recientes y de archivos que se reabrirían al iniciar; no elimina los demás datos. Después de cerrar la aplicación, puedes gestionar o borrar las preferencias locales, los borradores, los registros, los datos de WebView2 y el registro de licencia propios de Hanqing. Al borrar los borradores, se elimina su contenido de recuperación; al borrar el registro de licencia, será necesario comprobarla de nuevo en un inicio posterior. Hanqing no añade cifrado a los documentos, las preferencias, los borradores ni los registros; utiliza controles de acceso de Windows y medidas de protección del dispositivo adecuados. El editor no puede acceder a los archivos de tu equipo ni eliminarlos de forma remota a través de Hanqing.
+
+6. Cambios de esta política
+Esta política se actualizará cuando cambien las prácticas de tratamiento de datos de la aplicación.

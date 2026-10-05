@@ -1,14 +1,15 @@
 汗青 - Markdown Writer brings your documents into focus. Open local Markdown files in a readable preview, then switch to editing when you need to make changes. Use it for README files, notes, and written guides.
 
-In reading mode, a chapter list on the left gathers H1–H6 headings so you can jump to a section. In editing mode, write Markdown on the left and see a live preview on the right. Keep several documents open in tabs, and use search and replace to revise your text.
+In reading mode, a chapter list on the left gathers H1–H6 headings so you can jump to a section. Choose which heading levels to include; the same selection applies to bookmarks in exported PDFs. In editing mode, write Markdown on the left and see a live preview on the right. Keep several documents open in tabs, and use search and replace to revise your text.
 
-Bamboo Light and Bamboo Dark themes pair a bamboo interface with a xuan paper background. Set fonts and sizes separately for the interface, preview, and editor. Choose traditional lettering or fonts installed on your computer. The editing toolbar also helps you insert headings, bold, italic, strikethrough, inline code, and links.
+Choose from four themes: Light, Dark, Bamboo Light, and Bamboo Dark. The bamboo themes pair a bamboo interface with a xuan paper background. Set fonts and sizes separately for the interface, preview, and editor. Choose traditional lettering or fonts installed on your computer. The editing toolbar also helps you insert headings, bold, italic, strikethrough, inline code, and links.
 
 Work with tables, task lists, code blocks, footnotes, and local images. To share a finished document, save the Markdown source and export a timestamped PDF beside it. Autosave, external change notifications, and draft recovery after a crash support your everyday work.
 
-Document processing and preview happen locally. The interface is available in Traditional Chinese, English, and Japanese.
+Optionally remember open files when you close the app and reopen named files on your next launch. Unsaved changes still follow the usual save prompts. When no document is open, three built-in articles appear in turn each time you enter the empty-document view, without changing articles while you read.
+
+Document processing and preview happen locally. The interface and all three built-in articles are available in eight languages: Traditional Chinese, English, Japanese, Simplified Chinese, Spanish, Arabic, French, and Korean.
 
 Try it free for 7 days. Microsoft Store manages the trial period and license. After the trial expires, a one-time purchase of the full version is required to continue using the app.
 
 Preview and PDF export require Microsoft Edge WebView2 Runtime.
-

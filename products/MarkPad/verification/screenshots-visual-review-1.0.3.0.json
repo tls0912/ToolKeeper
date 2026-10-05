@@ -1,0 +1,62 @@
+{
+  "storeVersion": "1.0.3.0",
+  "reviewedAtUtc": "2026-10-04T06:33:28.3872658Z",
+  "status": "passed",
+  "screenshots": 40,
+  "build": {
+    "command": "dotnet build products/MarkPad/source/Screenshots/Screenshots.csproj -c Release --artifacts-path artifacts/markpad-store-capture/1.0.3.0",
+    "exitCode": 0,
+    "warnings": 0,
+    "errors": 0
+  },
+  "capture": {
+    "command": "dotnet artifacts/markpad-store-capture/1.0.3.0/bin/Screenshots/release/Screenshots.dll",
+    "exitCode": 0,
+    "passChecks": 570,
+    "failedChecks": 0
+  },
+  "fileValidation": {
+    "pngDimensions": "40 of 40 PNGs independently decoded as 1600x1000",
+    "pngHashes": "40 of 40 SHA256 values match screenshots-1.0.3.0.json",
+    "totalBytes": 17638163,
+    "minBytes": 274707,
+    "maxBytes": 690430
+  },
+  "visualReview": {
+    "method": "Reviewed all 40 images in eight per-language five-scene contact sheets, plus full-size zh-TW edit, zh-CN Light, ar-SA Bamboo Light/read and edit, fr-FR edit, ko-KR edit.",
+    "scenes": [
+      "01-preview-bamboo-light",
+      "02-preview-bamboo-dark",
+      "03-preview-light",
+      "04-preview-dark",
+      "05-edit-bamboo-light"
+    ],
+    "locales": [
+      "zh-TW",
+      "en-US",
+      "ja-JP",
+      "zh-CN",
+      "es-ES",
+      "ar-SA",
+      "fr-FR",
+      "ko-KR"
+    ],
+    "result": "Every scene contains the real document preview; four preview themes are visually distinct, editing uses the left editor and right preview, all locales show localized text and tabs.",
+    "arabic": "Arabic glyphs are connected and readable; preview paragraphs, tasks and table align right with RTL direction. Editor remains at the left of the split view.",
+    "fonts": "French accents and Korean/CJK glyphs are visible without replacement boxes. The application uses installed fallback fonts: Segoe UI for Arabic and Malgun Gothic for Korean on this capture host.",
+    "observations": [
+      "Long outline headings and some long tab/action labels use the existing application ellipsis or wrapping. No screenshot-source modification was made to alter application behavior."
+    ],
+    "limits": "Visual check is not an independent native-speaker linguistic review or an installation/Store submission test."
+  },
+  "isolation": {
+    "stateDirectory": "artifacts/markpad-store-capture/state/20261004-062359-043",
+    "startup": "Plain WPF Application; MarkPad.App.OnStartup and Store license flow were not invoked",
+    "documents": "Repository samples copied to the unique capture state directory; original sample SHA256 verified unchanged by capture",
+    "session": "RememberOpenFiles=false, empty remembered session; App.Session reset and Settings/Recovery/WebView2 isolated"
+  },
+  "sourceFiles": {
+    "programSha256": "b44c38e01402c00706e60e8cfdea6462600c099c66448329598a7098b448b87b",
+    "projectSha256": "d0244055ce4cc8cccbbd07eb438b5c3c0d6e235db85b612947d3f70b28b43bc7"
+  }
+}

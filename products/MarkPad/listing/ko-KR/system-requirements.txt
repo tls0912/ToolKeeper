@@ -1,0 +1,2 @@
+이 패키지는 64비트 Windows(x64)용입니다.
+미리 보기와 PDF 내보내기에는 Microsoft Edge WebView2 Evergreen Runtime이 필요합니다.

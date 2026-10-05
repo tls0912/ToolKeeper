@@ -12,6 +12,8 @@ public sealed class UriActivationTests
     [InlineData("003")]
     [InlineData("004")]
     [InlineData("005")]
+    [InlineData("006")]
+    [InlineData("007")]
     public void EveryCatalogEntryHasAnUnambiguousUri(string id)
     {
         var uri = ToolActivationUri.ForProduct(id);
@@ -35,6 +37,11 @@ public sealed class UriActivationTests
     [InlineData(null)]
     [InlineData("")]
     [InlineData("toolkeeper://run/999")]
+    [InlineData("toolkeeper://run/006?symbol=2330")]
+    [InlineData("toolkeeper://run/006/../004")]
+    [InlineData("toolkeeper://run/007?text=private")]
+    [InlineData("toolkeeper://run/007/../004")]
+    [InlineData("translamp://open")]
     [InlineData("toolkeeper://run/4")]
     [InlineData("toolkeeper://run/004/")]
     [InlineData("toolkeeper://run//004")]
@@ -101,9 +108,9 @@ public sealed class UriActivationTests
         using var client = new ActivationBroker(path.ToLowerInvariant() + Path.DirectorySeparatorChar);
         var received = new List<string?>();
         owner.Start((uri, _) => { received.Add(uri); return Task.FromResult(true); });
-        foreach (var uri in new string?[] { null, "toolkeeper://run/002", "toolkeeper://run/004", "toolkeeper://run/005", "toolkeeper://run/004" })
+        foreach (var uri in new string?[] { null, "toolkeeper://run/002", "toolkeeper://run/004", "toolkeeper://run/005", "toolkeeper://run/006", "toolkeeper://run/006", "toolkeeper://run/004" })
             Assert.True(await client.ForwardAsync(uri));
-        Assert.Equal(new string?[] { null, "toolkeeper://run/002", "toolkeeper://run/004", "toolkeeper://run/005", "toolkeeper://run/004" }, received);
+        Assert.Equal(new string?[] { null, "toolkeeper://run/002", "toolkeeper://run/004", "toolkeeper://run/005", "toolkeeper://run/006", "toolkeeper://run/006", "toolkeeper://run/004" }, received);
     }
 
     [Fact]

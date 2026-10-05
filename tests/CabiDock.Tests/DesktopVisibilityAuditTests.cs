@@ -86,18 +86,28 @@ public sealed class DesktopVisibilityAuditTests
     // All clipping mutations below apply only to this hidden test-owned HWND.
     private sealed class TestWindow : IDisposable
     {
+        private readonly NativeDpiScope _dpi = new();
         public nint Handle { get; }
         public int Left { get; }
         public int Top { get; }
 
         public TestWindow()
         {
-            Handle = CreateWindowEx(0, "STATIC", "CabiDock visibility audit test", 0x80000000,
-                -400, -300, 320, 200, 0, 0, 0, 0);
-            Assert.NotEqual(0, Handle);
-            Assert.True(NativeDesktop.GetWindowRect(Handle, out var bounds));
-            Left = bounds.Left;
-            Top = bounds.Top;
+            try
+            {
+                Handle = CreateWindowEx(0, "STATIC", "CabiDock visibility audit test", 0x80000000,
+                    -400, -300, 320, 200, 0, 0, 0, 0);
+                Assert.NotEqual(0, Handle);
+                Assert.True(NativeDesktop.GetWindowRect(Handle, out var bounds));
+                Left = bounds.Left;
+                Top = bounds.Top;
+            }
+            catch
+            {
+                if (Handle != 0) DestroyWindow(Handle);
+                _dpi.Dispose();
+                throw;
+            }
         }
 
         public DesktopClipPlan MakePlan()
@@ -143,7 +153,11 @@ public sealed class DesktopVisibilityAuditTests
             finally { if (region != 0) DeleteObject(region); }
         }
 
-        public void Dispose() => DestroyWindow(Handle);
+        public void Dispose()
+        {
+            try { DestroyWindow(Handle); }
+            finally { _dpi.Dispose(); }
+        }
     }
 
     [DllImport("user32.dll", CharSet = CharSet.Unicode)]

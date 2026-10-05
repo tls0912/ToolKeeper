@@ -19,7 +19,7 @@ public sealed record PreviewMessage(string Type, string? Text = null, int Line =
 public sealed partial class PreviewPane : UserControl, IDisposable
 {
     private readonly Grid _layout = new();
-    private readonly WebView2CompositionControl _browser = new();
+    private readonly WebView2CompositionControl _browser = new() { FlowDirection = FlowDirection.LeftToRight };
     private readonly TextBlock _notice = new() { TextWrapping = TextWrapping.Wrap, Margin = new Thickness(32), VerticalAlignment = VerticalAlignment.Center, HorizontalAlignment = HorizontalAlignment.Center, MaxWidth = 560, FontSize = 16 };
     private readonly MarkdownRenderer _renderer = new();
     private Task<bool>? _initializeTask;
@@ -61,7 +61,7 @@ public sealed partial class PreviewPane : UserControl, IDisposable
         Content = _layout;
         _layout.Children.Add(_browser);
         _layout.Children.Add(_notice);
-        ShowNotice("Preparing preview…");
+        ShowNotice(MarkdownRenderer.Translate(_language, "Preparing preview…", "正在準備預覽…", "プレビューを準備中…"));
     }
 
     public async Task ShowAsync(string markdown, string? filePath, PreviewOptions options, double scroll = 0, int? sourceLine = null)
@@ -89,6 +89,9 @@ public sealed partial class PreviewPane : UserControl, IDisposable
         var version = ++_request;
         PublishHeadings(Array.Empty<PreviewHeading>());
         _language = options.Language;
+        _notice.FlowDirection = UiLanguage.IsRightToLeft(_language) ? FlowDirection.RightToLeft : FlowDirection.LeftToRight;
+        if (_current is null && !_browserFailed)
+            _notice.Text = MarkdownRenderer.Translate(_language, "Preparing preview…", "正在準備預覽…", "プレビューを準備中…");
         ApplyThemeColors(options.Dark, options.Ink);
         try
         {

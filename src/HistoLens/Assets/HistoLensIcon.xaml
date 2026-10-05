@@ -1,0 +1,77 @@
+<!-- Vector master for the HistoLens PNG and multi-resolution Windows icon.
+     Regenerate with scripts/New-HistoLensIcon.ps1. Coordinates use a 256px canvas. -->
+<DrawingImage xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation">
+  <DrawingImage.Drawing>
+    <DrawingGroup>
+      <GeometryDrawing Brush="Transparent" Geometry="M0,0 H256 V256 H0 Z" />
+      <!-- Bamboo handle: a broad silhouette, a light face and two raised nodes. -->
+      <GeometryDrawing Geometry="M159,158 L222,223">
+        <GeometryDrawing.Pen>
+          <Pen Brush="#294B3E" Thickness="34" StartLineCap="Round" EndLineCap="Round" />
+        </GeometryDrawing.Pen>
+      </GeometryDrawing>
+      <GeometryDrawing Geometry="M169,170 L222,223">
+        <GeometryDrawing.Pen>
+          <Pen Thickness="25" StartLineCap="Round" EndLineCap="Round">
+            <Pen.Brush>
+              <LinearGradientBrush StartPoint="0,1" EndPoint="1,0">
+                <GradientStop Color="#54783F" Offset="0" />
+                <GradientStop Color="#BAD387" Offset="0.52" />
+                <GradientStop Color="#709953" Offset="1" />
+              </LinearGradientBrush>
+            </Pen.Brush>
+          </Pen>
+        </GeometryDrawing.Pen>
+      </GeometryDrawing>
+      <GeometryDrawing Geometry="M179,191 L193,177 M204,216 L218,202">
+        <GeometryDrawing.Pen>
+          <Pen Brush="#436139" Thickness="5" StartLineCap="Round" EndLineCap="Round" />
+        </GeometryDrawing.Pen>
+      </GeometryDrawing>
+      <GeometryDrawing Geometry="M177,188 L190,175 M202,213 L215,200">
+        <GeometryDrawing.Pen>
+          <Pen Brush="#DCE7AC" Thickness="3" StartLineCap="Round" EndLineCap="Round" />
+        </GeometryDrawing.Pen>
+      </GeometryDrawing>
+      <!-- The pale lens keeps both comparison lines readable on light and dark surfaces. -->
+      <GeometryDrawing>
+        <GeometryDrawing.Geometry>
+          <EllipseGeometry Center="107,107" RadiusX="84" RadiusY="84" />
+        </GeometryDrawing.Geometry>
+        <GeometryDrawing.Brush>
+          <LinearGradientBrush StartPoint="0,0" EndPoint="0.8,1">
+            <GradientStop Color="#66865B" Offset="0" />
+            <GradientStop Color="#264E40" Offset="1" />
+          </LinearGradientBrush>
+        </GeometryDrawing.Brush>
+      </GeometryDrawing>
+      <GeometryDrawing>
+        <GeometryDrawing.Geometry>
+          <EllipseGeometry Center="107,107" RadiusX="67" RadiusY="67" />
+        </GeometryDrawing.Geometry>
+        <GeometryDrawing.Brush>
+          <LinearGradientBrush StartPoint="0,0" EndPoint="0.6,1">
+            <GradientStop Color="#FFFFEF" Offset="0" />
+            <GradientStop Color="#E1EBDD" Offset="1" />
+          </LinearGradientBrush>
+        </GeometryDrawing.Brush>
+      </GeometryDrawing>
+      <GeometryDrawing Geometry="M50,73 A67,67 0 0 1 147,53">
+        <GeometryDrawing.Pen>
+          <Pen Brush="#D6E5B2" Thickness="3" StartLineCap="Round" EndLineCap="Round" />
+        </GeometryDrawing.Pen>
+      </GeometryDrawing>
+      <!-- Repeated, non-directional price shapes express historical similarity. -->
+      <GeometryDrawing Geometry="M57,132 L78,110 L103,132 L128,97 L156,119">
+        <GeometryDrawing.Pen>
+          <Pen Brush="#B98432" Thickness="10" StartLineCap="Round" EndLineCap="Round" LineJoin="Round" />
+        </GeometryDrawing.Pen>
+      </GeometryDrawing>
+      <GeometryDrawing Geometry="M57,105 L78,83 L103,105 L128,70 L156,92">
+        <GeometryDrawing.Pen>
+          <Pen Brush="#237D79" Thickness="11" StartLineCap="Round" EndLineCap="Round" LineJoin="Round" />
+        </GeometryDrawing.Pen>
+      </GeometryDrawing>
+    </DrawingGroup>
+  </DrawingImage.Drawing>
+</DrawingImage>

@@ -49,7 +49,7 @@ public static class AboutContent
         if (!string.IsNullOrWhiteSpace(info.Author))
             body.Children.Add(new TextBlock
             {
-                Text = UiLanguage.Text(language, $"Author: {info.Author}", $"作者：{info.Author}", $"作者：{info.Author}"),
+                Text = UiLanguage.Format(language, "Author: {0}", "作者：{0}", "作者：{0}", info.Author),
                 TextWrapping = TextWrapping.Wrap
             });
 

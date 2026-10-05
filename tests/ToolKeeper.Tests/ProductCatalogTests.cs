@@ -10,10 +10,10 @@ public sealed class ProductCatalogTests
     [Fact]
     public void DefinesAllModulesWithStableIdsKindsAndVerifiedStoreIdentity()
     {
-        Assert.Equal(["001", "002", "003", "004", "005"], ProductCatalogService.Definitions.Select(product => product.Id));
-        Assert.Equal(["001", "003"], ProductCatalogService.Definitions
+        Assert.Equal(["001", "002", "003", "004", "005", "006", "007"], ProductCatalogService.Definitions.Select(product => product.Id));
+        Assert.Equal(["001", "003", "007"], ProductCatalogService.Definitions
             .Where(product => product.ModuleKind == ModuleKind.Standalone).Select(product => product.Id));
-        Assert.Equal(["002", "004", "005"], ProductCatalogService.Definitions
+        Assert.Equal(["002", "004", "005", "006"], ProductCatalogService.Definitions
             .Where(product => product.ModuleKind == ModuleKind.BuiltIn).Select(product => product.Id));
         var hanqing = ProductCatalogService.Definitions[0];
         Assert.Equal("汗青", hanqing.Name);
@@ -21,6 +21,14 @@ public sealed class ProductCatalogTests
         Assert.Equal("9NHF764PXW9C", hanqing.StoreId);
         Assert.Null(ProductCatalogService.Definitions[2].ProtocolScheme);
         Assert.Null(ProductCatalogService.Definitions[2].StoreId);
+        var translamp = Assert.Single(ProductCatalogService.Definitions, product => product.Id == "007");
+        Assert.Equal("TransLamp", translamp.Name);
+        Assert.Equal("TransLamp.exe", translamp.ExecutableName);
+        Assert.Equal("TransLamp", translamp.ProjectName);
+        Assert.Equal("net10.0-windows", translamp.TargetFramework);
+        Assert.Equal("translamp", translamp.ProtocolScheme);
+        Assert.Equal("translamp://open", translamp.ProductActivationUri);
+        Assert.Null(translamp.StoreId);
         Assert.True(((IList<ProductDefinition>)ProductCatalogService.Definitions).IsReadOnly);
     }
 
@@ -28,6 +36,7 @@ public sealed class ProductCatalogTests
     [InlineData("002", "CabiDock")]
     [InlineData("004", "Hash Checker")]
     [InlineData("005", "Image → ICO")]
+    [InlineData("006", "HistoLens")]
     public void BuiltInModulesAreAvailableWithoutInstallationOrRegistryProbes(string id, string name)
     {
         var environment = new ProductTestEnvironment();
@@ -55,18 +64,41 @@ public sealed class ProductCatalogTests
         var statuses = environment.Catalog.Refresh();
 
         Assert.Equal(["toolkeeper://run/001", "toolkeeper://run/002", "toolkeeper://run/003",
-            "toolkeeper://run/004", "toolkeeper://run/005"], statuses.Select(status => status.ActivationUri));
+            "toolkeeper://run/004", "toolkeeper://run/005", "toolkeeper://run/006", "toolkeeper://run/007"], statuses.Select(status => status.ActivationUri));
         Assert.All(statuses, status => Assert.Equal(status.Product.ActivationUri, status.ActivationUri));
     }
 
     [Fact]
     public void ExistingDefinitionConstructorDefaultsToStandalone()
     {
-        var product = new ProductDefinition("006", "Example", "Example", "範例", "例",
+        var product = new ProductDefinition("999", "Example", "Example", "範例", "例",
             "Example.exe", "Example", "net10.0-windows", null, null);
 
         Assert.Equal(ModuleKind.Standalone, product.ModuleKind);
-        Assert.Equal("toolkeeper://run/006", product.ActivationUri);
+        Assert.Null(product.ProductActivationUri);
+        Assert.Equal("toolkeeper://run/999", product.ActivationUri);
+    }
+
+    [Fact]
+    public void HistoLensDescribesTwseAndSyntheticDataWithoutStandaloneOrStoreClaims()
+    {
+        var histolens = Assert.Single(ProductCatalogService.Definitions, product => product.Id == "006");
+
+        Assert.Equal("HistoLens", histolens.Name);
+        Assert.Contains("development preview", histolens.DescriptionEnglish);
+        Assert.Contains("TWSE downloads", histolens.DescriptionEnglish);
+        Assert.Contains("synthetic data", histolens.DescriptionEnglish);
+        Assert.Contains("開發預覽", histolens.DescriptionChinese);
+        Assert.Contains("合成資料", histolens.DescriptionChinese);
+        Assert.Contains("開発プレビュー", histolens.DescriptionJapanese);
+        Assert.Contains("合成データ", histolens.DescriptionJapanese);
+        Assert.Equal(ModuleKind.BuiltIn, histolens.ModuleKind);
+        Assert.Empty(histolens.ExecutableName);
+        Assert.Empty(histolens.ProjectName);
+        Assert.Empty(histolens.TargetFramework);
+        Assert.Null(histolens.ProtocolScheme);
+        Assert.Null(histolens.ProductActivationUri);
+        Assert.Null(histolens.StoreId);
     }
 
     [Fact]
@@ -83,7 +115,11 @@ public sealed class ProductCatalogTests
         Assert.Equal(ProductAvailability.Unavailable, statuses[2].Availability);
         Assert.Null(statuses[2].LaunchTarget);
         Assert.False(statuses[2].CanActivate);
-        Assert.Equal(["toolkeeper-markpad"], environment.ProtocolQueries);
+        var translamp = Assert.Single(statuses, status => status.Id == "007");
+        Assert.Equal(ProductAvailability.Unavailable, translamp.Availability);
+        Assert.Null(translamp.LaunchTarget);
+        Assert.False(translamp.CanActivate);
+        Assert.Equal(["toolkeeper-markpad", "translamp"], environment.ProtocolQueries);
     }
 
     [Fact]
@@ -102,9 +138,28 @@ public sealed class ProductCatalogTests
         Assert.Empty(environment.FileQueries);
     }
 
+    [Fact]
+    public void TransLampProtocolUsesOpenContractBeforePortableCopy()
+    {
+        var environment = new ProductTestEnvironment();
+        environment.Protocols.Add("translamp");
+        environment.AddApplication(Path.Combine(environment.BaseDirectory, "TransLamp.exe"));
+
+        var status = environment.Catalog.Find("007")!;
+
+        Assert.Equal(ProductAvailability.Available, status.Availability);
+        Assert.Equal("translamp://open", status.LaunchTarget);
+        Assert.Equal("toolkeeper://run/007", status.ActivationUri);
+        Assert.True(status.CanLaunch);
+        Assert.False(status.CanAcquire);
+        Assert.Equal(["translamp"], environment.ProtocolQueries);
+        Assert.Empty(environment.FileQueries);
+    }
+
     [Theory]
     [InlineData("001", "Hanqing", "Hanqing.exe")]
     [InlineData("003", "ConvAnvil", "ConvAnvil.exe")]
+    [InlineData("007", "TransLamp", "TransLamp.exe")]
     public void DetectsCompleteSiblingPortableApplication(string id, string folder, string executable)
     {
         var environment = new ProductTestEnvironment();
@@ -126,19 +181,21 @@ public sealed class ProductCatalogTests
         Assert.Equal(ProductAvailability.Unavailable, environment.Catalog.Find("003")!.Availability);
     }
 
-    [Fact]
-    public void DevelopmentDiscoveryRequiresBothRepositoryMarkers()
+    [Theory]
+    [InlineData("003", "ConvAnvil")]
+    [InlineData("007", "TransLamp")]
+    public void DevelopmentDiscoveryRequiresBothRepositoryMarkers(string id, string project)
     {
         const string repository = @"C:\work\ToolKeeper";
         var environment = new ProductTestEnvironment(Path.Combine(repository, "src", "ToolKeeper", "bin", "Debug", "net10.0-windows"));
-        var path = Path.Combine(repository, "src", "ConvAnvil", "bin", "Debug", "net10.0-windows", "ConvAnvil.exe");
+        var path = Path.Combine(repository, "src", project, "bin", "Debug", "net10.0-windows", project + ".exe");
         environment.AddApplication(path);
         environment.Files.Add(Path.Combine(repository, "ToolKeeper.sln"));
-        Assert.False(environment.Catalog.Find("003")!.CanLaunch);
+        Assert.False(environment.Catalog.Find(id)!.CanLaunch);
 
         environment.Files.Add(Path.Combine(repository, "src", "ToolKeeper", "ToolKeeper.csproj"));
 
-        Assert.Equal(path, environment.Catalog.Find("003")!.LaunchTarget);
+        Assert.Equal(path, environment.Catalog.Find(id)!.LaunchTarget);
     }
 
     [Fact]
@@ -188,7 +245,7 @@ public sealed class ProductCatalogTests
     }
 
     [Theory]
-    [InlineData("006")]
+    [InlineData("999")]
     [InlineData("../ConvAnvil.exe")]
     [InlineData("https://example.com")]
     public void UnknownIdsDoNotProbeAnything(string id)

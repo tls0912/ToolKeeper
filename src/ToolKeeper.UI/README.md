@@ -1,6 +1,6 @@
 # ToolKeeper.UI 開發指南
 
-`ToolKeeper.UI` 是 `net10.0-windows` WPF 類別庫，提供全系列的共用介面骨架、視窗操作、樣式、竹材／紙紋、字型、文字陰影及偏好元件。ToolKeeper 本體及 001–005 都使用同一 `WindowFrame`，以汗青的自訂視窗為外觀基準。
+`ToolKeeper.UI` 是 `net10.0-windows` WPF 類別庫，提供全系列的共用介面骨架、視窗操作、樣式、竹材／紙紋、字型、文字陰影及偏好元件。ToolKeeper 本體及 001–005 都使用同一 `WindowFrame`。未特別指定時，以工具番本體現有外觀為預設標準，見[工具番介面標準](../../docs/UI-STANDARD.md)。
 
 一般工具透過 `AppWindow` 取得標準布局；汗青把文件分頁、側欄及編輯／預覽布局組合到同一骨架。產品各自保存設定與功能狀態，切換外觀不重建工作區。只引用組件不會自動改變其他視窗。
 
@@ -16,7 +16,9 @@ UiPreferencesChanged += (_, _) => UpdateProductLabels();
 ApplyUiPreferences();
 ```
 
-`SelectedTheme` 預設 `Light`，`SelectedLanguage` 預設 `System`。風格包括亮色、深色、竹子（亮色）、竹子（深色）與跟隨系統；語言包括跟隨系統、英文、繁體中文與日文。竹子風格採用的傳統文字依本機字型與語言解析，技術內容可保留等寬字型。公開屬性或 `ApplyUiPreferences()` 可用於程式套用／測試；選單的使用者操作才會保存偏好。共用模組統一提供調色盤、竹材與紙紋；宿主負責把材質放到產品自己的功能配置中。
+簡介與「風格／語言／關於」位於同一行，三個入口靠右排列；簡介可隨寬度換行，可選 `HeaderActions` 位於下一行左側。
+
+`SelectedTheme` 預設 `Ink`（竹子亮色），`SelectedLanguage` 預設 `System`。風格包括亮色、深色、竹子（亮色）、竹子（深色）與跟隨系統；語言包括跟隨系統、英文、繁體中文與日文。竹子風格採用的傳統文字依本機字型與語言解析，技術內容可保留等寬字型。公開屬性或 `ApplyUiPreferences()` 可用於程式套用／測試；選單的使用者操作才會保存偏好。共用模組統一提供調色盤、竹材與紙紋；宿主負責把材質放到產品自己的功能配置中。
 
 首次顯示視窗時，從 `PreferencesPath` 載入獨立的風格／語言 JSON；設為 `null` 就不讀寫設定。載入無效值回到上述預設，保存以暫存檔後替換，與產品既有業務 JSON 分開。相同路徑的開啟視窗會同步，其他產品維持自己的偏好。系統風格的事件於顯示時訂閱、關閉時解除。
 
@@ -46,6 +48,8 @@ frame.ApplyLanguage(language);
 `WindowFrame` 統一 caption、圖示、完整 `Window.Title`、最小化／最大化／還原／關閉、外框及螢幕工作區處理；`NoResize` 只顯示關閉，`CanMinimize` 禁止最大化。完整標題在產品最小尺寸內顯示，極窄自訂尺寸使用省略號並保留完整 tooltip；`CaptionContent`、`CaptionActions` 與 `Workspace` 僅承載產品內容。caption 控制使用 `WindowChrome` 的互動命中設定，空白處保留拖曳行為。關閉按鈕走 `Window.Close()`，不越過產品的 `Closing` 取消、隱藏或未儲存文件確認。
 
 汗青的全螢幕模式用 `IsFullScreen`、`IsCaptionVisible`、`CaptionLeftInset` 與 `CaptionRevealRequested` 接上共用標題列；螢幕範圍、還原位置、側欄與文件狀態仍由汗青管理。不要為不同布局再複製一套標題列或視窗按鈕。
+
+需要固定頂列、動態工作列標題時，可用 `new WindowFrame(this, captionTitle: "汗青")`。指定文字僅套用到頂列及其提示；`Window.Title` 繼續供 Windows 工作列使用。省略 `captionTitle` 的工具仍跟隨 `Window.Title`。
 
 `UiAppearance.ApplyResources` 一次更新調色盤、竹材／紙紋、介面字型及 `ChromeTextShadow` 資源，只作用於指定字典。`ChromeTextShadow` 與 `Resources/ChromeTextStyles.xaml` 已從汗青移至 `ToolKeeper.UI`，保留既有陰影開關、厚度、資源 key 與繪製方式。閱讀和編輯字型不是視窗介面字型，仍由文件產品處理。
 
@@ -98,7 +102,9 @@ var language = UiLanguage.Resolve(Settings.Language);
 var label = UiLanguage.Text(language, "Theme", "主題", "テーマ");
 ```
 
-可保存的語言值為 `System`、`en`、`zh-TW`、`ja`。`Resolve` 預設讀取 `CultureInfo.CurrentUICulture.Name`，也可傳入第二個參數指定系統語言供測試。系統語言為 `zh-TW`、`zh-HK`、`zh-MO` 或 `zh-Hant*` 時解析為繁體中文，`ja*` 解析為日文，其餘為英文。
+預設可保存的語言值為 `System`、`en`、`zh-TW`、`ja`。`Resolve` 預設讀取 `CultureInfo.CurrentUICulture.Name`，也可傳入第二個參數指定系統語言供測試。系統語言為 `zh-TW`、`zh-HK`、`zh-MO` 或 `zh-Hant*` 時解析為繁體中文，`ja*` 解析為日文，其餘為英文。
+
+汗青另外在 `IsSupported`、`Resolve`、`Choices` 與 `PreferenceMenus.AddLanguageChoices` 明確傳入 `includeAdditionalLanguages: true`，啟用 `zh-CN`、`es`、`ar`、`fr`、`ko`。其他產品沿用原 API 時維持原有語系範圍。新增語系的 `Text` 從 `Resources/Localization/{code}.json` 讀取並快取；英文原文是穩定鍵，`source.en.json` 保存完整鍵清單及繁中對照，供翻譯與驗證使用，不打包進產品。包含執行期資料的字串以 `UiLanguage.Format` 及 `{0}` 等參數處理，不用字串插值作為查詢鍵。`IsRightToLeft` 可用於阿拉伯文閱讀與選單，文件及程式碼方向由宿主分別處理。
 
 `Settings.Language` 必須保留使用者選擇的原始值；例如 `System` 解析成 `zh-TW` 後，仍保存 `System`。把解析後的值傳給 `Text`、字體解析與選項標籤，把原始值傳給選單的 `selected` 參數，才能正確勾選「跟隨系統」。模組不修改執行緒文化設定。
 

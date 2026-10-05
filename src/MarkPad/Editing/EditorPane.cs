@@ -51,6 +51,7 @@ public sealed partial class EditorPane : UserControl
     {
         Editor = new TextEditor
         {
+            FlowDirection = FlowDirection.LeftToRight,
             WordWrap = true,
             ShowLineNumbers = false,
             Padding = new Thickness(12, 16, 16, 32),
@@ -87,6 +88,7 @@ public sealed partial class EditorPane : UserControl
         _selectionPopup = new Popup
         {
             Child = _popupBorder,
+            FlowDirection = FlowDirection.LeftToRight,
             PlacementTarget = Editor.TextArea.TextView,
             Placement = PlacementMode.Relative,
             AllowsTransparency = true,
@@ -212,11 +214,14 @@ public sealed partial class EditorPane : UserControl
 
     public void ApplyLanguage(string language)
     {
-        string[] tooltips = language.StartsWith("zh", StringComparison.OrdinalIgnoreCase)
-            ? ["粗體 · Ctrl+B", "斜體 · Ctrl+I", "行內程式碼", "連結"]
-            : language.StartsWith("ja", StringComparison.OrdinalIgnoreCase)
-                ? ["太字 · Ctrl+B", "斜体 · Ctrl+I", "インラインコード", "リンク"]
-                : ["Bold · Ctrl+B", "Italic · Ctrl+I", "Inline code", "Link"];
+        string[] tooltips =
+        [
+            UiLanguage.Text(language, "Bold · Ctrl+B", "粗體 · Ctrl+B", "太字 · Ctrl+B"),
+            UiLanguage.Text(language, "Italic · Ctrl+I", "斜體 · Ctrl+I", "斜体 · Ctrl+I"),
+            UiLanguage.Text(language, "Inline code", "行內程式碼", "インラインコード"),
+            UiLanguage.Text(language, "Link", "連結", "リンク")
+        ];
+        _popupBorder.FlowDirection = UiLanguage.IsRightToLeft(language) ? FlowDirection.RightToLeft : FlowDirection.LeftToRight;
         for (var index = 0; index < _formatButtons.Count; index++) _formatButtons[index].ToolTip = tooltips[index];
     }
 

@@ -51,7 +51,7 @@ public sealed class GroupWindow : Window
     public event EventHandler? Expanded;
     public event Action? InteractionEnded;
 
-    public GroupWindow(CategoryDefinition category, GroupLayout layout, string theme = "Light")
+    public GroupWindow(CategoryDefinition category, GroupLayout layout, string theme = "Ink")
     {
         _category = category;
         Title = category.Name;
@@ -194,8 +194,18 @@ public sealed class GroupWindow : Window
 
     public void UpdateItems(IEnumerable<DesktopItem> items, IEnumerable<CategoryDefinition> categories)
     {
-        _items = items.OrderBy(i => i.Name, StringComparer.CurrentCultureIgnoreCase).ToList();
-        _categories = categories.ToList();
+        var nextItems = items.OrderBy(i => i.Name, StringComparer.CurrentCultureIgnoreCase).ToList();
+        var nextCategories = categories.ToList();
+        if (_items.Count == nextItems.Count && _items.Zip(nextItems).All(pair =>
+                pair.First.FullPath == pair.Second.FullPath && pair.First.IsDirectory == pair.Second.IsDirectory
+                && pair.First.Identity == pair.Second.Identity)
+            && _categories.Count == nextCategories.Count && _categories.Zip(nextCategories).All(pair =>
+                pair.First.Id == pair.Second.Id && pair.First.Name == pair.Second.Name)) return;
+
+        // Keep the last rendered values independent of mutable caller objects. An unchanged
+        // catalog refresh must preserve the scroll viewer and its focused item.
+        _items = nextItems.Select(item => new DesktopItem(item.FullPath, item.IsDirectory, item.Identity)).ToList();
+        _categories = nextCategories.Select(category => new CategoryDefinition { Id = category.Id, Name = category.Name }).ToList();
         _count.Text = $"{_items.Count} 個項目";
         RenderBody();
     }

@@ -204,7 +204,6 @@ public partial class ImageToIcoWindow : AppWindow
         ("IconSizes", "16–256 px sizes · Keep proportions and transparency", "16–256 px 多尺寸 · 保留比例與透明背景", "16–256 px の複数サイズ · 比率と透明度を保持"),
         ("IconNames", "Duplicate names are numbered; originals are preserved.", "同名檔案會自動編號，保留原圖。", "同名ファイルには番号を付け、元の画像を保持します。"),
         ("NoImages", "No images selected.", "尚未選擇圖片。", "画像が選択されていません。"),
-        ("Badge", "Free · Local · Offline", "免費 · 本機處理 · 離線可用", "無料 · ローカル · オフライン"),
         ("Cancel", "Cancel", "取消", "キャンセル"),
         ("Privacy", "Your files stay on this computer. Every operation runs locally.", "檔案留在你的電腦，每次操作都在本機完成。", "ファイルはこのコンピューターに保持され、すべての処理はローカルで実行されます。"),
     ];

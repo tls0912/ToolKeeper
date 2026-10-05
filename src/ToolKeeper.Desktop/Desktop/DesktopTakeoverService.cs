@@ -17,7 +17,7 @@ internal sealed class DesktopTakeoverService : IDisposable
     private IReadOnlyList<DesktopItem> _items = [];
     private IReadOnlyList<DesktopTool> _tools = [];
     private Action<string>? _activateTool;
-    private string _theme = "Light";
+    private string _theme = "Ink";
     private DesktopRecoveryGuard? _guard;
     private DesktopIconClipper? _clipper;
     private DesktopProbeResult? _desktop;

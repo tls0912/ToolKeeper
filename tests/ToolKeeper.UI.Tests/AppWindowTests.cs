@@ -11,7 +11,7 @@ namespace ToolKeeper.UI.Tests;
 public sealed class AppWindowTests
 {
     [Fact]
-    public Task SharedFrameContainsFullCaptionAndWrappingProductHeader() => StaTest.Run(() =>
+    public Task SharedFrameKeepsPreferencesRightOfTheDescription() => StaTest.Run(() =>
     {
         var badge = new TextBlock { Text = "Local · Offline", FontSize = 12 };
         var workspace = new TextBox { Text = "Keep this unsaved text" };
@@ -22,6 +22,7 @@ public sealed class AppWindowTests
         };
         try
         {
+            Assert.Equal("Ink", window.SelectedTheme);
             var frame = Assert.IsType<WindowFrame>(window.Content);
             Assert.Equal(WindowStyle.None, window.WindowStyle);
             Assert.True(frame.IsCaptionVisible);
@@ -77,11 +78,19 @@ public sealed class AppWindowTests
                     Assert.True(Bounds(close, host).Right <= width + 0.5);
                     var descriptionBounds = Bounds(description, host);
                     Assert.True(descriptionBounds.Top >= captionBounds.Bottom - 0.5);
-                    var commandBounds = buttons.Select(button => Bounds(button, host)).Append(Bounds(badge, host)).ToArray();
+                    var preferenceBounds = buttons.Select(button => Bounds(button, host)).ToArray();
+                    foreach (var bounds in preferenceBounds)
+                    {
+                        Assert.True(bounds.Left >= descriptionBounds.Right - 0.5);
+                        Assert.InRange(Math.Abs(bounds.Top + bounds.Height / 2 - descriptionBounds.Top - descriptionBounds.Height / 2), 0, 1);
+                    }
+                    Assert.InRange(width - preferenceBounds[^1].Right, 28, 30);
+                    var badgeBounds = Bounds(badge, host);
+                    Assert.True(badgeBounds.Top >= Math.Max(descriptionBounds.Bottom, preferenceBounds.Max(bounds => bounds.Bottom)) - 0.5);
+                    var commandBounds = preferenceBounds.Append(badgeBounds).ToArray();
                     for (var index = 0; index < commandBounds.Length; index++)
                     {
                         var bounds = commandBounds[index];
-                        Assert.True(bounds.Top >= descriptionBounds.Bottom - 0.5);
                         Assert.InRange(bounds.Left, 0, width);
                         Assert.True(bounds.Right <= width + 0.5);
                         for (var other = index + 1; other < commandBounds.Length; other++)
@@ -107,7 +116,7 @@ public sealed class AppWindowTests
     {
         var dataContext = new object();
         var editor = new TextBox { Text = "Draft", SelectionStart = 1, SelectionLength = 3 };
-        var first = new AppWindow { SelectedLanguage = "en", Workspace = editor, DataContext = dataContext };
+        var first = new AppWindow { SelectedTheme = "Light", SelectedLanguage = "en", Workspace = editor, DataContext = dataContext };
         var second = new AppWindow { SelectedTheme = "Light", SelectedLanguage = "ja" };
         try
         {
@@ -154,6 +163,7 @@ public sealed class AppWindowTests
             var first = Path.Combine(directory, "First", "ui.json");
             var second = Path.Combine(directory, "Second", "ui.json");
             var productSettings = Path.Combine(directory, "settings.json");
+            Assert.Equal(new AppWindowPreferences("Ink", "System"), AppWindowPreferences.Load(first));
             File.WriteAllText(productSettings, "keep-product-data");
             new AppWindowPreferences("InkDark", "System").Save(first);
             new AppWindowPreferences("Light", "ja").Save(second);
@@ -161,7 +171,7 @@ public sealed class AppWindowTests
             Assert.Equal(new AppWindowPreferences("Light", "ja"), AppWindowPreferences.Load(second));
             Assert.Equal("keep-product-data", File.ReadAllText(productSettings));
             File.WriteAllText(first, "{\"Theme\":\"unknown\",\"Language\":\"unknown\"}");
-            Assert.Equal(new AppWindowPreferences(), AppWindowPreferences.Load(first));
+            Assert.Equal(new AppWindowPreferences("Ink", "System"), AppWindowPreferences.Load(first));
             File.WriteAllText(first, "broken-json");
             Assert.Equal(new AppWindowPreferences(), AppWindowPreferences.Load(first));
             Assert.Equal("broken-json", File.ReadAllText(first));

@@ -24,6 +24,11 @@ packaging/MarkPad/StoreIdentity.json
 *.log
 *.tmp
 *.bak
+__pycache__/
+
+# Independent Sites workspaces
+/sites-toolkeeper-source/
+/sites-toolkeeper/
 
 # OS / editor
 .DS_Store

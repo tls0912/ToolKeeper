@@ -1,0 +1,2 @@
+Ce paquet est conçu pour Windows 64 bits (x64).
+L'aperçu et l'exportation en PDF nécessitent Microsoft Edge WebView2 Evergreen Runtime.

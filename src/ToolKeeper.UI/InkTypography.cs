@@ -29,9 +29,17 @@ public static class InkTypography
         string[] candidates = language switch
         {
             "zh-TW" => ["DFKai-SB", "標楷體", "BiauKai", "KaiTi", "楷体", "Yu Mincho", "PMingLiU", "MingLiU", "Microsoft JhengHei", "Georgia"],
+            "zh-CN" => ["KaiTi", "楷体", "STKaiti", "SimSun", "宋体", "Microsoft YaHei", "Georgia"],
             "ja" => ["Yu Mincho", "游明朝", "YuMincho", "MS PMincho", "MS Mincho", "DFKai-SB", "Georgia"],
+            "ko" => ["Batang", "바탕", "Gungsuh", "궁서", "Malgun Gothic", "Georgia"],
+            "ar" => ["Traditional Arabic", "Arabic Typesetting", "Segoe UI", "Tahoma"],
             _ => ["Georgia", "Palatino Linotype", "Book Antiqua", "Times New Roman"]
         };
+        return ResolveInstalled(candidates);
+    }
+
+    internal static string ResolveInstalled(params string[] candidates)
+    {
         foreach (var candidate in candidates)
             if (InstalledFonts.Value.TryGetValue(candidate, out var installed)) return installed;
         return SystemFonts.MessageFontFamily.Source;

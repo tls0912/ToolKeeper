@@ -1,0 +1,5 @@
+01-preview-bamboo-light.png	竹子亮色界面搭配宣纸底色，章节列表整理 H1–H6 标题，点击即可跳转，并可选择显示的标题级别。
+02-preview-bamboo-dark.png	竹子深色预览保留宣纸纹理和章节导航，按阅读习惯选择深色界面。
+03-preview-light.png	普通亮色预览用清晰的浅色版面呈现 Markdown，支持章节跳转、表格和任务列表。
+04-preview-dark.png	普通深色预览用深色背景搭配明亮文字，阅读 Markdown 时同样可使用章节导航。
+05-edit-bamboo-light.png	竹子亮色编辑模式：左侧编辑 Markdown，右侧实时预览；上方工具栏可调整字体、字号和文本格式。

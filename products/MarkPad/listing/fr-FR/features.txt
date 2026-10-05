@@ -1,0 +1,15 @@
+Lecture et édition de fichiers Markdown locaux dans plusieurs onglets
+Navigation par titres H1–H6 avec choix des niveaux du plan et des signets PDF
+Édition à gauche, aperçu en temps réel à droite et largeur des colonnes réglable
+Barre d'outils pour les polices, la taille du texte et la mise en forme Markdown
+Quatre thèmes : Clair, Sombre, Bambou (clair) et Bambou (sombre)
+Fonds de papier xuan et écriture traditionnelle pour les thèmes Bambou
+Polices réglables séparément pour l'interface, l'aperçu et l'éditeur
+Tableaux, listes de tâches, blocs de code, notes de bas de page et images locales
+Recherche, remplacement, annulation et rétablissement
+Enregistrement automatique, alertes de modifications externes et récupération des brouillons après un arrêt inattendu
+Enregistrement du Markdown et exportation d'un PDF horodaté à côté du fichier source
+Option pour mémoriser les fichiers ouverts à la fermeture et rouvrir les documents enregistrés au démarrage
+Interface en chinois traditionnel, anglais, japonais, chinois simplifié, espagnol, arabe, français et coréen
+Trois articles intégrés dans huit langues, affichés à tour de rôle lorsqu'aucun document n'est ouvert
+Essai gratuit de 7 jours ; version complète en achat unique, sans abonnement

@@ -10,7 +10,7 @@ namespace ToolKeeper.UI;
 
 /// <summary>
 /// Common application shell. Set Workspace for product content and HeaderActions
-/// for optional product controls in the wrapping header; Content belongs to the shell.
+/// for optional product controls below the description; Content belongs to the shell.
 /// WindowFrame supplies the same caption, chrome and appearance used by product layouts.
 /// </summary>
 public class AppWindow : Window
@@ -31,7 +31,7 @@ public class AppWindow : Window
         nameof(HeaderActions), typeof(UIElement), typeof(AppWindow), new PropertyMetadata(null, HeaderActionsChanged));
 
     public static readonly DependencyProperty SelectedThemeProperty = DependencyProperty.Register(
-        nameof(SelectedTheme), typeof(string), typeof(AppWindow), new PropertyMetadata("Light", PreferencesChanged),
+        nameof(SelectedTheme), typeof(string), typeof(AppWindow), new PropertyMetadata("Ink", PreferencesChanged),
         value => value is string theme && UiTheme.IsSupported(theme));
 
     public static readonly DependencyProperty SelectedLanguageProperty = DependencyProperty.Register(
@@ -77,19 +77,20 @@ public class AppWindow : Window
         var header = new Grid { Name = "ProductHeader", Margin = new Thickness(0, 0, 0, 12) };
         header.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
         header.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+        header.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+        header.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
         _description = new TextBlock
         {
             Name = "ProductDescription", TextWrapping = TextWrapping.Wrap,
-            Margin = new Thickness(0, 0, 0, 8)
+            Margin = new Thickness(0, 0, 16, 0), VerticalAlignment = VerticalAlignment.Center
         };
         _description.SetResourceReference(TextBlock.ForegroundProperty, "MutedBrush");
         header.Children.Add(_description);
 
-        // Individual commands and product controls wrap as the available width shrinks.
-        var preferences = new WrapPanel
+        var preferences = new StackPanel
         {
             Name = "SharedHeaderPreferences", Orientation = Orientation.Horizontal,
-            VerticalAlignment = VerticalAlignment.Center
+            HorizontalAlignment = HorizontalAlignment.Right, VerticalAlignment = VerticalAlignment.Center
         };
         _themeButton = HeaderButton("SharedThemeButton", ShowThemeMenu);
         _languageButton = HeaderButton("SharedLanguageButton", ShowLanguageMenu);
@@ -99,11 +100,14 @@ public class AppWindow : Window
         preferences.Children.Add(_aboutButton);
         _actionsHost = new Border
         {
-            Name = "ProductHeaderActions", VerticalAlignment = VerticalAlignment.Center
+            Name = "ProductHeaderActions", HorizontalAlignment = HorizontalAlignment.Left,
+            VerticalAlignment = VerticalAlignment.Center, Visibility = Visibility.Collapsed
         };
-        preferences.Children.Add(_actionsHost);
-        Grid.SetRow(preferences, 1);
+        Grid.SetColumn(preferences, 1);
         header.Children.Add(preferences);
+        Grid.SetRow(_actionsHost, 1);
+        Grid.SetColumnSpan(_actionsHost, 2);
+        header.Children.Add(_actionsHost);
         shell.Children.Add(header);
 
         _workspaceHost = new Border();
@@ -184,7 +188,7 @@ public class AppWindow : Window
         var button = new Button
         {
             Name = name, MinHeight = 34, Padding = new Thickness(10, 5, 10, 5),
-            Margin = new Thickness(0, 0, 3, 4), VerticalAlignment = VerticalAlignment.Center
+            Margin = new Thickness(3, 0, 0, 0), VerticalAlignment = VerticalAlignment.Center
         };
         button.SetResourceReference(StyleProperty, "UiButtonStyle");
         button.Click += (_, _) => action();
@@ -337,6 +341,7 @@ public class AppWindow : Window
     {
         var host = ((AppWindow)sender)._actionsHost;
         host.Child = (UIElement?)args.NewValue;
-        host.Margin = args.NewValue is null ? new Thickness(0) : new Thickness(16, 0, 0, 4);
+        host.Margin = args.NewValue is null ? new Thickness(0) : new Thickness(0, 8, 0, 0);
+        host.Visibility = args.NewValue is null ? Visibility.Collapsed : Visibility.Visible;
     }
 }

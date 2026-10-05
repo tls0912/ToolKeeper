@@ -9,11 +9,6 @@
             <ResourceDictionary Source="/ToolKeeper;component/Modules/UtilityStyles.xaml" />
         </ResourceDictionary.MergedDictionaries></ResourceDictionary>
     </ui:AppWindow.Resources>
-    <ui:AppWindow.HeaderActions>
-        <Border VerticalAlignment="Center" Background="{DynamicResource HoverBrush}" CornerRadius="12" Padding="12,6">
-            <TextBlock Text="{DynamicResource ToolKeeper.Badge}" Foreground="{DynamicResource AccentBrush}" FontSize="12" />
-        </Border>
-    </ui:AppWindow.HeaderActions>
     <ui:AppWindow.Workspace>
         <Grid>
             <Grid.RowDefinitions><RowDefinition Height="*" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
@@ -21,11 +16,7 @@
                     PreviewDragEnter="HashDragOver" PreviewDragOver="HashDragOver" PreviewDragLeave="DropZoneDragLeave" PreviewDrop="HashDrop">
                 <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Padding="0,0,2,0">
                     <StackPanel>
-                        <DockPanel>
-                            <TextBlock DockPanel.Dock="Right" Text="004" Foreground="{DynamicResource MutedBrush}" FontSize="24" />
-                            <TextBlock Text="{DynamicResource ToolKeeper.HashTitle}" FontSize="20" FontWeight="SemiBold" />
-                        </DockPanel>
-                        <TextBlock Text="{DynamicResource ToolKeeper.HashDropHint}" Margin="0,8,0,4" />
+                        <TextBlock Text="{DynamicResource ToolKeeper.HashDropHint}" Margin="0,0,0,4" />
                         <TextBlock Text="MD5 · SHA-1 · SHA-256" Style="{StaticResource Muted}" />
                         <DockPanel Margin="0,14,0,10">
                             <Button x:Name="ChooseHashButton" Content="{DynamicResource ToolKeeper.ChooseFile}" Click="ChooseHashClick" DockPanel.Dock="Left" />

@@ -15,5 +15,6 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="../../src/MarkPad/MarkPad.csproj" />
+    <None Include="../../src/ToolKeeper.UI/Resources/Localization/source.en.json" Link="LocalizationSource.json" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 </Project>

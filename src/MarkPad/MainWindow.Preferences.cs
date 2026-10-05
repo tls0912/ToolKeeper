@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
@@ -20,6 +21,8 @@ public partial class MainWindow
     private string? _sizePreset;
     private Popup? _flyout;
     private bool IsInkTheme => UiTheme.IsInk(Settings.Theme);
+    private FlowDirection UiFlowDirection => ToolKeeper.UI.UiLanguage.IsRightToLeft(UiLanguage)
+        ? FlowDirection.RightToLeft : FlowDirection.LeftToRight;
 
     private void SetupRail()
     {
@@ -44,7 +47,7 @@ public partial class MainWindow
         StatusToast.Margin = new Thickness(20, _fullScreen ? UiTitleHeight + 24 : 24, 20, 0);
         ActionScrollViewer.VerticalScrollBarVisibility = _railExpanded ? ScrollBarVisibility.Auto : ScrollBarVisibility.Hidden;
         var toggleLabel = _railExpanded ? T("Collapse sidebar", "收合工具列", "サイドバーを閉じる") : T("Expand sidebar", "展開工具列", "サイドバーを開く");
-        var toggleRow = new StackPanel { Orientation = Orientation.Horizontal };
+        var toggleRow = new StackPanel { Orientation = Orientation.Horizontal, FlowDirection = UiFlowDirection };
         toggleRow.Children.Add(new TextBlock { Text = _railExpanded ? "\uE76B" : "\uE700", FontFamily = new FontFamily("Segoe MDL2 Assets"), FontSize = 15, Width = 28, TextAlignment = TextAlignment.Center, VerticalAlignment = VerticalAlignment.Center });
         if (_railExpanded) toggleRow.Children.Add(new ChromeTextShadow(new TextBlock { Text = toggleLabel, Margin = new Thickness(8, 0, 0, 0), VerticalAlignment = VerticalAlignment.Center }));
         RailToggleButton.Content = toggleRow;
@@ -94,7 +97,7 @@ public partial class MainWindow
     private void AddGroup(string name)
     {
         // Reserve the same height in both states so revealing descriptions never moves the icons.
-        var group = new Grid { Height = Math.Max(name.Length == 0 ? 12 : 20, UiSize(name.Length == 0 ? 12 : 20)), Margin = new Thickness(8, 0, 8, 0) };
+        var group = new Grid { FlowDirection = UiFlowDirection, Height = Math.Max(name.Length == 0 ? 8 : 18, UiSize(name.Length == 0 ? 8 : 18)), Margin = new Thickness(8, 0, 8, 0) };
         var rule = new Border { Height = 1, VerticalAlignment = VerticalAlignment.Center, Background = B("LineBrush") };
         group.Children.Add(rule);
         if (_railExpanded && name.Length > 0)
@@ -110,7 +113,7 @@ public partial class MainWindow
 
     private void AddAction(string glyph, string label, string description, Func<Task> action, string? shortcut = null, bool enabled = true)
     {
-        var row = new Grid();
+        var row = new Grid { FlowDirection = UiFlowDirection };
         row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(28) });
         row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
         row.Children.Add(new TextBlock { Text = glyph, FontFamily = new FontFamily(glyph is "Aa" or "PDF" ? "Segoe UI" : "Segoe MDL2 Assets"),
@@ -122,7 +125,7 @@ public partial class MainWindow
             var heading = new DockPanel();
             if (shortcut is not null)
             {
-                var key = new TextBlock { Text = shortcut, FontSize = UiSize(10), Foreground = B("MutedBrush"), VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(4, 0, 0, 0) };
+                var key = new TextBlock { Text = shortcut, FlowDirection = FlowDirection.LeftToRight, FontSize = UiSize(10), Foreground = B("MutedBrush"), VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(4, 0, 0, 0) };
                 DockPanel.SetDock(key, Dock.Right); heading.Children.Add(key);
             }
             heading.Children.Add(new ChromeTextShadow(new TextBlock { Text = label, FontSize = UiSize(12), FontWeight = FontWeights.SemiBold, TextTrimming = TextTrimming.CharacterEllipsis }));
@@ -131,7 +134,7 @@ public partial class MainWindow
                 Foreground = B("MutedBrush"), TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 2, 0, 0) });
             Grid.SetColumn(details, 1); row.Children.Add(details);
         }
-        var button = new Button { Content = row, Height = Math.Max(54, UiSize(54)), HorizontalContentAlignment = HorizontalAlignment.Stretch, Padding = new Thickness(4, 3, 4, 3), IsEnabled = enabled };
+        var button = new Button { Content = row, MinHeight = Math.Max(46, UiSize(46)), HorizontalContentAlignment = HorizontalAlignment.Stretch, Padding = new Thickness(4, 3, 4, 3), IsEnabled = enabled };
         if (!_railExpanded) button.ToolTip = label + (shortcut is null ? "" : "  (" + shortcut + ")") + "\n" + description;
         ToolTipService.SetShowOnDisabled(button, true);
         System.Windows.Automation.AutomationProperties.SetName(button, label);
@@ -147,14 +150,15 @@ public partial class MainWindow
             Settings.InterfaceTextShadowEnabled, Settings.InterfaceTextShadowThickness);
         ApplyUiTypography();
         _frame.ApplyLanguage(UiLanguage);
-        InkLandscape.Visibility = IsInkTheme ? Visibility.Visible : Visibility.Collapsed;
-        EmptyMonogram.Text = IsInkTheme ? "竹" : "M↓";
-        EmptyMonogram.Foreground = IsInkTheme ? new SolidColorBrush(_dark ? Color.FromRgb(215, 155, 137) : Color.FromRgb(166, 75, 60)) : B("MutedBrush");
+        EmptyLabel.FlowDirection = EmptyOpenButton.FlowDirection = StatusToast.FlowDirection = UiFlowDirection;
+        ExpandReplaceButton.FlowDirection = ReplaceButton.FlowDirection = ReplaceAllButton.FlowDirection = UiFlowDirection;
+        _ = GuardAsync(() => _emptyPreview.SetThemeAsync(_dark, IsInkTheme));
         foreach (var view in _documentViews.Values)
         {
             view.Editor.ApplyOptions(_dark, EditorFontName, Settings.EditorFontSize, IsInkTheme);
             view.Editor.ApplyLanguage(UiLanguage);
             view.ApplyLanguage(UiLanguage);
+            view.ApplyOutlineLevels(Settings.PdfOutlineLevels);
             _ = GuardAsync(() => view.Preview.SetThemeAsync(_dark, IsInkTheme));
         }
         EmptyLabel.Text = T("Drop or open Markdown", "拖入或開啟 Markdown", "Markdown をドロップまたは開く");
@@ -174,6 +178,7 @@ public partial class MainWindow
         RefreshEditorToolbar(); BuildActions(); BuildTabs(); UpdateStatus();
         ScheduleAutoSave();
         if (_current is not null) _ = GuardAsync(() => RenderAsync());
+        else _ = GuardAsync(RenderEmptyStateAsync);
     }
 
     private void SystemPreferenceChanged(object sender, UserPreferenceChangedEventArgs e)
@@ -198,6 +203,7 @@ public partial class MainWindow
     {
         // Popups live outside the window's visual tree; share its live theme resources explicitly.
         menu.Resources = Resources;
+        menu.FlowDirection = UiFlowDirection;
         menu.PlacementTarget = Rail; menu.Placement = PlacementMode.Right;
         menu.MaxWidth = Math.Max(320, UiSize(320));
         menu.IsOpen = true;
@@ -207,8 +213,8 @@ public partial class MainWindow
     {
         if (modal)
         {
-            var choices = ToolKeeper.UI.UiLanguage.Choices(UiLanguage).Select(choice => (choice.Value, choice.Label)).ToArray();
-            var choice = Choose("Choose your language · 選擇語言 · 言語を選択", choices);
+            var choices = ToolKeeper.UI.UiLanguage.Choices(UiLanguage, includeAdditionalLanguages: true).Select(choice => (choice.Value, choice.Label)).ToArray();
+            var choice = Choose(T("Choose your language", "選擇語言", "言語を選択"), choices);
             Settings.Language = choice ?? "System";
             App.ApplyPreferences();
             return;
@@ -221,13 +227,18 @@ public partial class MainWindow
     private void AddLanguageChoices(ItemCollection items)
     {
         PreferenceMenus.AddLanguageChoices(items, Settings.Language, UiLanguage,
-            value => { Settings.Language = value; App.ApplyPreferences(); }, Report);
+            value => { Settings.Language = value; App.ApplyPreferences(); }, includeAdditionalLanguages: true, onError: Report);
     }
 
     private void ShowRecentFiles()
     {
         var menu = new ContextMenu();
-        foreach (var path in Settings.RecentFiles.ToArray()) menu.Items.Add(AsyncItem(path, () => OpenPathsAsync([path])));
+        foreach (var path in Settings.RecentFiles.ToArray())
+        {
+            var item = AsyncItem(Path.GetFileName(path), () => OpenPathsAsync([path]));
+            item.ToolTip = path;
+            menu.Items.Add(item);
+        }
         if (menu.Items.Count == 0) menu.Items.Add(new MenuItem { Header = T("No recent files", "沒有最近開啟的檔案", "最近のファイルはありません"), IsEnabled = false });
         OpenMenu(menu);
     }
@@ -236,6 +247,12 @@ public partial class MainWindow
     {
         var menu = new ContextMenu();
         MenuItem Section(string name) { var item = new MenuItem { Header = name, FontWeight = FontWeights.SemiBold }; menu.Items.Add(item); return item; }
+        menu.Items.Add(Item(T("Keep open files on exit", "關閉時保留當前開啟檔案", "終了時に開いているファイルを記憶"), () =>
+        {
+            Settings.RememberOpenFiles = !Settings.RememberOpenFiles;
+            if (!Settings.RememberOpenFiles) App.Session.Reset();
+            App.Preferences.Save();
+        }, Settings.RememberOpenFiles));
         var general = Section(T("General", "一般", "一般"));
         var windowSize = new MenuItem { Header = T("Window size", "視窗尺寸", "サイズ") };
         AddSizeChoices(windowSize.Items);
@@ -253,18 +270,21 @@ public partial class MainWindow
         var preview = Section(T("Preview", "預覽", "プレビュー"));
         preview.Items.Add(Item(T("Code block line numbers", "程式碼區塊行號", "コードブロックの行番号"), () => { Settings.CodeLineNumbers = !Settings.CodeLineNumbers; App.ApplyPreferences(); }, Settings.CodeLineNumbers));
         preview.Items.Add(Item(T("Convert emoji shortcodes", "轉換 Emoji 短碼", "絵文字ショートコードを変換"), () => { Settings.EmojiShortcodes = !Settings.EmojiShortcodes; App.ApplyPreferences(); }, Settings.EmojiShortcodes));
-        var pdfOutline = Section(T("PDF chapter outline", "PDF章節大綱", "PDF の章アウトライン"));
+        var outline = Section(T("Chapter outline", "章節大綱", "章アウトライン"));
         foreach (var level in Enumerable.Range(1, 6))
         {
-            var choice = Item(T($"H{level} · Heading {level}", $"H{level} · 第 {level} 級標題", $"H{level} · 見出し {level}"), () =>
+            var choice = Item(F("H{0} · Heading {0}", "H{0} · 第 {0} 級標題", "H{0} · 見出し {0}", level), () =>
             {
                 Settings.PdfOutlineLevels = Settings.PdfOutlineLevels.Contains(level)
                     ? Settings.PdfOutlineLevels.Where(value => value != level).ToArray()
                     : Settings.PdfOutlineLevels.Append(level).Order().ToArray();
                 App.Preferences.Save();
+                foreach (var window in Application.Current.Windows.OfType<MainWindow>())
+                    foreach (var view in window._documentViews.Values)
+                        view.ApplyOutlineLevels(Settings.PdfOutlineLevels);
             }, Settings.PdfOutlineLevels.Contains(level));
             choice.StaysOpenOnClick = true;
-            pdfOutline.Items.Add(choice);
+            outline.Items.Add(choice);
         }
         menu.Items.Add(new Separator());
         menu.Items.Add(Item(T("Reset settings…", "重設設定…", "設定をリセット…"), () =>
@@ -273,7 +293,7 @@ public partial class MainWindow
             App.Preferences.Reset();
             App.ApplyPreferences();
         }));
-        menu.Items.Add(Item(T($"About 汗青 {AppVersion}", $"關於汗青 {AppVersion}", $"汗青 {AppVersion} について"), () =>
+        menu.Items.Add(Item(F("About 汗青 {0}", "關於汗青 {0}", "汗青 {0} について", AppVersion), () =>
         {
             // Release the menu's mouse capture before the dismissible About popup opens.
             menu.IsOpen = false;
@@ -302,7 +322,7 @@ public partial class MainWindow
     private void ShowFlyout(UIElement body, UIElement? placementTarget = null, PlacementMode placement = PlacementMode.Right)
     {
         if (_flyout is not null) _flyout.IsOpen = false;
-        var frame = new Border { Child = body, BorderThickness = new Thickness(1), CornerRadius = new CornerRadius(4) };
+        var frame = new Border { Child = body, FlowDirection = UiFlowDirection, BorderThickness = new Thickness(1), CornerRadius = new CornerRadius(4) };
         frame.Resources = Resources;
         frame.SetResourceReference(Border.BackgroundProperty, "SurfaceBrush");
         frame.SetResourceReference(Border.BorderBrushProperty, "LineBrush");

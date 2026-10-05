@@ -6,20 +6,22 @@ using Forms = System.Windows.Forms;
 
 namespace ToolKeeper;
 
-/// <summary>Branding owned by this executable, including windows supplied by hosted modules.</summary>
+/// <summary>Default branding for the executable and hosted windows without a product icon.</summary>
 internal static class PlatformIcon
 {
     private const string ResourceName = "ToolKeeper.Resources.ToolKeeper.ico";
     private static readonly Lazy<ImageSource> WindowImage = new(LoadWindowImage);
 
+    public static ImageSource Source => WindowImage.Value;
+
     public static void InitializeHostedWindows()
     {
         // ApplicationIcon already supplies the native default. Set the WPF property too,
-        // so module About panels receive the same image. Registration is host-process only.
+        // so module About panels receive an image too. Preserve explicit product icons.
         EventManager.RegisterClassHandler(typeof(Window), FrameworkElement.LoadedEvent,
             new RoutedEventHandler((sender, args) =>
             {
-                if (sender is Window window && ReferenceEquals(args.OriginalSource, window))
+                if (sender is Window { Icon: null } window && ReferenceEquals(args.OriginalSource, window))
                     window.SetCurrentValue(Window.IconProperty, WindowImage.Value);
             }), handledEventsToo: true);
     }

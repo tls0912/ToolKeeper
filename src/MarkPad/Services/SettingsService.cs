@@ -56,7 +56,7 @@ public sealed class SettingsService
         // Fresh installs, Reset and invalid-value recovery share one source of defaults.
         var defaults = new AppSettings();
         if (!UiTheme.IsSupported(Settings.Theme)) Settings.Theme = defaults.Theme;
-        if (!UiLanguage.IsSupported(Settings.Language)) Settings.Language = defaults.Language;
+        if (!UiLanguage.IsSupported(Settings.Language, includeAdditionalLanguages: true)) Settings.Language = defaults.Language;
         Settings.UiFontFamily ??= defaults.UiFontFamily;
         Settings.PreviewFontFamily ??= defaults.PreviewFontFamily;
         if (string.IsNullOrWhiteSpace(Settings.EditorFontFamily)) Settings.EditorFontFamily = defaults.EditorFontFamily;
@@ -71,6 +71,12 @@ public sealed class SettingsService
             .Where(level => level is >= 1 and <= 6).Distinct().Order().ToArray();
         Settings.RecentFiles = (Settings.RecentFiles ?? []).Where(path => !string.IsNullOrWhiteSpace(path))
             .Distinct(StringComparer.OrdinalIgnoreCase).Take(20).ToList();
+        // New installs and upgrades from the two-article rotation start with the introduction.
+        Settings.NextEmptyArticleIndex ??= 1;
+        if (Settings.NextEmptyArticleIndex is < 0 or >= AppSettings.EmptyArticleCount)
+            Settings.NextEmptyArticleIndex = 1;
+        Settings.NextEmptyArticleIsIntroduction = Settings.NextEmptyArticleIndex == 1;
+        DocumentSessionService.Normalize(Settings);
     }
 
     private static double ValidNumber(double value, double min, double max, double fallback) =>

@@ -104,6 +104,9 @@ internal sealed class PlatformController : IDisposable
         };
     }
 
+    internal static HistoLens.MainWindow CreateHistoLensWindow(string platformDataDirectory) =>
+        new(Path.Combine(platformDataDirectory, "HistoLens"));
+
     private void ToggleDesktop()
     {
         if (_exiting || _desktop is null) return;
@@ -187,6 +190,9 @@ internal sealed class PlatformController : IDisposable
                 {
                     PreferencesPath = Path.Combine(_options.PlatformDataDirectory, "ui.json")
                 });
+                break;
+            case "006":
+                _modules.Open(id, () => CreateHistoLensWindow(_options.PlatformDataDirectory));
                 break;
             default: throw new ArgumentException("Unknown hosted module.", nameof(id));
         }

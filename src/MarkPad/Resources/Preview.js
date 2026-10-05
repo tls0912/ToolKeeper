@@ -4,11 +4,13 @@
   delete window.markpadConfig;
   const article = document.getElementById('document');
   const language = config.language.startsWith('zh') ? 'zh' : config.language.startsWith('ja') ? 'ja' : 'en';
-  const labels = {
+  const fallbackLabels = {
     en: { copy:'Copy', copied:'Copied', copyMarkdown:'Copy as Markdown', selectAll:'Select All', open:'Open Link', copyLink:'Copy Link', edit:'Edit Here', fold:'Fold section', close:'Close image' },
     zh: { copy:'複製', copied:'已複製', copyMarkdown:'複製 Markdown', selectAll:'全選', open:'開啟連結', copyLink:'複製連結', edit:'在此編輯', fold:'折疊段落', close:'關閉圖片' },
     ja: { copy:'コピー', copied:'コピーしました', copyMarkdown:'Markdown としてコピー', selectAll:'すべて選択', open:'リンクを開く', copyLink:'リンクをコピー', edit:'ここを編集', fold:'セクションを折りたたむ', close:'画像を閉じる' }
   }[language];
+  const labels = { ...fallbackLabels, ...config.labels };
+  const uiDirection = config.uiDirection === 'rtl' ? 'rtl' : 'ltr';
   const send = (type, details = {}) => window.chrome?.webview?.postMessage({ token:config.token, type, ...details });
   const sourceElement = node => (node?.nodeType === Node.ELEMENT_NODE ? node : node?.parentElement)?.closest('[data-source-line]');
   const sourceLine = node => Math.max(1, Number(sourceElement(node)?.dataset.sourceLine) || 1);
@@ -110,8 +112,8 @@
     const original = code.textContent;
     const name = [...code.classList].find(c => c.startsWith('language-'))?.slice(9) || '';
     highlight(code, name);
-    const toolbar = document.createElement('div'); toolbar.className = 'code-tools';
-    const tag = document.createElement('span'); tag.textContent = name;
+    const toolbar = document.createElement('div'); toolbar.className = 'code-tools'; toolbar.dir = uiDirection;
+    const tag = document.createElement('span'); tag.textContent = name; tag.dir = 'ltr';
     const button = document.createElement('button'); button.type = 'button'; button.textContent = labels.copy;
     button.addEventListener('click', () => { copy(original); button.textContent = labels.copied; setTimeout(() => button.textContent = labels.copy, 1500); });
     toolbar.append(tag, button); pre.prepend(toolbar);
@@ -150,7 +152,7 @@
   }
   function showImage(source) {
     closeOverlay();
-    overlay = document.createElement('div'); overlay.className = 'image-overlay'; overlay.setAttribute('role','dialog'); overlay.setAttribute('aria-modal','true'); overlay.setAttribute('aria-label', source.alt || labels.close);
+    overlay = document.createElement('div'); overlay.className = 'image-overlay'; overlay.dir = uiDirection; overlay.setAttribute('role','dialog'); overlay.setAttribute('aria-modal','true'); overlay.setAttribute('aria-label', source.alt || labels.close);
     const picture = document.createElement('img'); picture.src = source.src; picture.alt = source.alt; picture.draggable = false;
     const close = document.createElement('button'); close.type = 'button'; close.textContent = '×'; close.setAttribute('aria-label', labels.close); close.addEventListener('click', closeOverlay);
     overlay.append(picture, close); document.body.append(overlay); close.focus(); send('overlay', { flag:true });
@@ -240,7 +242,7 @@
     const target = event.target;
     const text = selectedText();
     const link = target.closest('a[href]');
-    menu = document.createElement('div'); menu.className = 'preview-menu'; menu.setAttribute('role','menu');
+    menu = document.createElement('div'); menu.className = 'preview-menu'; menu.dir = uiDirection; menu.setAttribute('role','menu');
     const item = (label, action, enabled=true) => {
       const button=document.createElement('button'); button.type='button'; button.textContent=label; button.disabled=!enabled; button.setAttribute('role','menuitem');
       button.addEventListener('mousedown', e=>e.preventDefault());
@@ -250,7 +252,7 @@
     item(labels.copyMarkdown, copyMarkdown, !!text);
     item(labels.selectAll, () => { const range=document.createRange(); range.selectNodeContents(article); const selection=window.getSelection(); selection.removeAllRanges(); selection.addRange(range); });
     if (link) { item(labels.open,()=>openLink(link.getAttribute('href'))); item(labels.copyLink,()=>send('copy-link',{text:link.getAttribute('href')})); }
-    item(labels.edit,()=>send('edit',{line:sourceLine(target)}));
+    item(labels.edit,()=>send('edit',{line:sourceLine(target)}), !config.readOnly);
     document.body.append(menu);
     menu.style.left=Math.max(4,Math.min(event.clientX,innerWidth-menu.offsetWidth-4))+'px';
     menu.style.top=Math.max(4,Math.min(event.clientY,innerHeight-menu.offsetHeight-4))+'px';

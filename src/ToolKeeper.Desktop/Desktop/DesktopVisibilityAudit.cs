@@ -121,7 +121,8 @@ internal static class DesktopVisibilityAudit
                 try
                 {
                     using var process = Process.GetProcessById(checked((int)processId));
-                    isCabiDock = string.Equals(process.ProcessName, "CabiDock", StringComparison.OrdinalIgnoreCase);
+                    isCabiDock = string.Equals(process.ProcessName, "ToolKeeper", StringComparison.OrdinalIgnoreCase)
+                        || string.Equals(process.ProcessName, "CabiDock", StringComparison.OrdinalIgnoreCase);
                 }
                 catch (Exception error) when (error is ArgumentException or InvalidOperationException or System.ComponentModel.Win32Exception)
                 {

@@ -16,7 +16,8 @@ public sealed record ProductDefinition(
     string TargetFramework,
     string? ProtocolScheme,
     string? StoreId,
-    ModuleKind ModuleKind = ModuleKind.Standalone)
+    ModuleKind ModuleKind = ModuleKind.Standalone,
+    string? ProductActivationUri = null)
 {
     public string ActivationUri => $"toolkeeper://run/{Id}";
 }
@@ -39,6 +40,7 @@ public sealed class ProductCatalogService
     // IDs remain the product numbers even when display names or assembly names change.
     // Hanqing's protocol and Store ID are declared in packaging/MarkPad and MarkPad.csproj.
     // ConvAnvil has no published protocol or Store ID. Built-in modules activate through the host.
+    // HistoLens is temporarily hosted for its data-source preview; release packaging is undecided.
     public static IReadOnlyList<ProductDefinition> Definitions { get; } = Array.AsReadOnly<ProductDefinition>(
     [
         new("001", "汗青", "Markdown reading and editing", "Markdown 閱讀與編輯", "Markdown の閲覧と編集",
@@ -50,7 +52,12 @@ public sealed class ProductCatalogService
         new("004", "Hash Checker", "Calculate and compare file hashes", "計算與比對檔案雜湊", "ファイルのハッシュを計算・照合",
             "", "", "", null, null, ModuleKind.BuiltIn),
         new("005", "Image → ICO", "Convert PNG, JPG and BMP images to ICO", "將 PNG、JPG、BMP 圖片轉成 ICO", "PNG・JPG・BMP 画像を ICO に変換",
-            "", "", "", null, null, ModuleKind.BuiltIn)
+            "", "", "", null, null, ModuleKind.BuiltIn),
+        new("006", "HistoLens", "Historical research development preview with TWSE downloads and synthetic data", "歷史研究開發預覽，支援 TWSE 下載與合成資料", "TWSE ダウンロードと合成データによる履歴研究の開発プレビュー",
+            "", "", "", null, null, ModuleKind.BuiltIn),
+        new("007", "TransLamp", "Offline translation for emergencies", "離線應急翻譯", "緊急時のオフライン翻訳",
+            "TransLamp.exe", "TransLamp", "net10.0-windows", "translamp", null,
+            ProductActivationUri: "translamp://open")
     ]);
 
     private readonly string _baseDirectory;
@@ -80,7 +87,7 @@ public sealed class ProductCatalogService
             return new(product, ProductAvailability.Available, product.ActivationUri);
 
         if (product.ProtocolScheme is { } scheme && Probe(() => _protocolAvailable(scheme)))
-            return new(product, ProductAvailability.Available, scheme + ":");
+            return new(product, ProductAvailability.Available, product.ProductActivationUri ?? scheme + ":");
 
         var executable = LocalCandidates(product).Distinct(StringComparer.OrdinalIgnoreCase)
             .FirstOrDefault(IsCompleteApplication);

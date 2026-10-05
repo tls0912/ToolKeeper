@@ -20,7 +20,10 @@ public static class UiTypography
         return language switch
         {
             "zh-TW" => forInterface ? "Microsoft JhengHei UI" : "Microsoft JhengHei",
+            "zh-CN" => InkTypography.ResolveInstalled(forInterface ? "Microsoft YaHei UI" : "Microsoft YaHei", "Microsoft YaHei", "SimSun", "Segoe UI"),
             "ja" => forInterface ? "Yu Gothic UI" : "Yu Gothic",
+            "ko" => InkTypography.ResolveInstalled("Malgun Gothic", "맑은 고딕", "Segoe UI"),
+            "ar" => InkTypography.ResolveInstalled("Segoe UI", "Tahoma", "Traditional Arabic"),
             _ => "Segoe UI"
         };
     }

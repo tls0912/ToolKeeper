@@ -9,6 +9,38 @@ namespace MarkPad.Tests;
 public sealed class SettingsServiceTests
 {
     [Theory]
+    [InlineData(false, 1)]
+    [InlineData(true, 1)]
+    public void UpgradingTheTwoArticleRotationStartsWithTheIntroduction(bool introduction, int expected)
+    {
+        using var directory = new TestDirectory();
+        File.WriteAllText(directory.FilePath("settings.json"),
+            "{\"NextEmptyArticleIsIntroduction\":" + (introduction ? "true" : "false") + "}");
+        var service = new SettingsService(directory.PathName);
+        Assert.Equal(expected, service.Settings.NextEmptyArticleIndex);
+        service.Save();
+        Assert.Equal(expected, new SettingsService(directory.PathName).Settings.NextEmptyArticleIndex);
+    }
+
+    [Theory]
+    [InlineData(0, 0)]
+    [InlineData(1, 1)]
+    [InlineData(2, 2)]
+    [InlineData(-1, 1)]
+    [InlineData(3, 1)]
+    public void ThreeArticlePreferenceOverridesLegacyFlagAndValidatesRange(int stored, int expected)
+    {
+        using var directory = new TestDirectory();
+        File.WriteAllText(directory.FilePath("settings.json"),
+            $"{{\"NextEmptyArticleIndex\":{stored},\"NextEmptyArticleIsIntroduction\":true}}");
+        var service = new SettingsService(directory.PathName);
+        Assert.Equal(expected, service.Settings.NextEmptyArticleIndex);
+        service.Save();
+        Assert.Equal(expected, new SettingsService(directory.PathName).Settings.NextEmptyArticleIndex);
+        Assert.Equal(expected == 1, service.Settings.NextEmptyArticleIsIntroduction);
+    }
+
+    [Theory]
     [InlineData("Ink")]
     [InlineData("InkDark")]
     public void InkThemeAndFontPresetsPersistWithoutOverwritingOtherFontChoices(string theme)
@@ -98,6 +130,17 @@ public sealed class SettingsServiceTests
     [InlineData("System", "zh-Hant-TW", "zh-TW")]
     [InlineData("System", "en-US", "en")]
     [InlineData("System", "de-DE", "en")]
+    [InlineData("System", "zh-CN", "zh-CN")]
+    [InlineData("System", "zh-SG", "zh-CN")]
+    [InlineData("System", "es-MX", "es")]
+    [InlineData("System", "ar-SA", "ar")]
+    [InlineData("System", "fr-CA", "fr")]
+    [InlineData("System", "ko-KR", "ko")]
+    [InlineData("zh-CN", "en-US", "zh-CN")]
+    [InlineData("es", "en-US", "es")]
+    [InlineData("ar", "en-US", "ar")]
+    [InlineData("fr", "en-US", "fr")]
+    [InlineData("ko", "en-US", "ko")]
     [InlineData("en", "ja-JP", "en")]
     [InlineData("zh-TW", "en-US", "zh-TW")]
     [InlineData("ja", "de-DE", "ja")]
@@ -198,7 +241,7 @@ public sealed class SettingsServiceTests
         Assert.Equal("Ink", settings.Theme);
         Assert.Equal("System", settings.Language);
         Assert.Equal(string.Empty, settings.UiFontFamily);
-        Assert.Equal(16, settings.UiFontSize);
+        Assert.Equal(15, settings.UiFontSize);
         Assert.Equal(16, settings.PreviewFontSize);
         Assert.Equal(16, settings.EditorFontSize);
         Assert.Equal(900, settings.WindowWidth);
@@ -209,12 +252,12 @@ public sealed class SettingsServiceTests
     }
 
     [Theory]
-    [InlineData(9, 16)]
+    [InlineData(9, 15)]
     [InlineData(10, 10)]
     [InlineData(20, 20)]
-    [InlineData(21, 16)]
-    [InlineData(double.NaN, 16)]
-    [InlineData(double.PositiveInfinity, 16)]
+    [InlineData(21, 15)]
+    [InlineData(double.NaN, 15)]
+    [InlineData(double.PositiveInfinity, 15)]
     public void UiFontSizeUsesItsOwnRangeWithoutChangingContentFonts(double requestedSize, double expectedSize)
     {
         using var directory = new TestDirectory();
@@ -241,7 +284,7 @@ public sealed class SettingsServiceTests
 
         var restored = new SettingsService(directory.PathName).Settings;
         Assert.Equal(string.Empty, restored.UiFontFamily);
-        Assert.Equal(16, restored.UiFontSize);
+        Assert.Equal(15, restored.UiFontSize);
         Assert.Equal("Yu Gothic UI", restored.PreviewFontFamily);
         Assert.Equal(24, restored.PreviewFontSize);
         Assert.Equal("Consolas", restored.EditorFontFamily);
@@ -294,7 +337,7 @@ public sealed class SettingsServiceTests
         Assert.Equal(string.Empty, settings.UiFontFamily);
         Assert.Equal(string.Empty, settings.PreviewFontFamily);
         Assert.Equal("Cascadia Mono", settings.EditorFontFamily);
-        Assert.Equal(16, settings.UiFontSize);
+        Assert.Equal(15, settings.UiFontSize);
         Assert.Equal(16, settings.PreviewFontSize);
         Assert.Equal(16, settings.EditorFontSize);
         Assert.True(settings.InterfaceTextShadowEnabled);

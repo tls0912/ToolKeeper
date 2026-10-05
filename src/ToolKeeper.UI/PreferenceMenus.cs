@@ -9,6 +9,10 @@ public static class PreferenceMenus
         Action<string> select, Action<Exception>? onError = null) =>
         AddChoices(items, UiLanguage.Choices(language), selected, select, onError);
 
+    public static void AddLanguageChoices(ItemCollection items, string selected, string language,
+        Action<string> select, bool includeAdditionalLanguages, Action<Exception>? onError = null) =>
+        AddChoices(items, UiLanguage.Choices(language, includeAdditionalLanguages), selected, select, onError);
+
     public static void AddThemeChoices(ItemCollection items, string selected, string language,
         Action<string> select, Action<Exception>? onError = null) =>
         AddChoices(items, UiTheme.Choices(language), selected, select, onError);

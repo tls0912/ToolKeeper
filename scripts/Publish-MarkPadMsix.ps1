@@ -13,7 +13,7 @@ Microsoft Store signs it after certification. Does not install or register it.
 param(
     [Parameter(Mandatory = $true)][string]$IdentityFile,
     [ValidateSet('win-x64', 'win-arm64')][string]$Runtime = 'win-x64',
-    [string]$PackageVersion = '1.0.2.0',
+    [string]$PackageVersion = '1.0.3.0',
     [string]$OutputDirectory,
     [string]$SdkBinDirectory,
     [string]$MaxVersionTested = '10.0.26100.0',

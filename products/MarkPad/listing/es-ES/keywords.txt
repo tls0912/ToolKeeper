@@ -1,0 +1,7 @@
+Markdown
+editor de documentos
+lector de documentos
+vista previa
+exportar PDF
+escritura
+notas

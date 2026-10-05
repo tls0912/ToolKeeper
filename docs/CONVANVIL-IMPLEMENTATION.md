@@ -17,6 +17,10 @@ dotnet run --project src/ConvAnvil/ConvAnvil.csproj
 
 Release 建置後可執行 `src/ConvAnvil/bin/Release/net10.0-windows/ConvAnvil.exe`；這是需要 .NET 10 Windows Desktop Runtime 的開發輸出，尚未製作安裝包或獨立執行的發行包。
 
+從工具番本體的開發輸出啟動 ConvAnvil 時，會優先選擇與宿主相同的 Debug／Release 組態。更新共用介面後，也須建置該組態的 ConvAnvil，確保啟動目錄中的 `ToolKeeper.UI.dll` 已更新；只建置 Release 不會更新 Debug 的副本。
+
+ConvAnvil 依[工具番介面標準](UI-STANDARD.md)使用 `AppWindow`／`WindowFrame`：關閉 Windows 原生標題列，保留工具番本體相同的竹紋頂列與視窗操作鈕；簡介和右側「風格／語言／關於」同列，預設風格為竹子亮色。File／Text／Bytes 工作區保留產品自己的功能配置。
+
 開發環境第一次還原 NuGet 套件需要網路；應用程式的檔案檢查與轉換不需要網路、帳號或雲端服務。
 
 ## File：診斷與轉檔

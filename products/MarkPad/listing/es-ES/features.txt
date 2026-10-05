@@ -1,0 +1,15 @@
+Lee y edita archivos Markdown locales en varias pestañas
+Navega por los títulos H1–H6 y elige los niveles del índice y los marcadores PDF
+Edita a la izquierda con vista previa en tiempo real a la derecha y columnas ajustables
+Ajusta fuentes, tamaños y formato Markdown desde la barra de herramientas
+Cuatro temas: Claro, Oscuro, Bambú claro y Bambú oscuro
+Fondos de papel xuan y tipografía tradicional en los temas de bambú
+Configura por separado las fuentes de la interfaz, la vista previa y el editor
+Tablas, listas de tareas, bloques de código, notas al pie e imágenes locales
+Búsqueda y sustitución, deshacer y rehacer
+Guardado automático, avisos de cambios externos y recuperación de borradores tras un cierre inesperado
+Guarda Markdown y exporta un PDF con fecha y hora junto al archivo original
+Opción para recordar archivos abiertos al salir y reabrir documentos guardados al iniciar
+Interfaz en chino tradicional, inglés, japonés, chino simplificado, español, árabe, francés y coreano
+Tres artículos integrados en ocho idiomas, mostrados por turnos cuando no hay documentos abiertos
+Prueba gratuita de 7 días; versión completa con una compra única, sin suscripción

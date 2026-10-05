@@ -1,0 +1,5 @@
+<Project>
+  <!-- Only shipping projects participate; tests and packaging helpers stay untouched. -->
+  <Import Project="build\Obfuscar.targets"
+          Condition="$([System.String]::Copy('$(MSBuildProjectDirectory)').StartsWith('$(MSBuildThisFileDirectory)src\'))" />
+</Project>

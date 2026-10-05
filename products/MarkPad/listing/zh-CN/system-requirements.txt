@@ -1,0 +1,2 @@
+此软件包适用于 64 位 Windows（x64）。
+预览和 PDF 导出需要 Microsoft Edge WebView2 Evergreen Runtime。

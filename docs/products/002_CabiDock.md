@@ -216,7 +216,7 @@ CabiDock 除了一般桌面分類外，已加入由 ToolKeeper 管理的 **「�
 
 ## 設定視窗與系統匣
 
-設定主視窗採用 `ToolKeeper.UI` 共用外觀，原生標題列為 `CabiDock - Desktop Organizer`。內容左上以 30 DIP 顯示 `CabiDock`，標題上方不留空白列或額外上邊距，下方以 14 DIP 顯示獨立的產品簡介。桌面接管切換與群組操作預覽兩個按鈕放在 CabiDock 自己的 `Workspace` 第一列靠右的水平工具列，設定內容接續其下；這些按鈕不放在共用標頭的 `HeaderActions`。產品簡介與副標題分開定義。共用範圍與 ToolKeeper 本體、003 一致；桌面分類群組及分類、保存、啟停邏輯仍由 CabiDock 負責。
+設定主視窗依 [工具番介面標準](../UI-STANDARD.md) 採用 `ToolKeeper.UI.AppWindow` 與共用 `WindowFrame`，自訂竹紋頂列顯示 `CabiDock - Desktop Organizer`，不顯示 Windows 原生標題列。標頭左側為產品簡介，右側「風格／語言／關於」與簡介同列，內容區不重複顯示大型產品名稱。桌面接管切換與群組操作預覽兩個按鈕放在 CabiDock 自己的 `Workspace` 第一列靠右的水平工具列，設定內容接續其下；這些按鈕不放在共用標頭的 `HeaderActions`。產品簡介與副標題分開定義。共用範圍與 ToolKeeper 本體、003 一致；桌面分類群組及分類、保存、啟停邏輯仍由 CabiDock 負責。
 
 - 正式啟動顯示只含工具列表的 ToolKeeper 主視窗；桌面設定從 002 CabiDock 列表入口或系統匣開啟。首次使用及沒有平台偏好的既有使用者預設啟用桌面，之後依保存的啟停狀態恢復。
 - 未調整任何設定也能直接使用七個預設分類。

@@ -14,6 +14,7 @@ using Xunit;
 
 namespace ToolKeeper.Tests;
 
+[Collection("WPF UI")]
 public sealed class UiSmokeTests
 {
     private const string AbcMd5 = "900150983cd24fb0d6963f7d28e17f72";
@@ -244,6 +245,51 @@ public sealed class UiSmokeTests
     });
 
     [Fact]
+    public Task RejectedHashDropsPreserveCompletedResultsAndRunningRequests() => OnSta(async () =>
+    {
+        using var fixture = new Fixture();
+        var path = fixture.WriteText("accepted.txt", "abc");
+        var folder = Path.GetDirectoryName(path)!;
+        var window = CreateHashWindow();
+        try
+        {
+            await window.LoadHashFileAsync(path);
+            var target = Get<Border>(window, "HashDropZone");
+            var rejected = new[]
+            {
+                new DataObject(DataFormats.FileDrop, new[] { folder }),
+                new DataObject(DataFormats.FileDrop, new[] { path, path }),
+                new DataObject(DataFormats.FileDrop, new[] { fixture.FilePath("missing.txt") }),
+                new DataObject(DataFormats.UnicodeText, "not a file")
+            };
+            foreach (var data in rejected)
+            {
+                Assert.Equal(DragDropEffects.None,
+                    RaiseDrag(target, DragDrop.PreviewDragOverEvent, data, DragDropEffects.Copy).Effects);
+                Assert.Equal(DragDropEffects.None,
+                    RaiseDrag(target, DragDrop.PreviewDropEvent, data, DragDropEffects.Copy).Effects);
+                AssertAbcHashes(window);
+                Assert.True(Get<Button>(window, "CopyHashesButton").IsEnabled);
+                Assert.Equal("accepted.txt", Get<TextBlock>(window, "HashFileName").Text);
+            }
+
+            var request = window.LoadHashFileAsync(path);
+            Assert.True(Get<Button>(window, "CancelHashButton").IsEnabled);
+            var status = Get<TextBlock>(window, "HashStatus").Text;
+            var folderDrop = new DataObject(DataFormats.FileDrop, new[] { folder });
+            Assert.Equal(DragDropEffects.None,
+                RaiseDrag(target, DragDrop.PreviewDropEvent, folderDrop, DragDropEffects.Copy).Effects);
+            Assert.True(Get<Button>(window, "CancelHashButton").IsEnabled);
+            Assert.Equal(status, Get<TextBlock>(window, "HashStatus").Text);
+            await request;
+            AssertAbcHashes(window);
+            Assert.True(Directory.Exists(folder));
+            Assert.Equal("abc", File.ReadAllText(path));
+        }
+        finally { window.Close(); }
+    });
+
+    [Fact]
     public Task BusyIconDropIsRejectedAndDoesNotConvertTheAdditionalImage() => OnSta(async () =>
     {
         using var fixture = new Fixture();
@@ -443,7 +489,7 @@ public sealed class UiSmokeTests
     [InlineData("en", "Dark")]
     [InlineData("ja", "InkDark")]
     [InlineData("zh-TW", "Ink")]
-    public Task LauncherShowsFiveModuleEntriesAtMinimumSize(string language, string theme) => OnSta(() =>
+    public Task LauncherShowsAllModuleEntriesAtMinimumSize(string language, string theme) => OnSta(() =>
     {
         var window = new MainWindow { PreferencesPath = null, ShowActivated = false, ShowInTaskbar = false, SelectedTheme = theme, SelectedLanguage = language };
         try
@@ -462,11 +508,11 @@ public sealed class UiSmokeTests
                 foreach (var name in new[] { "PlatformStatus", "ToolList" })
                     AssertVisibleBounds(Get<FrameworkElement>(window, name), host, width, height);
                 var products = Get<ItemsControl>(window, "Products");
-                Assert.Equal(new[] { "001", "002", "003", "004", "005" }, products.Items.Cast<object>().Select(item => ReadProperty<string>(item, "Id")));
+                Assert.Equal(new[] { "001", "002", "003", "004", "005", "006", "007" }, products.Items.Cast<object>().Select(item => ReadProperty<string>(item, "Id")));
                 var scroller = VisualDescendants<ScrollViewer>(Get<Border>(window, "ToolList")).First();
                 scroller.ScrollToBottom();
                 host.UpdateLayout();
-                var last = Assert.IsAssignableFrom<FrameworkElement>(products.ItemContainerGenerator.ContainerFromIndex(4));
+                var last = Assert.IsAssignableFrom<FrameworkElement>(products.ItemContainerGenerator.ContainerFromIndex(products.Items.Count - 1));
                 Assert.True(Bounds(last, host).Bottom <= Bounds(scroller, host).Bottom + 1);
                 Assert.All(VisualDescendants<Button>(products), action => Assert.True(action.IsEnabled));
                 scroller.ScrollToTop();

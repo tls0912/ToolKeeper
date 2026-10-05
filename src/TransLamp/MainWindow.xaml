@@ -1,0 +1,201 @@
+<ui:AppWindow x:Class="TransLamp.MainWindow"
+              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+              xmlns:ui="clr-namespace:ToolKeeper.UI;assembly=ToolKeeper.UI"
+              MainName="TransLamp" SubName="Offline Language Translator"
+              Icon="/TransLamp;component/Resources/TransLamp.ico"
+              Description="{DynamicResource Lamp.Description}"
+              Width="1120" Height="830" MinWidth="900" MinHeight="720"
+              PreviewKeyDown="WindowKeyDown" Loaded="WindowLoaded">
+    <ui:AppWindow.Resources>
+        <Style TargetType="TextBlock">
+            <Setter Property="Foreground" Value="{DynamicResource TextBrush}" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+        </Style>
+        <Style x:Key="Caption" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="{DynamicResource MutedBrush}" />
+            <Setter Property="Margin" Value="0,0,0,7" />
+            <Setter Property="FontSize" Value="12" />
+        </Style>
+        <Style TargetType="Button" BasedOn="{StaticResource UiButtonStyle}">
+            <Setter Property="Padding" Value="15,8" />
+            <Setter Property="MinHeight" Value="36" />
+            <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+        <Style x:Key="Primary" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+            <Setter Property="Background" Value="{DynamicResource HoverBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource AccentBrush}" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+        </Style>
+        <Style TargetType="ComboBox" BasedOn="{StaticResource FontPickerComboBoxStyle}">
+            <Setter Property="MinHeight" Value="36" />
+            <Setter Property="Padding" Value="10,6" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+        </Style>
+        <Style TargetType="TextBox">
+            <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource TextBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource LineBrush}" />
+            <Setter Property="CaretBrush" Value="{DynamicResource TextBrush}" />
+            <Setter Property="FontFamily" Value="Segoe UI, Microsoft JhengHei UI, Yu Gothic UI" />
+            <Setter Property="FontSize" Value="16" />
+            <Setter Property="Padding" Value="16,12" />
+            <Setter Property="VerticalContentAlignment" Value="Top" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+            <Setter Property="AcceptsReturn" Value="True" />
+            <Setter Property="AcceptsTab" Value="False" />
+            <Setter Property="VerticalScrollBarVisibility" Value="Auto" />
+            <Setter Property="SpellCheck.IsEnabled" Value="False" />
+        </Style>
+    </ui:AppWindow.Resources>
+    <ui:AppWindow.Workspace>
+        <Grid Margin="0,4,0,0">
+            <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="*" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
+            <StackPanel Orientation="Horizontal" Margin="0,0,0,16">
+                <Button x:Name="TranslationTab" Content="{DynamicResource Lamp.Translate}" Click="TranslationTabClick" Margin="0,0,8,0" MinWidth="110" />
+                <Button x:Name="DataTab" Content="{DynamicResource Lamp.DataManagement}" Click="DataTabClick" MinWidth="110" />
+            </StackPanel>
+            <Grid x:Name="TranslationPage" Grid.Row="1">
+            <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="*" MinHeight="150" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
+            <Grid Margin="0,0,0,12">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="22" /><ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <StackPanel>
+                    <TextBlock Text="{DynamicResource Lamp.From}" Style="{StaticResource Caption}" />
+                    <ComboBox x:Name="SourceLanguage" DisplayMemberPath="Label" SelectedValuePath="Code" SelectionChanged="DirectionChanged" AutomationProperties.Name="{DynamicResource Lamp.From}" />
+                </StackPanel>
+                <Button x:Name="SwapButton" Grid.Column="1" Content="⇄" FontSize="21" Margin="8,20,8,0" Padding="12,3" Click="SwapClick" ToolTip="{DynamicResource Lamp.Swap}" AutomationProperties.Name="{DynamicResource Lamp.Swap}" />
+                <StackPanel Grid.Column="2">
+                    <TextBlock Text="{DynamicResource Lamp.To}" Style="{StaticResource Caption}" />
+                    <ComboBox x:Name="TargetLanguage" DisplayMemberPath="Label" SelectedValuePath="Code" SelectionChanged="DirectionChanged" AutomationProperties.Name="{DynamicResource Lamp.To}" />
+                </StackPanel>
+                <Button x:Name="TranslateButton" Grid.Column="4" Margin="0,20,0,0" Content="{DynamicResource Lamp.TranslateNow}" Click="TranslateClick" ToolTip="Ctrl+Enter" />
+            </Grid>
+            <Border Grid.Row="1" Background="{DynamicResource HoverBrush}" CornerRadius="5" Padding="12,9" Margin="0,0,0,12">
+                <StackPanel>
+                    <TextBlock Text="{DynamicResource Lamp.LiveHint}" FontSize="12" Margin="0,0,0,4" />
+                    <TextBlock x:Name="AvailabilityText" FontSize="12" AutomationProperties.LiveSetting="Polite" />
+                </StackPanel>
+            </Border>
+            <Grid Grid.Row="2">
+                <Grid.ColumnDefinitions><ColumnDefinition Width="*" MinWidth="230" /><ColumnDefinition Width="12" /><ColumnDefinition Width="*" MinWidth="230" /></Grid.ColumnDefinitions>
+                <Grid>
+                    <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="*" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
+                    <DockPanel Margin="0,0,0,8">
+                        <TextBlock x:Name="SourceCount" DockPanel.Dock="Right" FontSize="12" Foreground="{DynamicResource MutedBrush}" VerticalAlignment="Center" />
+                        <TextBlock Text="{DynamicResource Lamp.Source}" FontWeight="SemiBold" />
+                    </DockPanel>
+                    <Grid Grid.Row="1">
+                        <TextBox x:Name="SourceText" TextChanged="SourceTextChanged" AutomationProperties.Name="{DynamicResource Lamp.Source}" />
+                        <TextBlock x:Name="SourcePlaceholder" Text="{DynamicResource Lamp.Placeholder}" Foreground="{DynamicResource MutedBrush}" IsHitTestVisible="False" Margin="17,13" FontSize="15" />
+                    </Grid>
+                    <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,10,0,0">
+                        <Button x:Name="PasteButton" Content="{DynamicResource Lamp.Paste}" Click="PasteClick" Margin="0,0,8,0" />
+                        <Button x:Name="ClearButton" Content="{DynamicResource Lamp.Clear}" Click="ClearClick" />
+                    </StackPanel>
+                </Grid>
+                <GridSplitter Grid.Column="1" Width="6" HorizontalAlignment="Center" VerticalAlignment="Stretch" Background="{DynamicResource LineBrush}" ResizeBehavior="PreviousAndNext" ResizeDirection="Columns" Margin="0,28,0,46" ToolTip="{DynamicResource Lamp.Resize}" AutomationProperties.Name="{DynamicResource Lamp.Resize}" />
+                <Grid Grid.Column="2">
+                    <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="*" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
+                    <DockPanel Margin="0,0,0,8">
+                        <TextBlock x:Name="TargetCount" DockPanel.Dock="Right" FontSize="12" Foreground="{DynamicResource MutedBrush}" VerticalAlignment="Center" />
+                        <TextBlock Text="{DynamicResource Lamp.Result}" FontWeight="SemiBold" />
+                    </DockPanel>
+                    <Grid Grid.Row="1">
+                        <TextBox x:Name="TargetText" IsReadOnly="True" TextChanged="TargetTextChanged" AutomationProperties.Name="{DynamicResource Lamp.Result}" />
+                        <TextBlock x:Name="TargetPlaceholder" Text="{DynamicResource Lamp.ResultPlaceholder}" Foreground="{DynamicResource MutedBrush}" IsHitTestVisible="False" Margin="17,13" FontSize="15" />
+                    </Grid>
+                    <Button x:Name="CopyButton" Grid.Row="2" Content="{DynamicResource Lamp.Copy}" Click="CopyClick" Margin="0,10,0,0" HorizontalAlignment="Right" IsEnabled="False" />
+                </Grid>
+            </Grid>
+            <TextBlock x:Name="QualityNotice" Grid.Row="3" Text="{DynamicResource Lamp.Quality}" Foreground="{DynamicResource MutedBrush}" FontSize="12" Margin="0,12,0,0" />
+            </Grid>
+            <Border Grid.Row="2" Margin="0,14,0,0" BorderBrush="{DynamicResource LineBrush}" BorderThickness="0,1,0,0" Padding="0,10,0,0">
+                <Grid>
+                    <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
+                    <DockPanel>
+                        <Button x:Name="CancelButton" DockPanel.Dock="Right" Content="{DynamicResource Lamp.Cancel}" Click="CancelClick" IsEnabled="False" Margin="12,0,0,0" />
+                        <TextBlock x:Name="StatusText" FontSize="12" VerticalAlignment="Center" AutomationProperties.LiveSetting="Polite" />
+                    </DockPanel>
+                    <Border x:Name="QualityWarning" Grid.Row="1" Visibility="Collapsed" Margin="0,6,0,0" Padding="8,4" Background="{DynamicResource HoverBrush}" BorderBrush="{DynamicResource LineBrush}" BorderThickness="1" CornerRadius="4">
+                        <ScrollViewer MaxHeight="28" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                            <TextBlock x:Name="QualityWarningText" FontSize="12" Foreground="{DynamicResource AccentBrush}" AutomationProperties.LiveSetting="Polite" />
+                        </ScrollViewer>
+                    </Border>
+                    <ProgressBar x:Name="OperationProgress" Grid.Row="2" Height="3" Margin="0,8,0,0" Visibility="Collapsed" Background="{DynamicResource LineBrush}" Foreground="{DynamicResource AccentBrush}" />
+                </Grid>
+            </Border>
+            <ScrollViewer x:Name="DataPage" Grid.Row="1" Visibility="Collapsed" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                <StackPanel Margin="0,0,12,0">
+                <TextBlock Text="{DynamicResource Lamp.AvailablePacks}" FontWeight="SemiBold" FontSize="17" Margin="0,0,0,6" />
+                <TextBlock x:Name="DataRuntimeHint" Foreground="{DynamicResource ErrorBrush}" FontSize="12" Margin="0,0,0,10" />
+                <TextBlock Text="{DynamicResource Lamp.DownloadHint}" Foreground="{DynamicResource MutedBrush}" FontSize="12" Margin="0,0,0,12" />
+                <TextBlock x:Name="DownloadCatalogSummary" Foreground="{DynamicResource MutedBrush}" FontSize="12" Margin="0,0,0,12" />
+                <Grid Margin="0,0,0,12">
+                    <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="28" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                    <StackPanel>
+                        <TextBlock Text="{DynamicResource Lamp.From}" Style="{StaticResource Caption}" />
+                        <ComboBox x:Name="DownloadSourceLanguage" DisplayMemberPath="Label" SelectedValuePath="Code" SelectionChanged="DownloadSourceChanged" IsTextSearchEnabled="True" TextSearch.TextPath="Label" MaxDropDownHeight="320" AutomationProperties.Name="{DynamicResource Lamp.DownloadFrom}" />
+                    </StackPanel>
+                    <TextBlock Grid.Column="1" Text="→" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,20,0,0" />
+                    <StackPanel Grid.Column="2">
+                        <TextBlock Text="{DynamicResource Lamp.To}" Style="{StaticResource Caption}" />
+                        <ComboBox x:Name="DownloadTargetLanguage" DisplayMemberPath="Label" SelectedValuePath="Code" SelectionChanged="DownloadTargetChanged" IsTextSearchEnabled="True" TextSearch.TextPath="Label" MaxDropDownHeight="320" AutomationProperties.Name="{DynamicResource Lamp.DownloadTo}" />
+                    </StackPanel>
+                </Grid>
+                <Border x:Name="DownloadDetails" Background="{DynamicResource PaperBackgroundBrush}" BorderBrush="{DynamicResource LineBrush}" BorderThickness="1" CornerRadius="4" Padding="12">
+                    <Grid>
+                        <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                        <StackPanel Margin="0,0,12,0">
+                            <TextBlock x:Name="DownloadPackTitle" FontWeight="SemiBold" Foreground="{DynamicResource TextBrush}" />
+                            <TextBlock x:Name="DownloadPackDetails" Foreground="{DynamicResource MutedBrush}" FontSize="12" Margin="0,4,0,0" />
+                            <TextBlock x:Name="DownloadPackSource" Foreground="{DynamicResource MutedBrush}" FontSize="12" Margin="0,3,0,0" />
+                        </StackPanel>
+                        <Button x:Name="DownloadButton" Grid.Column="1" Click="DownloadPackClick" />
+                    </Grid>
+                </Border>
+                <TextBlock Text="{DynamicResource Lamp.InstalledPacks}" FontWeight="SemiBold" FontSize="17" Margin="0,16,0,10" />
+                <Border Background="{DynamicResource PaperBackgroundBrush}" BorderBrush="{DynamicResource LineBrush}" BorderThickness="1" CornerRadius="4" Padding="12">
+                    <Grid>
+                        <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
+                        <DockPanel Margin="0,0,0,9">
+                            <Button x:Name="ImportButton" DockPanel.Dock="Right" Content="{DynamicResource Lamp.Import}" Click="ImportClick" Margin="12,0,0,0" />
+                            <TextBlock Text="{DynamicResource Lamp.PackHint}" FontSize="12" Foreground="{DynamicResource MutedBrush}" VerticalAlignment="Center" />
+                        </DockPanel>
+                        <StackPanel Grid.Row="1">
+                            <StackPanel>
+                                <TextBlock x:Name="NoPacksText" Text="{DynamicResource Lamp.NoPacks}" Margin="0,6" Foreground="{DynamicResource MutedBrush}" FontSize="12" />
+                                <ItemsControl x:Name="PacksList">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border BorderBrush="{DynamicResource LineBrush}" BorderThickness="0,1,0,0" Padding="0,9">
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                                                    <StackPanel Margin="0,0,12,0">
+                                                        <TextBlock Text="{Binding Title}" FontWeight="SemiBold" Foreground="{DynamicResource TextBrush}" />
+                                                        <TextBlock Text="{Binding Details}" FontSize="12" Foreground="{DynamicResource MutedBrush}" Margin="0,3,0,0" />
+                                                        <TextBlock Text="{Binding Source}" FontSize="12" Foreground="{DynamicResource MutedBrush}" Margin="0,3,0,0" />
+                                                    </StackPanel>
+                                                    <Button Grid.Column="1" Content="{DynamicResource Lamp.Remove}" Click="RemovePackClick" Tag="{Binding Id}" IsEnabled="{Binding CanRemove}" />
+                                                </Grid>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
+                        </StackPanel>
+                        <Grid Grid.Row="2" Margin="0,8,0,0">
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                            <TextBlock x:Name="PackLocation" FontSize="11" Foreground="{DynamicResource MutedBrush}" TextTrimming="CharacterEllipsis" TextWrapping="NoWrap" VerticalAlignment="Center" />
+                            <Button x:Name="OpenPacksFolderButton" Grid.Column="1" Content="{DynamicResource Lamp.OpenPacksFolder}" Click="OpenPacksFolderClick" Margin="12,0,0,0" />
+                        </Grid>
+                    </Grid>
+                </Border>
+                </StackPanel>
+            </ScrollViewer>
+        </Grid>
+    </ui:AppWindow.Workspace>
+</ui:AppWindow>

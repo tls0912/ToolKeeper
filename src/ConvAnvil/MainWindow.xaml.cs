@@ -194,8 +194,6 @@ public partial class MainWindow : AppWindow
     {
         if (_file is null || _convertedFile is null) return;
         var original = _file.Path;
-        var bytes = _convertedFile;
-        var revision = _fileRevision;
         var dialog = new SaveFileDialog
         {
             Title = T("Save converted file (use a new name)", "另存轉換結果（請使用新檔名）", "変換結果を保存（新しい名前を使用）"),
@@ -204,16 +202,26 @@ public partial class MainWindow : AppWindow
             FileName = Path.GetFileNameWithoutExtension(original) + ".converted" + Path.GetExtension(original)
         };
         if (dialog.ShowDialog(this) != true) return;
+        await SaveConvertedFileAsync(dialog.FileName);
+    }
+
+    internal async Task SaveConvertedFileAsync(string destination, Func<string, byte[], string?, Task>? saveFile = null)
+    {
+        if (_file is null || _convertedFile is null) return;
+        var original = _file.Path;
+        var bytes = _convertedFile;
+        var revision = _fileRevision;
         SaveFileButton.IsEnabled = false;
         try
         {
-            await FileConversionService.SaveNewAsync(dialog.FileName, bytes, original);
-            if (!_closed) SetText(StatusLabel, () => T($"Saved {bytes.Length:N0} bytes: {dialog.FileName}",
-                $"已另存 {bytes.Length:N0} bytes：{dialog.FileName}", $"{bytes.Length:N0} bytes を保存：{dialog.FileName}"));
+            if (saveFile is null) await FileConversionService.SaveNewAsync(destination, bytes, original);
+            else await saveFile(destination, bytes, original);
+            if (!_closed && revision == _fileRevision) SetText(StatusLabel, () => T($"Saved {bytes.Length:N0} bytes: {destination}",
+                $"已另存 {bytes.Length:N0} bytes：{destination}", $"{bytes.Length:N0} bytes を保存：{destination}"));
         }
         catch (Exception ex) when (IsExpected(ex))
         {
-            if (!_closed) SetResult(FileResult, () => T("Not saved: ", "未儲存：", "保存できません：") + ex.Message, true);
+            if (!_closed && revision == _fileRevision) SetResult(FileResult, () => T("Not saved: ", "未儲存：", "保存できません：") + ex.Message, true);
         }
         finally
         {
@@ -361,6 +369,13 @@ public partial class MainWindow : AppWindow
             return;
         }
         var normalized = TextInspector.NormalizeLineEndings(TextEntry.Text, crlf);
+        if (normalized.Length > TextInputLimit)
+        {
+            SetResult(TextResult, () => T($"Changing line endings would exceed {TextInputLimit:N0} UTF-16 units. The original text was kept.",
+                $"換行轉換結果會超過 {TextInputLimit:N0} 個 UTF-16 單位；已保留原文字。",
+                $"改行変換後のテキストが {TextInputLimit:N0} UTF-16 単位を超えるため、元のテキストを保持しました。"), true);
+            return;
+        }
         TextEntry.SelectAll();
         TextEntry.SelectedText = normalized;
         TextEntry.Select(0, 0);

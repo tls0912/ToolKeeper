@@ -19,7 +19,7 @@ public sealed class UiTypographyTests
     [Fact]
     public Task AutomaticInkAndExplicitInkChoicesUseTheSharedInstalledFontResolver() => StaTest.Run(() =>
     {
-        foreach (var language in new[] { "en", "zh-TW", "ja" })
+        foreach (var language in new[] { "en", "zh-TW", "ja", "zh-CN", "es", "ar", "fr", "ko" })
         {
             var expected = InkTypography.Resolve(language);
             Assert.Equal(expected, UiTypography.ResolveInterfaceFont("", language, true));
@@ -32,13 +32,31 @@ public sealed class UiTypographyTests
     [Fact]
     public void ExplicitCustomFontsArePreservedAcrossLanguageAndInkChoices()
     {
-        foreach (var language in new[] { "en", "zh-TW", "ja" })
+        foreach (var language in new[] { "en", "zh-TW", "ja", "zh-CN", "es", "ar", "fr", "ko" })
             foreach (var ink in new[] { false, true })
             {
                 Assert.Equal("Custom UI Family", UiTypography.ResolveInterfaceFont("Custom UI Family", language, ink));
                 Assert.Equal("Custom Reading Family", UiTypography.ResolveReadingFont("Custom Reading Family", language, ink));
             }
     }
+
+    [Fact]
+    public Task AdditionalScriptFontsResolveToAnInstalledFamily() => StaTest.Run(() =>
+    {
+        var installed = Fonts.SystemFontFamilies.SelectMany(family => family.FamilyNames.Values.Append(family.Source))
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+        foreach (var language in new[] { "zh-CN", "ar", "ko" })
+        {
+            Assert.Contains(UiTypography.ResolveInterfaceFont("", language, false), installed);
+            Assert.Contains(UiTypography.ResolveReadingFont("", language, false), installed);
+            Assert.Contains(InkTypography.Resolve(language), installed);
+        }
+        foreach (var language in new[] { "es", "fr" })
+        {
+            Assert.Equal("Segoe UI", UiTypography.ResolveInterfaceFont("", language, false));
+            Assert.Equal("Segoe UI", UiTypography.ResolveReadingFont("", language, false));
+        }
+    });
 
     [Fact]
     public Task TypographyResourcesStayInTheirOwnerAndPreserveOtherResources() => StaTest.Run(() =>

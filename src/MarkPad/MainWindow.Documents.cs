@@ -19,6 +19,7 @@ public partial class MainWindow
         view.Editor.ApplyOptions(_dark, EditorFontName, Settings.EditorFontSize, IsInkTheme);
         view.Editor.ApplyLanguage(UiLanguage);
         view.ApplyLanguage(UiLanguage);
+        view.ApplyOutlineLevels(Settings.PdfOutlineLevels);
         _ = GuardAsync(() => view.Preview.SetThemeAsync(_dark, IsInkTheme));
         view.Editor.SelectionChanged += OnEditorSelectionChanged;
         view.Editor.SearchChanged += OnEditorSearchChanged;

@@ -13,6 +13,12 @@ ToolKeeper（工具番）是一個以「超好用的小工具」為核心的 Win
 
 ToolKeeper、桌面設定、004／005 與 003 ConvAnvil 使用 `ToolKeeper.UI` 共用視窗元件；001 汗青維持既有自訂介面。`ToolKeeper.exe` 是平台唯一宿主，桌面能力留在 `ToolKeeper.Desktop` 類別庫，HASH／ICO 各有獨立模組視窗並在同一程序執行。儲存庫不再保留 CabiDock 開發 EXE。實機桌面驗收仍待完成，範圍見[架構說明](docs/ARCHITECTURE.md)。
 
+## 007 TransLamp 獨立啟動
+
+在專案根目錄雙擊 [Start-TransLamp.cmd](Start-TransLamp.cmd)，即可直接開啟目前版本的 TransLamp Offline Kit。入口會依專案版本選擇 `artifacts/TransLamp-OfflineKit-<版本>/TransLamp.exe`，不用先啟動工具番。
+
+尚未建立離線包時，先執行 `scripts/Prepare-TransLampResources.ps1`，再執行 `scripts/Publish-TransLamp.ps1`。入口只檢查並啟動既有程式，不會自動下載或建置。可用 `scripts/Start-TransLamp.ps1 -CheckOnly` 檢查實際啟動路徑。
+
 ## ToolKeeper 本體
 
 ToolKeeper 主視窗只保留五項工具列表。桌面設定由列表的 002 CabiDock 或系統匣開啟，桌面啟停由設定視窗或系統匣操作。免費的 Hash Checker 與 Image → ICO 各自開啟獨立視窗，保留原有操作，不在本體主畫面直接執行。
@@ -39,6 +45,8 @@ dotnet run --project src/ToolKeeper/ToolKeeper.csproj -- --desktop-directory art
 功能、測試結果、使用方式與待驗收事項見 [ToolKeeper 實作與問題報告](docs/TOOLKEEPER-IMPLEMENTATION.md)。
 
 ## Products
+
+全系列 Release 發佈已整合 Obfuscar：工具番與全部自有工具／共用模組會自動混淆，開發建置與測試保持原樣。涵蓋範圍、發佈指令與驗證方式見 [混淆發佈說明](docs/OBFUSCATION.md)。
 
 ### 001 — 汗青
 

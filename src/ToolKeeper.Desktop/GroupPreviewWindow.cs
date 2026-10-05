@@ -20,7 +20,7 @@ public sealed class GroupPreviewWindow : Window
     private bool _disposed;
     private IReadOnlyList<DesktopTool> _tools = [];
     private Action<string>? _activateTool;
-    private string _theme = "Light";
+    private string _theme = "Ink";
 
     public event Action<DesktopItem>? ItemOpenRequested;
     public event Action<DesktopItem, string>? ManualAssignmentRequested;

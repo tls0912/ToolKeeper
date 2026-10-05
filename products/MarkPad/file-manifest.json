@@ -1,6 +1,6 @@
 ﻿{
     "product":  "汗青 - Markdown Writer",
-    "version":  "1.0.2.0",
+    "version":  "1.0.3.0",
     "files":  [
                   {
                       "file":  "assets/app-icon-300.png",
@@ -10,7 +10,7 @@
                   {
                       "file":  "assets/asset-manifest.json",
                       "bytes":  14252,
-                      "sha256":  "445092499B14E906B41A58E2268BA0F4D62B7C18F6BF33A3A8107E3071CCA5DD"
+                      "sha256":  "59D27180A5DC4601860DA76EF3AA5326132B233F5CDDA27386DC2A2BF58EE414"
                   },
                   {
                       "file":  "assets/bamboo-icon-preview.png",
@@ -159,18 +159,58 @@
                   },
                   {
                       "file":  "index.html",
-                      "bytes":  41771,
-                      "sha256":  "7F734C3E6DB59FC290310E343440B444FD82E5DF0FFC40198EAFE17C67339AE6"
+                      "bytes":  130139,
+                      "sha256":  "E888F8D4C6C907A90CD1FA1ABDFA7FDC652A7CCF8964BEAD96994BBF43E6B3C4"
+                  },
+                  {
+                      "file":  "listing/ar-SA/description.txt",
+                      "bytes":  3577,
+                      "sha256":  "59B1C2B25ED2D0AE70C4B3403D20A50835C3366EC01BD11D9D190A28FA8DD217"
+                  },
+                  {
+                      "file":  "listing/ar-SA/features.txt",
+                      "bytes":  1982,
+                      "sha256":  "E58504A1C1A89E408B8556BE66EF25CB13707A4EA9812F6BDC234C4465476C39"
+                  },
+                  {
+                      "file":  "listing/ar-SA/keywords.txt",
+                      "bytes":  124,
+                      "sha256":  "3510E589E125C3440C35251C42839432E49393E8FC951290A42A1EE1F17DCB75"
+                  },
+                  {
+                      "file":  "listing/ar-SA/privacy-policy.txt",
+                      "bytes":  5760,
+                      "sha256":  "98DF1921A3C1EA9C814223D28FD2C98F818B5D5302BD065D380FDCE5C24E81B5"
+                  },
+                  {
+                      "file":  "listing/ar-SA/release-notes-update-only.txt",
+                      "bytes":  902,
+                      "sha256":  "0362ECFDCFCB17C5FC6F1FC1EA2D4EA8682B94F0DF1CB3DCED7F109F90EEBA41"
+                  },
+                  {
+                      "file":  "listing/ar-SA/screenshot-captions.txt",
+                      "bytes":  1076,
+                      "sha256":  "E741CF6C2CC13D392052946FCD3E7425DED9167FFA1C65B6CD2D8C8C023D8CAC"
+                  },
+                  {
+                      "file":  "listing/ar-SA/short-description.txt",
+                      "bytes":  315,
+                      "sha256":  "CBCA293E0E3CBDE0B2F7B35284ABFEC9E162873F59DDED9795411FD351E8EE01"
+                  },
+                  {
+                      "file":  "listing/ar-SA/system-requirements.txt",
+                      "bytes":  190,
+                      "sha256":  "E2AD45CC626C419C75D0B5F4FD7C3CE0FCA73BA79E8DCC176CE7DEDDEA06176E"
                   },
                   {
                       "file":  "listing/en-US/description.txt",
-                      "bytes":  1455,
-                      "sha256":  "CA9FABB5EC9F6F190F79483805F67964586D3EC306A230072A6966DC1A36F353"
+                      "bytes":  2010,
+                      "sha256":  "301AD3C4738C2A016EAD62D17849107E0CAD3715D3AE579C03CCD43B5BA6FCB3"
                   },
                   {
                       "file":  "listing/en-US/features.txt",
-                      "bytes":  744,
-                      "sha256":  "6039BB22AEAC424D9AB2054162F04953819F45E3E177560969A9DAF5245341B0"
+                      "bytes":  1028,
+                      "sha256":  "9B05E8C0D2FB517762EB9BC99F5EF3595C1153AF407E71C11BD87D0641179CDF"
                   },
                   {
                       "file":  "listing/en-US/keywords.txt",
@@ -179,13 +219,13 @@
                   },
                   {
                       "file":  "listing/en-US/privacy-policy.txt",
-                      "bytes":  3330,
-                      "sha256":  "4B018ADB8D63FEA2C9193A2E70F98C83FC3EAD5097A6F7FA05C624DBCC8444A8"
+                      "bytes":  3668,
+                      "sha256":  "78BC397052015E8889F93142584119B6CFF1115EC8B3FC26F003F30A0BB4EB58"
                   },
                   {
                       "file":  "listing/en-US/release-notes-update-only.txt",
-                      "bytes":  441,
-                      "sha256":  "4622D4554C9925990448B2D6269C0F67BEA83D4F8FD0AAF7C39F3EB718F982F6"
+                      "bytes":  509,
+                      "sha256":  "82405542FFE94EE8CD767EE8330953C3EEAEB30C02D7E551BA7298160E6389A1"
                   },
                   {
                       "file":  "listing/en-US/screenshot-captions.txt",
@@ -203,14 +243,94 @@
                       "sha256":  "0BC84ECFB7DEAE3ADA993C60BD52855F8CDA980FC6AFA2D419B19892B8DB7DF8"
                   },
                   {
+                      "file":  "listing/es-ES/description.txt",
+                      "bytes":  2343,
+                      "sha256":  "5198AD9DF110FF8F4D3B060E5606F16E78E435B25383F56C3EE2543E484424C3"
+                  },
+                  {
+                      "file":  "listing/es-ES/features.txt",
+                      "bytes":  1201,
+                      "sha256":  "A8E5979A475E73CAD0982BE868613D43FC130B9942DAF7A540D3E0F222FC332C"
+                  },
+                  {
+                      "file":  "listing/es-ES/keywords.txt",
+                      "bytes":  93,
+                      "sha256":  "11D668CDC94F0C1B443663CBD2D9E4A958A1F628437096FE9A00BE5C1C8CDABC"
+                  },
+                  {
+                      "file":  "listing/es-ES/privacy-policy.txt",
+                      "bytes":  4368,
+                      "sha256":  "FCF243DBDA3A76ED8D39A356D5458D27037ED613E674CE671BB41136903CFD1E"
+                  },
+                  {
+                      "file":  "listing/es-ES/release-notes-update-only.txt",
+                      "bytes":  645,
+                      "sha256":  "4E1D0D03FF19576230DDBDE270C20F1C5A3FC047123F21B76F0262B4BD26C38A"
+                  },
+                  {
+                      "file":  "listing/es-ES/screenshot-captions.txt",
+                      "bytes":  772,
+                      "sha256":  "286DF709EB2AFC1DF84E82F63FBEDE32F68635E389B63E03FBE1BAC6A8BF22C4"
+                  },
+                  {
+                      "file":  "listing/es-ES/short-description.txt",
+                      "bytes":  226,
+                      "sha256":  "9C636AE4509C5C6EDE06029F66F505D18FD0A75DE4D8D8ADAD99E4C1D41FA83F"
+                  },
+                  {
+                      "file":  "listing/es-ES/system-requirements.txt",
+                      "bytes":  153,
+                      "sha256":  "6E7153E5DE3AD0ACEF8F602EFBACE7015CB8E9DDDCA84ED53C41D02D94464225"
+                  },
+                  {
+                      "file":  "listing/fr-FR/description.txt",
+                      "bytes":  2460,
+                      "sha256":  "E2610EE9D18A109AF882D61C937C3E252584141CB81E25CAF939564696879310"
+                  },
+                  {
+                      "file":  "listing/fr-FR/features.txt",
+                      "bytes":  1290,
+                      "sha256":  "89949C0E3E1DD05A0E4E7D35CD041E58BD280B3C537AF3EA0BD50F877B57E164"
+                  },
+                  {
+                      "file":  "listing/fr-FR/keywords.txt",
+                      "bytes":  97,
+                      "sha256":  "3536B60D931A3445A1739627AD71B1BB0738928752956451C2335113ABC0C7DF"
+                  },
+                  {
+                      "file":  "listing/fr-FR/privacy-policy.txt",
+                      "bytes":  4757,
+                      "sha256":  "21D98FD71DEB8DCA00AC3B9F24E5E1721D7C2671FFCA4F72BBA175E4B9788CBD"
+                  },
+                  {
+                      "file":  "listing/fr-FR/release-notes-update-only.txt",
+                      "bytes":  671,
+                      "sha256":  "6473C3F58CC3FE15D85A01A2CB8BD36FD2A75BB693ABAD240E57515F0C9ABEC1"
+                  },
+                  {
+                      "file":  "listing/fr-FR/screenshot-captions.txt",
+                      "bytes":  839,
+                      "sha256":  "092102260753E0A331A776AC7689082C123F8EDE6D508EB70DF8350A10332AA4"
+                  },
+                  {
+                      "file":  "listing/fr-FR/short-description.txt",
+                      "bytes":  229,
+                      "sha256":  "C9A85D8AE19E0F6153BD94266849B284A78A4F65C70264D1714CB58D1D2E95D3"
+                  },
+                  {
+                      "file":  "listing/fr-FR/system-requirements.txt",
+                      "bytes":  139,
+                      "sha256":  "E46AFE6DA46FD1F2C6BCEAA54A93006DAEAC3E1642BDF9F9973109DD1E117CF7"
+                  },
+                  {
                       "file":  "listing/ja-JP/description.txt",
-                      "bytes":  1915,
-                      "sha256":  "4858F71BE769A975D20B3EBD07FB2FD5C7DD781F5D1A09EF18E70C381E77C973"
+                      "bytes":  2614,
+                      "sha256":  "89E28012368D90B63E38657A123C4251036E646769A7E1D043BCFBA7886D544B"
                   },
                   {
                       "file":  "listing/ja-JP/features.txt",
-                      "bytes":  858,
-                      "sha256":  "68E8211E253FA5027F20E97DABF4EECB50957B07E92DB1168900FCD1C62E783B"
+                      "bytes":  1222,
+                      "sha256":  "1D58F5237DE9F694A5E04334670130F309F137C6CCCAB32EAF8528D3688A410A"
                   },
                   {
                       "file":  "listing/ja-JP/keywords.txt",
@@ -219,13 +339,13 @@
                   },
                   {
                       "file":  "listing/ja-JP/privacy-policy.txt",
-                      "bytes":  4407,
-                      "sha256":  "808BCE37CB55C2B1F90D201C77491E4AA55E1070FE3FA76B996E22E78B649945"
+                      "bytes":  4878,
+                      "sha256":  "D8D2BEF960F2FA00C72137BB18F748A523F83805CA47F8A2301447CA6FE1C7D0"
                   },
                   {
                       "file":  "listing/ja-JP/release-notes-update-only.txt",
-                      "bytes":  537,
-                      "sha256":  "6AF3C07D12494AC657E68C832E595033FD41593B76A3278B5D60F316FF2C9140"
+                      "bytes":  678,
+                      "sha256":  "FFAE3A68E82EB854AC8284E9C43D783CE34C04594ABFB1D5E682261B743B626B"
                   },
                   {
                       "file":  "listing/ja-JP/screenshot-captions.txt",
@@ -243,14 +363,94 @@
                       "sha256":  "E75F822F611823524B17E65225D1207B2D8A70F7B076F9BE6EE129CE74EBAA8D"
                   },
                   {
+                      "file":  "listing/ko-KR/description.txt",
+                      "bytes":  2431,
+                      "sha256":  "E23E18793C881B5FF500BB13C203FDB8CCEFE9313F05FF5C85B2A6C00C709033"
+                  },
+                  {
+                      "file":  "listing/ko-KR/features.txt",
+                      "bytes":  1160,
+                      "sha256":  "0C1D3C0D1744C4840549FD0950A54E5C7D3EA624F7B0DC993749FBB1775AE36F"
+                  },
+                  {
+                      "file":  "listing/ko-KR/keywords.txt",
+                      "bytes":  97,
+                      "sha256":  "45296BD53F8E4966BC1991EA5CA42A4CDCB0BF39B25EFE5751458A8A4C6A988D"
+                  },
+                  {
+                      "file":  "listing/ko-KR/privacy-policy.txt",
+                      "bytes":  4355,
+                      "sha256":  "45F39B614813D04FF0683C6C0B760042D9F6FAB2660DF0B66626A1B69E12D20A"
+                  },
+                  {
+                      "file":  "listing/ko-KR/release-notes-update-only.txt",
+                      "bytes":  640,
+                      "sha256":  "1C13B6D313F6AE90F62B171EB78CC968D6A7590BFD03E00C03CFEADF36E46451"
+                  },
+                  {
+                      "file":  "listing/ko-KR/screenshot-captions.txt",
+                      "bytes":  931,
+                      "sha256":  "6F5910A93D4E12900668B28F2ACB9AC2D6C7662D72FBF30ACC77E352EAB8AFE6"
+                  },
+                  {
+                      "file":  "listing/ko-KR/short-description.txt",
+                      "bytes":  267,
+                      "sha256":  "0A08B2BADAFECCAAED435F6B1F61A30FA5D574CFADBAB246ABEE854BC295EBCC"
+                  },
+                  {
+                      "file":  "listing/ko-KR/system-requirements.txt",
+                      "bytes":  154,
+                      "sha256":  "F9609F40D6502533CCB91804D027E043E1F9622C75869DC4CE6F636BA1B90FD3"
+                  },
+                  {
+                      "file":  "listing/zh-CN/description.txt",
+                      "bytes":  1874,
+                      "sha256":  "A19F8ABE26D6FA840F50FADA6D80D28FCF9B36E5A4CDB3CC5084E08054B42D1A"
+                  },
+                  {
+                      "file":  "listing/zh-CN/features.txt",
+                      "bytes":  956,
+                      "sha256":  "A6A0EB8A62EFDDCEA44BC41D24F64FC7AE81F9EA85373FDA95B9624F0EDFDFDB"
+                  },
+                  {
+                      "file":  "listing/zh-CN/keywords.txt",
+                      "bytes":  73,
+                      "sha256":  "4E957C799659C8997D8E907860853FC0B120F6F07C299648F62CAFA8BD0B4A80"
+                  },
+                  {
+                      "file":  "listing/zh-CN/privacy-policy.txt",
+                      "bytes":  3354,
+                      "sha256":  "57DFE0C6796344BF355FCE5A805E2D40A1D7B66009E2489F312799C8CF33E9AA"
+                  },
+                  {
+                      "file":  "listing/zh-CN/release-notes-update-only.txt",
+                      "bytes":  464,
+                      "sha256":  "CF14246534F686C1B9E36B4A8A28F3D91891A5BE27376B5415F1802AB6058A6C"
+                  },
+                  {
+                      "file":  "listing/zh-CN/screenshot-captions.txt",
+                      "bytes":  685,
+                      "sha256":  "7ADEB8A62C872123DF4A02981B7F2CD8DCB208B0C1755C13B6FA43443C7DFB1B"
+                  },
+                  {
+                      "file":  "listing/zh-CN/short-description.txt",
+                      "bytes":  201,
+                      "sha256":  "72F42769435D4D762F39F406B127B350631580E08DC3C737A3B1FDB8E8C39930"
+                  },
+                  {
+                      "file":  "listing/zh-CN/system-requirements.txt",
+                      "bytes":  121,
+                      "sha256":  "CA187EA00795E849B6D12E448DC59F41E3810A26B025F99805ACDD2CE44DB8B4"
+                  },
+                  {
                       "file":  "listing/zh-TW/description.txt",
-                      "bytes":  1322,
-                      "sha256":  "EB1D675A0A5C0435A204D2E04F7C547534F1C0A1FA67B378B64EE5B9A2A4F44C"
+                      "bytes":  1817,
+                      "sha256":  "5B9657B082DAD25BFF0348CE8FDAB4D1731C322FA3BC047B1FE3F1758D2DBCFD"
                   },
                   {
                       "file":  "listing/zh-TW/features.txt",
-                      "bytes":  672,
-                      "sha256":  "34CA19CA46E7DFA3A3820D0FAD3C38BCDA09DCEEAA753DAF051B471CA60A364F"
+                      "bytes":  924,
+                      "sha256":  "8E7DA9847B41AECCCD59E4B1DFB4377DD88C22A38ACE0F052DEDF48BE767BCFA"
                   },
                   {
                       "file":  "listing/zh-TW/keywords.txt",
@@ -259,13 +459,13 @@
                   },
                   {
                       "file":  "listing/zh-TW/privacy-policy.txt",
-                      "bytes":  2982,
-                      "sha256":  "7225B4CE2A00A8E8F848E4A40052EF442C12020115A8D346F64C9E759BB49488"
+                      "bytes":  3282,
+                      "sha256":  "449D61DA3B340067A003680D865F5E0E6ECDE594228771A22774B4DA1D791067"
                   },
                   {
                       "file":  "listing/zh-TW/release-notes-update-only.txt",
-                      "bytes":  347,
-                      "sha256":  "93D5F1469F007149DDBD825F977813779C5169D76B2F1BB0313C60DBB91D3E93"
+                      "bytes":  458,
+                      "sha256":  "F01FBE619DA7AC3B89181922C830E0EC76E850E8A6113F61F8D98523CFD0ACE6"
                   },
                   {
                       "file":  "listing/zh-TW/screenshot-captions.txt",
@@ -284,18 +484,33 @@
                   },
                   {
                       "file":  "privacy-submission.md",
-                      "bytes":  1964,
-                      "sha256":  "D834837EDCD1F6710D23B66D92B4A41CAA8E9D7E82ED16ABDE6C1ECBF355B920"
+                      "bytes":  2284,
+                      "sha256":  "0BE9431DC5F0C867017ADDA36BE8AD9B1A735FAE810E68B3FE19F1657FE5504B"
                   },
                   {
                       "file":  "product-info.json",
-                      "bytes":  1759,
-                      "sha256":  "12B6AAD6A866745FC26BA3D59A1B4541FB956A1173BEEED2E576D361D40995AA"
+                      "bytes":  2142,
+                      "sha256":  "D64B4DBF6D8330D2C883E7CDA6507DC8333935094F3B7B8E7BF7B3C9693355AA"
                   },
                   {
                       "file":  "README.md",
-                      "bytes":  6782,
-                      "sha256":  "C6F5262E22A815A2AB19DA111E94DA9A9A06DF9F1AC14F060C0BF3E831BCE81B"
+                      "bytes":  6503,
+                      "sha256":  "9538193257F28D69C53AE9371E13FB2A3548F2C58AFB8F1ADD129327A8335784"
+                  },
+                  {
+                      "file":  "samples/ar-SA/خطط عطلة نهاية الأسبوع.md",
+                      "bytes":  90,
+                      "sha256":  "E0C332B2A233B088FF4266C77240AF40EEB2FBA015A461E78849C903B0BD1D11"
+                  },
+                  {
+                      "file":  "samples/ar-SA/صفحات هادئة.md",
+                      "bytes":  2296,
+                      "sha256":  "9A2C91F0B893D5560F6FA091C90357D91044B48F74D84B483B0924F0A52A53E6"
+                  },
+                  {
+                      "file":  "samples/ar-SA/قائمة القراءة.md",
+                      "bytes":  74,
+                      "sha256":  "72517CA5AB5748B4E291D7ED863995F3B5C066C902A8DD5FD424B4820C24A3D9"
                   },
                   {
                       "file":  "samples/en-US/Quiet pages.md",
@@ -313,6 +528,36 @@
                       "sha256":  "9C1A03C6DC9C6120609243B5B0E1B8303FAC3E63E6763C9626D35266062A5CB9"
                   },
                   {
+                      "file":  "samples/es-ES/Lista de lectura.md",
+                      "bytes":  52,
+                      "sha256":  "BA90E7F5BC6CCD49D7CD99284BDAD4E1F586CB278569C9AE232E737485B4FA75"
+                  },
+                  {
+                      "file":  "samples/es-ES/Páginas tranquilas.md",
+                      "bytes":  1715,
+                      "sha256":  "86DBBDF3F5A8C115DCC2D96AEF2452B903739944B0EA629474FFB452C551828D"
+                  },
+                  {
+                      "file":  "samples/es-ES/Planes para el fin de semana.md",
+                      "bytes":  64,
+                      "sha256":  "AEADA27971CA4DF83C799094358373122C7417DC11C76CCEF22938B8DE7506A7"
+                  },
+                  {
+                      "file":  "samples/fr-FR/Liste de lecture.md",
+                      "bytes":  53,
+                      "sha256":  "30B4692CD481B720BAC8F00469801DCAEF6D3365F4555880001D51EE95254008"
+                  },
+                  {
+                      "file":  "samples/fr-FR/Pages paisibles.md",
+                      "bytes":  1926,
+                      "sha256":  "FA04201398F24E7A6B1C474ADAD30101E07CB1124C02BBEAFC33AF3CE901B8FF"
+                  },
+                  {
+                      "file":  "samples/fr-FR/Projets du week-end.md",
+                      "bytes":  56,
+                      "sha256":  "E0E8949BB59C9894E333C90A7630C801375B23BE97D9A3B6FD30DF5CFB733376"
+                  },
+                  {
                       "file":  "samples/ja-JP/竹のそばのメモ.md",
                       "bytes":  1713,
                       "sha256":  "1D411D53FC57BAD3CFCE4A4BB1EE53D40CFBA3FCC18091CBD6A17677EB768043"
@@ -326,6 +571,36 @@
                       "file":  "samples/ja-JP/読書リスト.md",
                       "bytes":  53,
                       "sha256":  "4D3F1A6EAA64F38474908FA35EC6D73E70E6115AC1EBBE4BC0F2053C8577532B"
+                  },
+                  {
+                      "file":  "samples/ko-KR/대나무 사이의 기록.md",
+                      "bytes":  1860,
+                      "sha256":  "0156E2C29EA7336A237A7A5214D4BDE43EE407875B8ADE2C99ACFE536C199A71"
+                  },
+                  {
+                      "file":  "samples/ko-KR/독서 목록.md",
+                      "bytes":  52,
+                      "sha256":  "73998DAEFD9697A27C1E45C0A28FEFFACC7FC32D4F182A9ED4C6A3335B01F6F0"
+                  },
+                  {
+                      "file":  "samples/ko-KR/주말 계획.md",
+                      "bytes":  52,
+                      "sha256":  "71B4BBA2F2A9C7C8A298419BFE3C0830352476DEA25C18885CAF9E059BBA60C3"
+                  },
+                  {
+                      "file":  "samples/zh-CN/竹间札记.md",
+                      "bytes":  1465,
+                      "sha256":  "32A6AFF2360B331B88CDF7918E537ECCB13D2025D1C2C60A938D5E91D5F8C858"
+                  },
+                  {
+                      "file":  "samples/zh-CN/周末计划.md",
+                      "bytes":  46,
+                      "sha256":  "5B149671861CDA1861BF13FE4DC01AA3C82B7CB91799E6393082A6C8D6C3C548"
+                  },
+                  {
+                      "file":  "samples/zh-CN/阅读清单.md",
+                      "bytes":  46,
+                      "sha256":  "75B7A38A709609BBA26643E5B869B1C0868F3BB2949F12419CEBB244D326CF7D"
                   },
                   {
                       "file":  "samples/zh-TW/竹間札記.md",
@@ -343,89 +618,214 @@
                       "sha256":  "A51B012C5F7328DEBC0F92AB69D3CB52D38BF75D30CF841DAB819B034718F8FA"
                   },
                   {
+                      "file":  "screenshots/ar-SA/01-preview-bamboo-light.png",
+                      "bytes":  438717,
+                      "sha256":  "51628E31DA70AD3802BDD5D19BEE8B186EDBA002EA9FC01F21A8D327EC08C391"
+                  },
+                  {
+                      "file":  "screenshots/ar-SA/02-preview-bamboo-dark.png",
+                      "bytes":  425524,
+                      "sha256":  "3DEF0980F21621E804B1204FCC3CD8595EEAE49F73456F8151E00795BFB37361"
+                  },
+                  {
+                      "file":  "screenshots/ar-SA/03-preview-light.png",
+                      "bytes":  274707,
+                      "sha256":  "77315D795126CA84D8D406608B583378BEAF47254595D606C92CD75C26440DF5"
+                  },
+                  {
+                      "file":  "screenshots/ar-SA/04-preview-dark.png",
+                      "bytes":  281721,
+                      "sha256":  "8C24B67F94CBB32917D64C53A5362EE96D4A69BB7D13B59C95A9658E5EFD9715"
+                  },
+                  {
+                      "file":  "screenshots/ar-SA/05-edit-bamboo-light.png",
+                      "bytes":  547784,
+                      "sha256":  "AA90B5B1DD2889B8EF8CE72313B73E906651FDBDFC06B1D30BCA23E68EA210DB"
+                  },
+                  {
                       "file":  "screenshots/captions.json",
-                      "bytes":  2742,
-                      "sha256":  "E1E4B3C41967EA437F85EE5978293C39CA27DDD7376BF8BAF3C4CFF6DA6FCF93"
+                      "bytes":  11466,
+                      "sha256":  "89D1911CAAC810A8261B29BE43BF010BD5BB0E0B16C6557F52E3E1A26F9AD718"
                   },
                   {
                       "file":  "screenshots/en-US/01-preview-bamboo-light.png",
-                      "bytes":  499926,
-                      "sha256":  "8FAF4FF0BA5AEC830A8480DA736E1D3A23421AE1ED83786C498126517B95551C"
+                      "bytes":  516555,
+                      "sha256":  "3C3E4A1B12B58D5293535064B0455D4A6F0A38433A6139236767EB24C8B4444D"
                   },
                   {
                       "file":  "screenshots/en-US/02-preview-bamboo-dark.png",
-                      "bytes":  489137,
-                      "sha256":  "6A56E3A1523FF385C4D585303552D581F0B1213B020DAAD3A4902E3DFCB9BB5B"
+                      "bytes":  505451,
+                      "sha256":  "0FF0E62E0988F3BBFC2F75614D9D7E14B63356DC6F8D1708170F06E0C8D888F0"
                   },
                   {
                       "file":  "screenshots/en-US/03-preview-light.png",
-                      "bytes":  316890,
-                      "sha256":  "BEF57A3977F2E457FEA68924C54507186DA623D18992BD615F58F69B9956862D"
+                      "bytes":  329012,
+                      "sha256":  "7B96BC8FD5DFFD990E3F95DC4C620D2AD0B74BCBE58BC11D0AA97164FF283246"
                   },
                   {
                       "file":  "screenshots/en-US/04-preview-dark.png",
-                      "bytes":  323493,
-                      "sha256":  "5D7BE2AE47093A8133B6FF12EB78104CD6CD42ED4A5069E9B0F520AC263417B0"
+                      "bytes":  335269,
+                      "sha256":  "4320875525AE249F886905483AE0790A835A910F5A8815E72DDC5981688CE4CA"
                   },
                   {
                       "file":  "screenshots/en-US/05-edit-bamboo-light.png",
-                      "bytes":  610903,
-                      "sha256":  "AB1903C937AAC9892A7F05382A891D9B6914B6BD249A861024107F4D254E8139"
+                      "bytes":  625462,
+                      "sha256":  "328D0134A34DAF50A5485C310EE15EBDBB9465E9603321B81DF2A75C4365E647"
+                  },
+                  {
+                      "file":  "screenshots/es-ES/01-preview-bamboo-light.png",
+                      "bytes":  569107,
+                      "sha256":  "CFB0F22510EADC83693913B6B28D4781F87AC676A5E30B1116D24FBDF9D03EF4"
+                  },
+                  {
+                      "file":  "screenshots/es-ES/02-preview-bamboo-dark.png",
+                      "bytes":  555913,
+                      "sha256":  "0500D6ED2F6517E0D9E2F2314CB88DD76C105B35B565CCA52E86FC6980E7F183"
+                  },
+                  {
+                      "file":  "screenshots/es-ES/03-preview-light.png",
+                      "bytes":  369562,
+                      "sha256":  "9FA39ABE937C2F8778270F9AE13A7F73078FEE88FA272B1532E14BDCAD2A90BD"
+                  },
+                  {
+                      "file":  "screenshots/es-ES/04-preview-dark.png",
+                      "bytes":  376627,
+                      "sha256":  "67EABCB9E7692811E36F7EA6B796F1A6316ABAA5193E539CD755145F9B0C04DD"
+                  },
+                  {
+                      "file":  "screenshots/es-ES/05-edit-bamboo-light.png",
+                      "bytes":  669621,
+                      "sha256":  "F71CF27310254E595971A491FD07A5D291FBB367D2996C46F32A38345F5EE609"
+                  },
+                  {
+                      "file":  "screenshots/fr-FR/01-preview-bamboo-light.png",
+                      "bytes":  593621,
+                      "sha256":  "902087BC9B1A7654C7F4753C8BB582B77869D6AE777BDD75CAD443829B2A137F"
+                  },
+                  {
+                      "file":  "screenshots/fr-FR/02-preview-bamboo-dark.png",
+                      "bytes":  582430,
+                      "sha256":  "D41B116524D6348FCC54783CDAE4EA5E72020F22A6663830B81BF4A7AEF0954A"
+                  },
+                  {
+                      "file":  "screenshots/fr-FR/03-preview-light.png",
+                      "bytes":  379943,
+                      "sha256":  "C708F1913F2416A7B0336D0615AF7CC1523AC22232D7813796B0F6413A9860C6"
+                  },
+                  {
+                      "file":  "screenshots/fr-FR/04-preview-dark.png",
+                      "bytes":  387632,
+                      "sha256":  "598DDC33E34A80FBD412F09B1C43BAB097F05D3E07CF5791F9D2FE577CDF18FF"
+                  },
+                  {
+                      "file":  "screenshots/fr-FR/05-edit-bamboo-light.png",
+                      "bytes":  690430,
+                      "sha256":  "D09FD7CC4ACDED90384EBC99E56FAC32331FDDB9418C94F4865C833D0B5F8699"
                   },
                   {
                       "file":  "screenshots/ja-JP/01-preview-bamboo-light.png",
-                      "bytes":  447891,
-                      "sha256":  "604FDAE2EC0273F700ED17CAA678FB4A1D77A2914B3460E62C3E5A9DFC54D6AF"
+                      "bytes":  463934,
+                      "sha256":  "41F4293BC462E396233F1E50305203E39C6B5094212FACEC55A7B5C088FEAC0C"
                   },
                   {
                       "file":  "screenshots/ja-JP/02-preview-bamboo-dark.png",
-                      "bytes":  441264,
-                      "sha256":  "B99246D1719EDA3E6D7CBC717EC960BA7E146ADECF4231EF16FD73A41DFE84F0"
+                      "bytes":  457072,
+                      "sha256":  "E99C233594631923C2BF1D2E72271CB7E07ED9899848814F6D0C4771381D9A46"
                   },
                   {
                       "file":  "screenshots/ja-JP/03-preview-light.png",
-                      "bytes":  324199,
-                      "sha256":  "6C4B1A726BCBE473CAB24C906B9D9E256CDFBF375BEEBACFC6A8F3086EBDF508"
+                      "bytes":  339351,
+                      "sha256":  "695F7CA3AF33B7C4BE136EC5D1D1B2A88546087EE6891F26D0F07D679688D3FB"
                   },
                   {
                       "file":  "screenshots/ja-JP/04-preview-dark.png",
-                      "bytes":  334761,
-                      "sha256":  "6487A8C6290B329CDE854042BCDB6C72AEB961E7D0FADE2134126266C09B3A14"
+                      "bytes":  347239,
+                      "sha256":  "C642920B9DC3BDD506FBFE17FE31DB79FDC45E57E2DA08AA3D5EEC098DE116C5"
                   },
                   {
                       "file":  "screenshots/ja-JP/05-edit-bamboo-light.png",
-                      "bytes":  511204,
-                      "sha256":  "77F35CD4B1E88178110CC91CE47C0459FA841973AB85A3B1CF248ABB4E975FF9"
+                      "bytes":  525674,
+                      "sha256":  "E2FE013E389FC6D149907ED7C7407176C4DC53CD5494DDB0EC8FF333C132F830"
+                  },
+                  {
+                      "file":  "screenshots/ko-KR/01-preview-bamboo-light.png",
+                      "bytes":  447607,
+                      "sha256":  "121E94B33554C5B75DE294A8654CDEB2A3E75058CEEC8117DF4AB3E30432E438"
+                  },
+                  {
+                      "file":  "screenshots/ko-KR/02-preview-bamboo-dark.png",
+                      "bytes":  433213,
+                      "sha256":  "1F466C290A6F77E35CA7084033585EE18CA20601C299D647919F1CC61AABEA45"
+                  },
+                  {
+                      "file":  "screenshots/ko-KR/03-preview-light.png",
+                      "bytes":  274967,
+                      "sha256":  "D78B24435A86527EF7B71624020C871284F783216125BE462ECBD6E11DFAACE8"
+                  },
+                  {
+                      "file":  "screenshots/ko-KR/04-preview-dark.png",
+                      "bytes":  277396,
+                      "sha256":  "C1D02E32A891EA5AB9099C59BBCEC993B97A6E43238CF606CFA326B1D9943489"
+                  },
+                  {
+                      "file":  "screenshots/ko-KR/05-edit-bamboo-light.png",
+                      "bytes":  511474,
+                      "sha256":  "929AD420951497F2B3CB63EEA5818C4A5C71A6048055F6F346DE200A939FF6E7"
+                  },
+                  {
+                      "file":  "screenshots/zh-CN/01-preview-bamboo-light.png",
+                      "bytes":  458356,
+                      "sha256":  "A8F0F70747B72D2F89E5666DA4377ABEF0E6CA4A0F2FF480D380F30B16A72632"
+                  },
+                  {
+                      "file":  "screenshots/zh-CN/02-preview-bamboo-dark.png",
+                      "bytes":  452742,
+                      "sha256":  "BAFD84DD1384F8FA75CC1FDC1626D64056A2A44C389B62E8E4460CF5958ACB85"
+                  },
+                  {
+                      "file":  "screenshots/zh-CN/03-preview-light.png",
+                      "bytes":  308095,
+                      "sha256":  "D4AE5D96A2BA49BB7A0FE3B7FBAC236830778330F642554E45AAEA33609BF5DC"
+                  },
+                  {
+                      "file":  "screenshots/zh-CN/04-preview-dark.png",
+                      "bytes":  312920,
+                      "sha256":  "1DECC39575E1A96DF35F59AAC268910387C3C246E5CE559B33AA72DA39595DD5"
+                  },
+                  {
+                      "file":  "screenshots/zh-CN/05-edit-bamboo-light.png",
+                      "bytes":  520653,
+                      "sha256":  "EC8AF0B9852A5B1EA020A5B7D0A343C4BE341732556C8460B8A6E63810361CC1"
                   },
                   {
                       "file":  "screenshots/zh-TW/01-preview-bamboo-light.png",
-                      "bytes":  456868,
-                      "sha256":  "CC4FE7F2842B7FECE4CB5A91C1C2A385B03278A8E76436B21B93A144F516400B"
+                      "bytes":  470289,
+                      "sha256":  "61B68484CADDC2E5B40E0CB47B2C58EE19AE783D0393B1C4A34EAEB7806FB245"
                   },
                   {
                       "file":  "screenshots/zh-TW/02-preview-bamboo-dark.png",
-                      "bytes":  450661,
-                      "sha256":  "EAEE31EFBD953267DF9DD6BFC0ACCC50644270955CA3CE4192B32011491633C4"
+                      "bytes":  464193,
+                      "sha256":  "5941946949641C6A9F97211F15C7A22EB06F2F71D93FF946AF7D5CC8575E448F"
                   },
                   {
                       "file":  "screenshots/zh-TW/03-preview-light.png",
-                      "bytes":  270447,
-                      "sha256":  "D0BD3952C773B499C5DD63366C80E736E22950FEBAA264A9EA7517CF6D90C312"
+                      "bytes":  288545,
+                      "sha256":  "5A1FED9FD0079BA9A8DF6B8086842F2B9986732472DB8C1068EB3FB98F57223D"
                   },
                   {
                       "file":  "screenshots/zh-TW/04-preview-dark.png",
-                      "bytes":  276492,
-                      "sha256":  "E477A92A3A852DE5D7779186082DE77B0923838B9A81F636D598DFA17A3A99C1"
+                      "bytes":  291498,
+                      "sha256":  "94C0D953753F9D86701527138537999FB83DC685EBF75AC91DE5183342C5BC05"
                   },
                   {
                       "file":  "screenshots/zh-TW/05-edit-bamboo-light.png",
-                      "bytes":  524694,
-                      "sha256":  "FBF56128F5A8856468025936C50309055E3D52E9CB0CC339CA2396E17A1D2CF4"
+                      "bytes":  537857,
+                      "sha256":  "E8E7F657C48F333415C13342E7328A5E1C10C3421AC9407D7399D419DA4A0A8E"
                   },
                   {
                       "file":  "source/Build-ListingPack.ps1",
-                      "bytes":  17038,
-                      "sha256":  "5BAAE20395EA569D4612374D30ADC25DE584995CAB55EA3B7F9FCA7912806347"
+                      "bytes":  21087,
+                      "sha256":  "D2619B600636CDFF3661794F5500A109A0DFD5E89432FCABF17ED02D191D1ED2"
                   },
                   {
                       "file":  "source/Generate-StoreArtwork.ps1",
@@ -434,38 +834,53 @@
                   },
                   {
                       "file":  "source/README.md",
-                      "bytes":  2995,
-                      "sha256":  "94091546E4F12D1A19BA4DCC62E0943F94DBD5B47A48431EBF1E5005829AF008"
+                      "bytes":  3038,
+                      "sha256":  "BDB14B2951A4CEC1AF582F383D7980366C2DDAA5973BAE98B8055F764D60218F"
                   },
                   {
                       "file":  "source/Screenshots/Program.cs",
-                      "bytes":  16612,
-                      "sha256":  "48A7754827208EA2FA7B0E2AE526241B7C8EF6C4B7E107D4A119E0613473BEB6"
+                      "bytes":  17166,
+                      "sha256":  "B44C38E01402C00706E60E8CFDEA6462600C099C66448329598A7098B448B87B"
                   },
                   {
                       "file":  "source/Screenshots/Screenshots.csproj",
-                      "bytes":  628,
-                      "sha256":  "BFB8FB8CEC15723867B7AD4FCDCA2C9008B5709ADD5BAB48FCD7ECA01B31E3BD"
+                      "bytes":  588,
+                      "sha256":  "D0244055CE4CC8CCCBBD07EB438B5C3C0D6E235DB85B612947D3F70B28B43BC7"
                   },
                   {
                       "file":  "source/StoreArtworkRenderer.cs",
-                      "bytes":  12004,
-                      "sha256":  "1447ECA5D7DB97EF6EDF060C3B28E7A76DA7C41259BB082AC4EFF8A2F6FFBE40"
+                      "bytes":  12002,
+                      "sha256":  "0D328BCFC4907A8433590206CF7FFA24F25B3BF82230954D386B66F86B316BEE"
                   },
                   {
                       "file":  "submission-notes.md",
-                      "bytes":  8346,
-                      "sha256":  "C09F4AE11933106AB901381D46FECBEAF848C2196D61C6A6A193E6DF73AAC5FF"
+                      "bytes":  8476,
+                      "sha256":  "6CC99E1C1372E43631B540D662290C347806CA336BA9BCD601D93F2A64271DD0"
+                  },
+                  {
+                      "file":  "verification/preview-review-1.0.3.0.json",
+                      "bytes":  761,
+                      "sha256":  "49DCCC7956D2171752DF79023E23C90A11E15757AF58DB44872892FBD28E0B54"
                   },
                   {
                       "file":  "verification/screenshots.txt",
-                      "bytes":  5332,
-                      "sha256":  "AEDD51D74FDA267A9E3CB32D2846ADDAADF15A9C7BAF3CAFE89C1D65B5EAF134"
+                      "bytes":  31936,
+                      "sha256":  "5199BCC80F761FBA3FE0A52EE0EF6607DD3D5320CA35C3D55FF2BAEF7CB7A420"
+                  },
+                  {
+                      "file":  "verification/screenshots-1.0.3.0.json",
+                      "bytes":  62757,
+                      "sha256":  "E526049EBA80DF19D2EECC874C1A04E7E7FF8D2AE9C9865E96AA501738B1525E"
+                  },
+                  {
+                      "file":  "verification/screenshots-visual-review-1.0.3.0.json",
+                      "bytes":  2971,
+                      "sha256":  "1C90427641A0263EF951BA78858382907C8888B58634678A26985D05F874F5E0"
                   },
                   {
                       "file":  "verification/validation.json",
-                      "bytes":  44310,
-                      "sha256":  "44AE6C80D1C68A9E9DBA05AEEB9EE7794C33B890E662D96F9B0FDE543C46C178"
+                      "bytes":  121951,
+                      "sha256":  "8B59219EF3857BFD99CB64191A48F7C8610ED29B358B5EC5FA1F14C6E511057E"
                   }
               ],
     "excludes":  "file-manifest.json (self)"

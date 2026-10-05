@@ -1,0 +1,285 @@
+{
+  "purpose": "Frozen diagnostic snapshot of 40 synthetic Argos OPUS-MT 1.9 outputs. Includes known wrong translations; output equality is not language-quality acceptance.",
+  "samples": [
+    {
+      "id": "en-zh-01",
+      "sourceLanguage": "en",
+      "targetLanguage": "zh",
+      "input": "Please restart the device and check the network connection.",
+      "baselineOutput": "请重新启动设备并检查网络连接。"
+    },
+    {
+      "id": "en-zh-02",
+      "sourceLanguage": "en",
+      "targetLanguage": "zh",
+      "input": "Please check the network cable.",
+      "baselineOutput": "请检查access-date=中的日期值 (帮助) 网络电缆."
+    },
+    {
+      "id": "en-zh-03",
+      "sourceLanguage": "en",
+      "targetLanguage": "zh",
+      "input": "Connection timed out. Please restart the computer.",
+      "baselineOutput": "连接超时。请重新启动计算机。"
+    },
+    {
+      "id": "en-zh-04",
+      "sourceLanguage": "en",
+      "targetLanguage": "zh",
+      "input": "PLC connection timeout. Device D100 did not respond within 3000 ms.",
+      "baselineOutput": "PLC 连接超时。设备 D100 未在3000毫秒内响应."
+    },
+    {
+      "id": "en-zh-05",
+      "sourceLanguage": "en",
+      "targetLanguage": "zh",
+      "input": "The server at 192.168.1.10 is not responding on port 502.",
+      "baselineOutput": "192.168.1.10的服务器没有在502号端口上响应."
+    },
+    {
+      "id": "en-zh-06",
+      "sourceLanguage": "en",
+      "targetLanguage": "zh",
+      "input": "Error E102: The motor temperature is too high.",
+      "baselineOutput": "错误 E102:运动温度太高."
+    },
+    {
+      "id": "en-zh-07",
+      "sourceLanguage": "en",
+      "targetLanguage": "zh",
+      "input": "Disconnect the power supply before opening the cover.",
+      "baselineOutput": "开封前断开供电."
+    },
+    {
+      "id": "en-zh-08",
+      "sourceLanguage": "en",
+      "targetLanguage": "zh",
+      "input": "Press the emergency stop button if the machine makes an unusual noise.",
+      "baselineOutput": "如果机器发出不寻常的噪音,按紧急停机按钮。"
+    },
+    {
+      "id": "en-zh-09",
+      "sourceLanguage": "en",
+      "targetLanguage": "zh",
+      "input": "The pressure must remain below 0.8 MPa.",
+      "baselineOutput": "压力必须保持在0.8兆帕以下。"
+    },
+    {
+      "id": "en-zh-10",
+      "sourceLanguage": "en",
+      "targetLanguage": "zh",
+      "input": "Firmware version 2.3.1 is required for this device.",
+      "baselineOutput": "此设备需要固件版本2.3.1。"
+    },
+    {
+      "id": "en-zh-11",
+      "sourceLanguage": "en",
+      "targetLanguage": "zh",
+      "input": "Save the log file to C:\\Logs\\alarm_2026.txt.",
+      "baselineOutput": "将日志文件保存到 C:\\ Logs\\ alarm_2026.txt。"
+    },
+    {
+      "id": "en-zh-12",
+      "sourceLanguage": "en",
+      "targetLanguage": "zh",
+      "input": "Visit https://example.com/manual for the installation instructions.",
+      "baselineOutput": "访问 https://example.com/manual 为安装指令."
+    },
+    {
+      "id": "en-zh-13",
+      "sourceLanguage": "en",
+      "targetLanguage": "zh",
+      "input": "Set retry_count to 3 and restart the service.",
+      "baselineOutput": "设置重试_ 计数到 3 并重新启动服务。"
+    },
+    {
+      "id": "en-zh-14",
+      "sourceLanguage": "en",
+      "targetLanguage": "zh",
+      "input": "Received 0xFF instead of 0x00 from the controller.",
+      "baselineOutput": "从控制器收到0xFF而不是0x00."
+    },
+    {
+      "id": "en-zh-15",
+      "sourceLanguage": "en",
+      "targetLanguage": "zh",
+      "input": "The sensor is disconnected, but the motor is still running.",
+      "baselineOutput": "传感器断开,但发动机仍在运行."
+    },
+    {
+      "id": "en-zh-16",
+      "sourceLanguage": "en",
+      "targetLanguage": "zh",
+      "input": "Do not remove the USB drive while the update is in progress.",
+      "baselineOutput": "在更新过程中不要删除 USB 驱动器。"
+    },
+    {
+      "id": "en-zh-17",
+      "sourceLanguage": "en",
+      "targetLanguage": "zh",
+      "input": "The connection failed.\n\nTry again after ten seconds.",
+      "baselineOutput": "连接失败。\n\n10秒后再试一次"
+    },
+    {
+      "id": "en-zh-18",
+      "sourceLanguage": "en",
+      "targetLanguage": "zh",
+      "input": "Where is the nearest train station?",
+      "baselineOutput": "最近的火车站在哪?"
+    },
+    {
+      "id": "en-zh-19",
+      "sourceLanguage": "en",
+      "targetLanguage": "zh",
+      "input": "I cannot connect to the Internet. Can you help me?",
+      "baselineOutput": "我无法连接到互联网上。你能帮我吗?"
+    },
+    {
+      "id": "en-zh-20",
+      "sourceLanguage": "en",
+      "targetLanguage": "zh",
+      "input": "Thank you for your help. I will arrive tomorrow morning.",
+      "baselineOutput": "谢谢你的帮助我明天早上会到"
+    },
+    {
+      "id": "zh-en-01",
+      "sourceLanguage": "zh",
+      "targetLanguage": "en",
+      "input": "請重新啟動設備，然後檢查網路連線。",
+      "baselineOutput": "Please restart the device and check the network connection."
+    },
+    {
+      "id": "zh-en-02",
+      "sourceLanguage": "zh",
+      "targetLanguage": "en",
+      "input": "请检查网线是否连接正确。",
+      "baselineOutput": "Check if the line is connected correctly."
+    },
+    {
+      "id": "zh-en-03",
+      "sourceLanguage": "zh",
+      "targetLanguage": "en",
+      "input": "連線逾時，請稍後再試。",
+      "baselineOutput": "Connect to timeout, please try again later."
+    },
+    {
+      "id": "zh-en-04",
+      "sourceLanguage": "zh",
+      "targetLanguage": "en",
+      "input": "設備 D100 在 3000 ms 內沒有回應。",
+      "baselineOutput": "Device D100 did not respond within 30000 ms."
+    },
+    {
+      "id": "zh-en-05",
+      "sourceLanguage": "zh",
+      "targetLanguage": "en",
+      "input": "伺服器 192.168.1.10 的通訊埠 502 沒有回應。",
+      "baselineOutput": "The port of communication of the server 192168.1.10 did not respond."
+    },
+    {
+      "id": "zh-en-06",
+      "sourceLanguage": "zh",
+      "targetLanguage": "en",
+      "input": "錯誤 E102：馬達溫度過高。",
+      "baselineOutput": "E102: The temperature of the motor is too high."
+    },
+    {
+      "id": "zh-en-07",
+      "sourceLanguage": "zh",
+      "targetLanguage": "en",
+      "input": "打開蓋子之前，請先關閉電源。",
+      "baselineOutput": "Turn off the power before you open the lid."
+    },
+    {
+      "id": "zh-en-08",
+      "sourceLanguage": "zh",
+      "targetLanguage": "en",
+      "input": "如果機器發出異常聲音，請按下緊急停止按鈕。",
+      "baselineOutput": "If the machine makes an unusual sound, press the emergency stop button."
+    },
+    {
+      "id": "zh-en-09",
+      "sourceLanguage": "zh",
+      "targetLanguage": "en",
+      "input": "壓力必須保持在 0.8 MPa 以下。",
+      "baselineOutput": "The pressure must remain below 0.8 MPa."
+    },
+    {
+      "id": "zh-en-10",
+      "sourceLanguage": "zh",
+      "targetLanguage": "en",
+      "input": "這個設備需要韌體版本 2.3.1。",
+      "baselineOutput": "This device needs a body version 2.3.1."
+    },
+    {
+      "id": "zh-en-11",
+      "sourceLanguage": "zh",
+      "targetLanguage": "en",
+      "input": "請把紀錄檔存到 C:\\Logs\\alarm_2026.txt。",
+      "baselineOutput": "Please save the log file to C:\\Logs\\alarm_2026.txt."
+    },
+    {
+      "id": "zh-en-12",
+      "sourceLanguage": "zh",
+      "targetLanguage": "en",
+      "input": "請參考 https://example.com/manual 的安裝說明。",
+      "baselineOutput": "See https://example.com/manual for installation instructions."
+    },
+    {
+      "id": "zh-en-13",
+      "sourceLanguage": "zh",
+      "targetLanguage": "en",
+      "input": "將 retry_count 設為 3，然後重新啟動服務。",
+      "baselineOutput": "Set retry_count as 3 and restart the service."
+    },
+    {
+      "id": "zh-en-14",
+      "sourceLanguage": "zh",
+      "targetLanguage": "en",
+      "input": "控制器回傳的是 0xFF，而不是 0x00。",
+      "baselineOutput": "The controller returns 0xFF, not 0x00."
+    },
+    {
+      "id": "zh-en-15",
+      "sourceLanguage": "zh",
+      "targetLanguage": "en",
+      "input": "感測器已斷線，但馬達仍在運轉。",
+      "baselineOutput": "The sensors have been disconnected, but the motor is still in motion."
+    },
+    {
+      "id": "zh-en-16",
+      "sourceLanguage": "zh",
+      "targetLanguage": "en",
+      "input": "更新期間請勿移除 USB 隨身碟。",
+      "baselineOutput": "Do not remove the USB drive while updating."
+    },
+    {
+      "id": "zh-en-17",
+      "sourceLanguage": "zh",
+      "targetLanguage": "en",
+      "input": "連線失敗。\n\n請等十秒後再試一次。",
+      "baselineOutput": "Connection failed.\n\nPlease wait ten seconds and try again."
+    },
+    {
+      "id": "zh-en-18",
+      "sourceLanguage": "zh",
+      "targetLanguage": "en",
+      "input": "最近的火車站在哪裡？",
+      "baselineOutput": "Where's the nearest train station?"
+    },
+    {
+      "id": "zh-en-19",
+      "sourceLanguage": "zh",
+      "targetLanguage": "en",
+      "input": "我無法連上網路，可以請你幫忙嗎？",
+      "baselineOutput": "I can't get on the Internet. Can I ask you a favor?"
+    },
+    {
+      "id": "zh-en-20",
+      "sourceLanguage": "zh",
+      "targetLanguage": "en",
+      "input": "謝謝你的幫忙，我明天早上會到。",
+      "baselineOutput": "Thanks for your help. I'll be there in the morning."
+    }
+  ]
+}

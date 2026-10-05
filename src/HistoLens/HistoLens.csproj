@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <Version>0.3.16</Version>
+    <Description>HistoLens — Historical Stock Research (development preview)</Description>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../ToolKeeper.UI/ToolKeeper.UI.csproj" />
+    <InternalsVisibleTo Include="HistoLens.Tests" />
+    <Resource Include="Assets/HistoLens.ico" />
+    <Page Remove="Assets/HistoLensIcon.xaml" />
+    <None Include="Assets/HistoLensIcon.xaml" />
+  </ItemGroup>
+</Project>

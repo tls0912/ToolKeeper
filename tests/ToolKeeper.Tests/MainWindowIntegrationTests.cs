@@ -9,6 +9,7 @@ using Xunit;
 
 namespace ToolKeeper.Tests;
 
+[Collection("WPF UI")]
 public sealed class MainWindowIntegrationTests
 {
     [Fact]
@@ -21,7 +22,7 @@ public sealed class MainWindowIntegrationTests
             var originalSource = products.ItemsSource;
             var host = HostWindowContent(window);
             Layout(host);
-            Assert.Equal(5, products.Items.Count);
+            Assert.Equal(7, products.Items.Count);
             Assert.All(ProductButtons(products), button =>
             {
                 Assert.False(button.IsEnabled);
@@ -74,6 +75,21 @@ public sealed class MainWindowIntegrationTests
             Assert.True(desktopAction.IsEnabled);
             Click(desktopAction);
             Assert.Equal(new[] { "001", "003", "002" }, requested);
+
+            var histolens = ProductCatalogService.Definitions.Single(product => product.Id == "006");
+            window.SetProducts([new(histolens, ProductAvailability.Available, histolens.ActivationUri)]);
+            foreach (var language in new[] { "en", "zh-TW", "ja" })
+            {
+                window.SelectedLanguage = language;
+                Layout(host);
+                var previewAction = Assert.Single(ProductButtons(products));
+                Assert.True(previewAction.IsEnabled);
+                Assert.Equal(UiLanguage.Text(language, "Open", "開啟", "開く"), previewAction.Content);
+                Assert.Contains(Descendants<TextBlock>(products), text => text.Text == UiLanguage.Text(language,
+                    histolens.DescriptionEnglish, histolens.DescriptionChinese, histolens.DescriptionJapanese));
+                Click(previewAction);
+            }
+            Assert.Equal(new[] { "001", "003", "002", "006", "006", "006" }, requested);
         }
         finally { window.Close(); }
     });

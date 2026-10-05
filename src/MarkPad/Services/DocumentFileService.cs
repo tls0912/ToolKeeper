@@ -76,7 +76,7 @@ public sealed class DocumentFileService
             tab.IsReadOnly = false;
             tab.IsLargeFile = result.Length > LargeFileThreshold;
             // The user may continue typing while the write runs.
-            tab.IsDirty = !string.Equals(tab.Content, content, StringComparison.Ordinal);
+            tab.RecordSavedContent(content);
         }
         finally { gate.Release(); }
     }
