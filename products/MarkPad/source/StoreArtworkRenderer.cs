@@ -17,7 +17,7 @@ public static class HanqingStoreArtwork
         path.CloseFigure(); return path;
     }
 
-    // Palette and the long fibers/node joints match src/MarkPad/Theming/BambooChrome.cs.
+    // Palette and the long fibers/node joints match src/ToolKeeper.UI/BambooChrome.cs.
     private static void BambooStrip(Graphics g, float x, float y, float width, float length, bool horizontal)
     {
         GraphicsState state = g.Save();

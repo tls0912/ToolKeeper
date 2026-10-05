@@ -40,6 +40,57 @@ public sealed class SettingsServiceTests
     }
 
     [Theory]
+    [InlineData("[2, 5]", new int[] { 2, 5 })]
+    [InlineData("[6, 3, 3, 1, 0, 7, -1]", new int[] { 1, 3, 6 })]
+    [InlineData("[]", new int[] { })]
+    [InlineData("[0, 7, -1]", new int[] { })]
+    [InlineData("null", new int[] { 1, 2, 3, 4, 5, 6 })]
+    public void PdfOutlineLevelsNormalizeAndPersistWithoutRestoringDisabledLevels(string savedLevels, int[] expected)
+    {
+        using var directory = new TestDirectory();
+        File.WriteAllText(directory.FilePath("settings.json"), "{\"PdfOutlineLevels\":" + savedLevels + "}");
+
+        var service = new SettingsService(directory.PathName);
+        Assert.Equal(expected, service.Settings.PdfOutlineLevels);
+        service.Save();
+        Assert.Equal(expected, new SettingsService(directory.PathName).Settings.PdfOutlineLevels);
+    }
+
+    [Fact]
+    public void DisabledInterfaceTextShadowRetainsItsChosenThickness()
+    {
+        using var directory = new TestDirectory();
+        var service = new SettingsService(directory.PathName);
+        service.Settings.InterfaceTextShadowEnabled = false;
+        service.Settings.InterfaceTextShadowThickness = 3;
+        service.Save();
+
+        var restored = new SettingsService(directory.PathName).Settings;
+        Assert.False(restored.InterfaceTextShadowEnabled);
+        Assert.Equal(3, restored.InterfaceTextShadowThickness);
+    }
+
+    [Theory]
+    [InlineData(-1, 1)]
+    [InlineData(0, 1)]
+    [InlineData(1, 1)]
+    [InlineData(2, 2)]
+    [InlineData(3, 3)]
+    [InlineData(4, 4)]
+    [InlineData(5, 1)]
+    public void InterfaceTextShadowThicknessNormalizesOnLoadAndSave(int requestedThickness, int expectedThickness)
+    {
+        using var directory = new TestDirectory();
+        File.WriteAllText(directory.FilePath("settings.json"), $"{{\"InterfaceTextShadowThickness\":{requestedThickness}}}");
+        var service = new SettingsService(directory.PathName);
+        Assert.Equal(expectedThickness, service.Settings.InterfaceTextShadowThickness);
+
+        service.Settings.InterfaceTextShadowThickness = requestedThickness;
+        service.Save();
+        Assert.Equal(expectedThickness, new SettingsService(directory.PathName).Settings.InterfaceTextShadowThickness);
+    }
+
+    [Theory]
     [InlineData("System", "ja-JP", "ja")]
     [InlineData("System", "zh-TW", "zh-TW")]
     [InlineData("System", "zh-HK", "zh-TW")]
@@ -195,6 +246,9 @@ public sealed class SettingsServiceTests
         Assert.Equal(24, restored.PreviewFontSize);
         Assert.Equal("Consolas", restored.EditorFontFamily);
         Assert.Equal(18, restored.EditorFontSize);
+        Assert.Equal(new[] { 1, 2, 3, 4, 5, 6 }, restored.PdfOutlineLevels);
+        Assert.True(restored.InterfaceTextShadowEnabled);
+        Assert.Equal(1, restored.InterfaceTextShadowThickness);
     }
 
     [Fact]
@@ -220,6 +274,9 @@ public sealed class SettingsServiceTests
         settings.Settings.WindowHeight = 720;
         settings.Settings.CodeLineNumbers = false;
         settings.Settings.EmojiShortcodes = false;
+        settings.Settings.PdfOutlineLevels = [];
+        settings.Settings.InterfaceTextShadowEnabled = false;
+        settings.Settings.InterfaceTextShadowThickness = 4;
         settings.AddRecent(directory.FilePath("recent.md"));
         settings.Reset();
 
@@ -240,6 +297,8 @@ public sealed class SettingsServiceTests
         Assert.Equal(16, settings.UiFontSize);
         Assert.Equal(16, settings.PreviewFontSize);
         Assert.Equal(16, settings.EditorFontSize);
+        Assert.True(settings.InterfaceTextShadowEnabled);
+        Assert.Equal(1, settings.InterfaceTextShadowThickness);
         Assert.True(settings.AutoSave);
         Assert.False(settings.MatchCase);
         Assert.True(settings.ToolbarPinned);
@@ -249,6 +308,7 @@ public sealed class SettingsServiceTests
         Assert.False(settings.WindowMaximized);
         Assert.True(settings.CodeLineNumbers);
         Assert.True(settings.EmojiShortcodes);
+        Assert.Equal(new[] { 1, 2, 3, 4, 5, 6 }, settings.PdfOutlineLevels);
         Assert.Empty(settings.RecentFiles);
     }
 }

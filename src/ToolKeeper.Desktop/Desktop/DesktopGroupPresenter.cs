@@ -40,6 +40,7 @@ public sealed class DesktopGroupPresenter : IDisposable
     private string? _failure;
     private IReadOnlyList<DesktopTool> _tools = [];
     private Action<string>? _activateTool;
+    private string _theme = "Light";
 
     public event Action<DesktopItem>? ItemOpenRequested;
     public event Action<DesktopItem, string>? ManualAssignmentRequested;
@@ -57,6 +58,14 @@ public sealed class DesktopGroupPresenter : IDisposable
     }
 
     public bool IsAlive => !_disposed && _active && _groups.Values.All(group => group.Host.IsAlive);
+
+    public void SetTheme(string theme)
+    {
+        _dispatcher.VerifyAccess();
+        if (_disposed || _theme == theme) return;
+        _theme = theme;
+        foreach (var group in _groups.Values) group.Model.SetTheme(theme);
+    }
 
     public void SetTools(IReadOnlyList<DesktopTool> tools, Action<string> activateTool)
     {
@@ -214,7 +223,7 @@ public sealed class DesktopGroupPresenter : IDisposable
 
     private GroupEntry CreateGroup(CategoryDefinition category, GroupLayout saved, DesktopProbeResult probe)
     {
-        var model = new GroupWindow(category, saved);
+        var model = new GroupWindow(category, saved, _theme);
         var window = new Window
         {
             Title = $"CabiDock｜{category.Name}", WindowStyle = WindowStyle.None,
@@ -223,6 +232,8 @@ public sealed class DesktopGroupPresenter : IDisposable
             Left = 0, Top = 0, Background = model.Background, FontFamily = model.FontFamily,
             FontSize = model.FontSize, Foreground = model.Foreground, Resources = model.Resources
         };
+        window.SetResourceReference(System.Windows.Controls.Control.BackgroundProperty, "DesktopWindowBrush");
+        window.SetResourceReference(System.Windows.Controls.Control.ForegroundProperty, "TextBrush");
         model.Content = null;
         window.Content = model.CardContent;
         IDesktopGroupHost? host = null;

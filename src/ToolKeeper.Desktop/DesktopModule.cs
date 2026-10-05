@@ -7,6 +7,7 @@ using CabiDock.Models;
 using CabiDock.Services;
 using CabiDock.Views;
 using CabiDock.Desktop;
+using ToolKeeper.UI;
 
 
 namespace CabiDock;
@@ -93,6 +94,11 @@ public sealed class DesktopModule : IDisposable
             _settings.DesktopToggleRequested += (_, _) => SetEnabled(!Enabled);
         }
         _settings.SetDesktopState(_desktop?.Enabled == true, _desktop is not null);
+        _settings.UiPreferencesChanged += (_, _) => ApplyTheme();
+        // The settings window may never be shown during a desktop session.
+        // Load its own preference now so existing groups start with the saved bamboo finish.
+        _settings.SelectedTheme = AppWindowPreferences.Load(_settings.PreferencesPath!).Theme;
+        ApplyTheme();
         _refreshTimer = new DispatcherTimer(TimeSpan.FromSeconds(5), DispatcherPriority.Background,
             async (_, _) => await RefreshAsync(), _dispatcher);
         _refreshTimer.Stop();
@@ -113,6 +119,12 @@ public sealed class DesktopModule : IDisposable
                     "デスクトップの監視が中断しました。分類を保持して再スキャンします。\n" + message, true);
             }
         });
+    }
+
+    private void ApplyTheme()
+    {
+        _desktop?.SetTheme(_settings.SelectedTheme);
+        _preview?.SetTheme(_settings.SelectedTheme);
     }
 
     public void Start(bool showSettings = false)
@@ -177,6 +189,7 @@ public sealed class DesktopModule : IDisposable
         if (_preview is null)
         {
             _preview = new GroupPreviewWindow();
+            _preview.SetTheme(_settings.SelectedTheme);
             _preview.ItemOpenRequested += OpenItem;
             _preview.ManualAssignmentRequested += AssignManually;
             _preview.LayoutChanged += SaveLayout;

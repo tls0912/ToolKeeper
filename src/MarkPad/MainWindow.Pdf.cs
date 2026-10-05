@@ -21,6 +21,7 @@ public partial class MainWindow
             return;
         }
         _exportingPdf = true;
+        var outlineLevels = Settings.PdfOutlineLevels.ToArray();
         BuildActions();
         try
         {
@@ -62,7 +63,7 @@ public partial class MainWindow
             {
                 var options = new PreviewOptions(false, PreviewFontName, Settings.PreviewFontSize,
                     Settings.CodeLineNumbers, Settings.EmojiShortcodes, UiLanguage, true);
-                await export.ExportPdfAsync(markdown, sourcePath, options, destination, overwrite);
+                await export.ExportPdfAsync(markdown, sourcePath, options, destination, overwrite, outlineLevels);
             }
             finally { RootGrid.Children.Remove(export); }
             Toast(T($"PDF exported: {Path.GetFileName(destination)}", $"已匯出 PDF：{Path.GetFileName(destination)}", $"PDF を書き出しました：{Path.GetFileName(destination)}"));

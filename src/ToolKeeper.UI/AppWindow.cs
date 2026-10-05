@@ -3,7 +3,6 @@ using System.Windows;
 using System.Windows.Automation;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
-using System.Windows.Input;
 using System.Windows.Media;
 using Microsoft.Win32;
 
@@ -11,8 +10,8 @@ namespace ToolKeeper.UI;
 
 /// <summary>
 /// Common application shell. Set Workspace for product content and HeaderActions
-/// for optional controls beside the product description; Content belongs to the shell.
-/// Native window chrome preserves Windows resizing, snapping and caption actions.
+/// for optional product controls in the wrapping header; Content belongs to the shell.
+/// WindowFrame supplies the same caption, chrome and appearance used by product layouts.
 /// </summary>
 public class AppWindow : Window
 {
@@ -39,7 +38,8 @@ public class AppWindow : Window
         nameof(SelectedLanguage), typeof(string), typeof(AppWindow), new PropertyMetadata("System", PreferencesChanged),
         value => value is string language && UiLanguage.IsSupported(language));
 
-    private readonly TextBlock _heading;
+    private const double InterfaceFontSize = 14;
+    private readonly WindowFrame _frame;
     private readonly TextBlock _description;
     private readonly Border _workspaceHost;
     private readonly Border _actionsHost;
@@ -61,45 +61,35 @@ public class AppWindow : Window
     public AppWindow()
     {
         WindowStartupLocation = WindowStartupLocation.CenterScreen;
-        WindowStyle = WindowStyle.SingleBorderWindow;
         ResizeMode = ResizeMode.CanResize;
-        EnsureSharedResources();
+        UiAppearance.EnsureResources(Resources);
         SetResourceReference(FontFamilyProperty, "UiFontFamily");
         SetResourceReference(FontSizeProperty, "UiFontSize");
-        SetResourceReference(BackgroundProperty, "WindowBackground");
+        SetResourceReference(BackgroundProperty, "ChromeBackgroundBrush");
         SetResourceReference(ForegroundProperty, "TextBrush");
         UseLayoutRounding = true;
 
-        var shell = new Grid { Name = "SharedWindowShell", Margin = new Thickness(28, 0, 28, 16) };
+        _frame = new WindowFrame(this);
+        var shell = new Grid { Name = "SharedWindowShell", Margin = new Thickness(28, 16, 28, 16) };
         shell.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
         shell.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
 
-        var header = new Grid { Name = "ProductHeader", Margin = new Thickness(0, 0, 0, 20) };
+        var header = new Grid { Name = "ProductHeader", Margin = new Thickness(0, 0, 0, 12) };
         header.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
         header.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
-        header.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-        header.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-        _heading = new TextBlock
-        {
-            Name = "ProductHeading", FontSize = 30, FontWeight = FontWeights.SemiBold,
-            TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 0, 16, 0)
-        };
-        _heading.SetResourceReference(TextBlock.ForegroundProperty, "TextBrush");
-        AutomationProperties.SetHeadingLevel(_heading, AutomationHeadingLevel.Level1);
         _description = new TextBlock
         {
-            Name = "ProductDescription", FontSize = 14,
-            Margin = new Thickness(0, 4, 0, 0), TextWrapping = TextWrapping.Wrap
+            Name = "ProductDescription", TextWrapping = TextWrapping.Wrap,
+            Margin = new Thickness(0, 0, 0, 8)
         };
         _description.SetResourceReference(TextBlock.ForegroundProperty, "MutedBrush");
-        header.Children.Add(_heading);
-        Grid.SetRow(_description, 1);
         header.Children.Add(_description);
 
-        var preferences = new StackPanel
+        // Individual commands and product controls wrap as the available width shrinks.
+        var preferences = new WrapPanel
         {
             Name = "SharedHeaderPreferences", Orientation = Orientation.Horizontal,
-            HorizontalAlignment = HorizontalAlignment.Right, VerticalAlignment = VerticalAlignment.Center
+            VerticalAlignment = VerticalAlignment.Center
         };
         _themeButton = HeaderButton("SharedThemeButton", ShowThemeMenu);
         _languageButton = HeaderButton("SharedLanguageButton", ShowLanguageMenu);
@@ -107,19 +97,20 @@ public class AppWindow : Window
         preferences.Children.Add(_themeButton);
         preferences.Children.Add(_languageButton);
         preferences.Children.Add(_aboutButton);
-        Grid.SetColumn(preferences, 1);
+        _actionsHost = new Border
+        {
+            Name = "ProductHeaderActions", VerticalAlignment = VerticalAlignment.Center
+        };
+        preferences.Children.Add(_actionsHost);
+        Grid.SetRow(preferences, 1);
         header.Children.Add(preferences);
-
-        _actionsHost = new Border { VerticalAlignment = VerticalAlignment.Center, HorizontalAlignment = HorizontalAlignment.Right };
-        Grid.SetRow(_actionsHost, 1);
-        Grid.SetColumn(_actionsHost, 1);
-        header.Children.Add(_actionsHost);
         shell.Children.Add(header);
 
         _workspaceHost = new Border();
         Grid.SetRow(_workspaceHost, 1);
         shell.Children.Add(_workspaceHost);
-        Content = shell;
+        _frame.Workspace = shell;
+        Content = _frame;
         IsVisibleChanged += (_, _) =>
         {
             if (IsVisible) return;
@@ -148,12 +139,12 @@ public class AppWindow : Window
     public void ApplyUiPreferences()
     {
         if (!_ready || _closed) return;
-        EnsureSharedResources();
-        UiTheme.ApplyResources(Resources, SelectedTheme);
-        UiTypography.ApplyResources(Resources,
-            new FontFamily(UiTypography.ResolveInterfaceFont("", ResolvedLanguage, UiTheme.IsInk(SelectedTheme))), 14);
-        Resources["SuccessBrush"] = Brush(IsDarkTheme ? "#80C99D" : "#1C704D");
-        Resources["ErrorBrush"] = Brush(IsDarkTheme ? "#F19A97" : "#AA3434");
+        UiAppearance.EnsureResources(Resources);
+        UiAppearance.ApplyResources(Resources, SelectedTheme, ResolvedLanguage, "", InterfaceFontSize);
+        _frame.ApplyMetrics(InterfaceFontSize);
+        _frame.ApplyLanguage(ResolvedLanguage);
+        _workspaceHost.Background = UiTheme.IsInk(SelectedTheme)
+            ? (Brush)Resources["PaperBackgroundBrush"] : Brushes.Transparent;
         _themeButton.Content = T("Style", "風格", "スタイル");
         _languageButton.Content = T("Language", "語言", "言語");
         _aboutButton.Content = T("About", "關於", "情報");
@@ -188,21 +179,12 @@ public class AppWindow : Window
             Dispatcher.BeginInvoke(new Action(() => { if (SelectedTheme == "System") ApplyUiPreferences(); }));
     }
 
-    private void EnsureSharedResources()
-    {
-        if (Resources.Contains("UiButtonStyle")) return;
-        Resources.MergedDictionaries.Insert(0, new ResourceDictionary
-        {
-            Source = new Uri("/ToolKeeper.UI;component/Resources/UiStyles.xaml", UriKind.Relative)
-        });
-    }
-
     private Button HeaderButton(string name, Action action)
     {
         var button = new Button
         {
             Name = name, MinHeight = 34, Padding = new Thickness(10, 5, 10, 5),
-            Margin = new Thickness(3, 0, 0, 0), VerticalAlignment = VerticalAlignment.Center
+            Margin = new Thickness(0, 0, 3, 4), VerticalAlignment = VerticalAlignment.Center
         };
         button.SetResourceReference(StyleProperty, "UiButtonStyle");
         button.Click += (_, _) => action();
@@ -282,7 +264,7 @@ public class AppWindow : Window
         };
         var info = new AboutInfo(MainName, AboutVersion, Description, AboutAuthor,
             T("ToolKeeper", "工具番 · ToolKeeper", "ToolKeeper"), Icon);
-        var content = AboutContent.Create(info, ResolvedLanguage, () => popup.IsOpen = false, 14);
+        var content = AboutContent.Create(info, ResolvedLanguage, () => popup.IsOpen = false, InterfaceFontSize);
         content.Width = Math.Max(140, Math.Min(content.Width, ActualWidth - 84));
         var border = new Border
         {
@@ -343,7 +325,6 @@ public class AppWindow : Window
     {
         var window = (AppWindow)sender;
         window.Title = $"{window.MainName} - {window.SubName}";
-        window._heading.Text = window.MainName;
     }
 
     private static void DescriptionChanged(DependencyObject sender, DependencyPropertyChangedEventArgs args) =>
@@ -356,13 +337,6 @@ public class AppWindow : Window
     {
         var host = ((AppWindow)sender)._actionsHost;
         host.Child = (UIElement?)args.NewValue;
-        host.Margin = args.NewValue is null ? new Thickness(0) : new Thickness(24, 0, 0, 0);
-    }
-
-    private static SolidColorBrush Brush(string value)
-    {
-        var brush = new SolidColorBrush((Color)ColorConverter.ConvertFromString(value));
-        brush.Freeze();
-        return brush;
+        host.Margin = args.NewValue is null ? new Thickness(0) : new Thickness(16, 0, 0, 4);
     }
 }

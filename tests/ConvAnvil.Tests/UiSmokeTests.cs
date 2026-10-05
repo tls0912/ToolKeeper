@@ -130,15 +130,15 @@ public sealed class UiSmokeTests
             Assert.IsAssignableFrom<AppWindow>(window);
             Assert.Equal("ConvAnvil - 文字、編碼與位元組轉換器", window.Title);
             var host = HostWindowContent(window);
-            Layout(host, 844, 640);
+            Layout(host, 860, 680);
             var labels = LogicalDescendants<TextBlock>(host).ToArray();
-            var title = Assert.Single(labels, label => label.Text == "ConvAnvil");
+            var title = Assert.Single(labels, label => label.Name == "WindowTitleText" && label.Text == window.Title);
             var description = Assert.Single(labels, label =>
                 label.Text == "檢查文字編碼、預覽轉檔結果，並在文字與位元組之間轉換。");
             var badge = Assert.Single(labels, label => label.Text == "本機處理 · 離線可用");
             var workspace = Assert.IsAssignableFrom<FrameworkElement>(window.Workspace);
             var titlePosition = title.TransformToAncestor(host).Transform(new Point());
-            Assert.InRange(titlePosition.Y, 0, 0.5);
+            Assert.InRange(titlePosition.Y, 1, 40);
             var descriptionPosition = description.TransformToAncestor(host).Transform(new Point());
             var workspacePosition = workspace.TransformToAncestor(host).Transform(new Point());
             Assert.True(title.ActualHeight > 0);
@@ -400,7 +400,7 @@ public sealed class UiSmokeTests
                 })
                 {
                     tabs.SelectedItem = Get<TabItem>(window, tab);
-                    Render(host, 844, 640, $"{name}-ink-dark-{language}-minimum.png");
+                    Render(host, 860, 680, $"{name}-ink-dark-{language}-minimum.png");
                     AssertMinimumContentBounds(host, window, name, bottomControl);
                     var encodingPicker = Get<ComboBox>(window, name switch
                     {
@@ -459,7 +459,7 @@ public sealed class UiSmokeTests
         var content = (FrameworkElement)window.Content;
         window.Content = null;
         var host = new Border { Child = content, Resources = window.Resources };
-        host.SetResourceReference(Border.BackgroundProperty, "WindowBackground");
+        host.SetResourceReference(Border.BackgroundProperty, "ChromeBackgroundBrush");
         host.SetResourceReference(TextElement.FontFamilyProperty, "UiFontFamily");
         host.SetResourceReference(TextElement.FontSizeProperty, "UiFontSize");
         host.SetResourceReference(TextElement.ForegroundProperty, "TextBrush");
@@ -470,8 +470,8 @@ public sealed class UiSmokeTests
     {
         Render(host, 1160, 820, $"{tab}-default.png");
         Render(host, 860, 680, $"{tab}-compact.png");
-        // Reserve room for window chrome when checking the minimum 860 × 680 window.
-        Render(host, 844, 640, $"{tab}-minimum-client.png");
+        // The shared custom caption is part of the minimum 860 × 680 client content.
+        Render(host, 860, 680, $"{tab}-minimum-client.png");
         AssertMinimumContentBounds(host, window, tab, bottomControl);
     }
 
@@ -481,8 +481,8 @@ public sealed class UiSmokeTests
         {
             var control = Get<FrameworkElement>(window, name);
             var point = control.TransformToAncestor(host).Transform(new Point());
-            Assert.InRange(point.Y + control.ActualHeight, 1, 641);
-            Assert.InRange(point.X + control.ActualWidth, 1, 845);
+            Assert.InRange(point.Y + control.ActualHeight, 1, 681);
+            Assert.InRange(point.X + control.ActualWidth, 1, 861);
             Assert.True(control.ActualHeight > 0);
         }
 

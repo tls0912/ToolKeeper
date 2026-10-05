@@ -4,6 +4,7 @@ using System.Windows.Controls;
 using System.Windows.Media;
 using CabiDock.Models;
 using CabiDock.Views;
+using ToolKeeper.UI;
 
 namespace CabiDock;
 
@@ -19,6 +20,7 @@ public sealed class GroupPreviewWindow : Window
     private bool _disposed;
     private IReadOnlyList<DesktopTool> _tools = [];
     private Action<string>? _activateTool;
+    private string _theme = "Light";
 
     public event Action<DesktopItem>? ItemOpenRequested;
     public event Action<DesktopItem, string>? ManualAssignmentRequested;
@@ -27,32 +29,54 @@ public sealed class GroupPreviewWindow : Window
 
     public GroupPreviewWindow()
     {
-        Title = "CabiDock｜群組操作預覽";
+        Title = "CabiDock - 群組操作預覽";
         var workArea = SystemParameters.WorkArea;
         Width = Math.Min(1120, Math.Max(320, workArea.Width - 32));
         Height = Math.Min(730, Math.Max(320, workArea.Height - 32));
         MinWidth = Math.Min(640, Width);
         MinHeight = Math.Min(480, Height);
         WindowStartupLocation = WindowStartupLocation.CenterScreen;
+        ViewTheme.ApplyResources(Resources, _theme);
+        UiAppearance.ApplyResources(Resources, _theme, "zh-TW", "", 14);
+        SetResourceReference(Control.FontFamilyProperty, "UiFontFamily");
+        SetResourceReference(Control.FontSizeProperty, "UiFontSize");
+        SetResourceReference(Control.BackgroundProperty, "DesktopPreviewWindowBrush");
+        SetResourceReference(Control.ForegroundProperty, "DesktopPreviewTextBrush");
+        _canvas.SetResourceReference(Panel.BackgroundProperty, "DesktopPreviewBrush");
+        _empty.SetResourceReference(TextBlock.ForegroundProperty, "DesktopPreviewMutedBrush");
         var root = new DockPanel();
         var caption = new StackPanel { Margin = new Thickness(22, 16, 22, 16) };
-        caption.Children.Add(new TextBlock { Text = "群組操作預覽", FontSize = 22, FontWeight = FontWeights.SemiBold });
-        caption.Children.Add(new TextBlock
+        var description = new TextBlock
         {
             Text = "分類：點標題展開或收合 · 雙擊開啟項目 · 拖曳標題移動並吸附（Shift 暫停吸附） · 拖曳項目改分類\n工具番固定展開。預覽時桌面接管暫停，原生圖示保留，可回設定啟用。",
-            Margin = new Thickness(0, 8, 0, 0), Foreground = Brushes.DimGray, TextWrapping = TextWrapping.Wrap
-        });
-        DockPanel.SetDock(caption, Dock.Top);
-        root.Children.Add(caption);
+            TextWrapping = TextWrapping.Wrap
+        };
+        description.SetResourceReference(TextBlock.ForegroundProperty, "DesktopPreviewMutedBrush");
+        caption.Children.Add(description);
+        var header = new Border { Child = caption };
+        header.SetResourceReference(Border.BackgroundProperty, "DesktopPreviewHeaderBrush");
+        DockPanel.SetDock(header, Dock.Top);
+        root.Children.Add(header);
         var field = new Grid();
         field.Children.Add(_canvas);
         field.Children.Add(_empty);
         root.Children.Add(field);
-        Content = root;
+        var frame = new WindowFrame(this) { Workspace = root };
+        frame.ApplyMetrics(14);
+        frame.ApplyLanguage("zh-TW");
+        Content = frame;
         _canvas.SizeChanged += (_, _) => ClampGroups();
         Closing += (_, e) => { if (!AllowClose) { e.Cancel = true; Hide(); } };
         IsVisibleChanged += (_, _) => { if (!IsVisible) foreach (var group in _groups.Values) group.Collapse(); };
         Closed += (_, _) => DisposeGroups();
+    }
+
+    public void SetTheme(string theme)
+    {
+        _theme = theme;
+        ViewTheme.ApplyResources(Resources, theme);
+        UiAppearance.ApplyResources(Resources, theme, "zh-TW", "", 14);
+        foreach (var group in _groups.Values) group.SetTheme(theme);
     }
 
     public void SetTools(IReadOnlyList<DesktopTool> tools, Action<string> activateTool)
@@ -94,7 +118,7 @@ public sealed class GroupPreviewWindow : Window
                     layout = InitialGroupLayout.Create(bounds, category.Id == DesktopToolsGroup.Id, occupied);
                     state.Groups[category.Id] = layout;
                 }
-                group = new GroupWindow(category, layout);
+                group = new GroupWindow(category, layout, _theme);
                 var movingGroup = group;
                 group.SnapTargets = () => _groups.Values
                     .Where(other => other != movingGroup && other.CardContent.Visibility == Visibility.Visible)

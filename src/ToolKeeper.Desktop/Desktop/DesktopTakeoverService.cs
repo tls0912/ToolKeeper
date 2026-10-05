@@ -17,6 +17,7 @@ internal sealed class DesktopTakeoverService : IDisposable
     private IReadOnlyList<DesktopItem> _items = [];
     private IReadOnlyList<DesktopTool> _tools = [];
     private Action<string>? _activateTool;
+    private string _theme = "Light";
     private DesktopRecoveryGuard? _guard;
     private DesktopIconClipper? _clipper;
     private DesktopProbeResult? _desktop;
@@ -68,6 +69,7 @@ internal sealed class DesktopTakeoverService : IDisposable
 
     private void BindGroups()
     {
+        _groups.SetTheme(_theme);
         _groups.SetTools(_tools, id => _activateTool?.Invoke(id));
         var presenter = _groups;
         _groups.ItemOpenRequested += item => ItemOpenRequested?.Invoke(item);
@@ -80,6 +82,13 @@ internal sealed class DesktopTakeoverService : IDisposable
             StopSession();
             SetStatus(false, reason);
         }, DispatcherPriority.Send);
+    }
+
+    public void SetTheme(string theme)
+    {
+        if (_disposed) return;
+        _theme = theme;
+        _groups.SetTheme(theme);
     }
 
     public void SetTools(IReadOnlyList<DesktopTool> tools, Action<string> activateTool)

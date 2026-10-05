@@ -2,6 +2,7 @@ using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Interop;
 using CabiDock.Models;
+using ToolKeeper.UI;
 using Controls = System.Windows.Controls;
 
 namespace CabiDock.Views;
@@ -12,22 +13,41 @@ internal sealed class RenameItemDialog : Window
     private readonly Controls.TextBox _name;
     private readonly Controls.TextBlock _error;
 
-    private RenameItemDialog(DesktopItem item)
+    private RenameItemDialog(DesktopItem item, string theme)
     {
         _item = item;
-        Title = "重新命名";
+        Title = "CabiDock - 重新命名";
         Width = 440;
         SizeToContent = SizeToContent.Height;
         ResizeMode = ResizeMode.NoResize;
         ShowInTaskbar = false;
         WindowStartupLocation = WindowStartupLocation.CenterScreen;
-        ViewTheme.Apply(this);
-        var panel = new Controls.StackPanel { Margin = new Thickness(22) };
-        Content = panel;
-        panel.Children.Add(ViewTheme.Text("新名稱（包含副檔名）"));
+        UiAppearance.ApplyResources(Resources, theme, "zh-TW", "", 14);
+        SetResourceReference(Controls.Control.FontFamilyProperty, "UiFontFamily");
+        SetResourceReference(Controls.Control.FontSizeProperty, "UiFontSize");
+        SetResourceReference(Controls.Control.ForegroundProperty, "TextBrush");
+        SetResourceReference(Controls.Control.BackgroundProperty, "ChromeBackgroundBrush");
+        var bamboo = UiTheme.IsInk(theme);
+        var panel = new Controls.StackPanel { Margin = new Thickness(bamboo ? 10 : 22) };
+        if (bamboo)
+        {
+            var paper = new Controls.Border { Margin = new Thickness(12), Child = panel };
+            paper.SetResourceReference(Controls.Border.BackgroundProperty, "PaperBackgroundBrush");
+            Content = paper;
+        }
+        else Content = panel;
+        var workspace = (UIElement)Content;
+        Content = null;
+        var frame = new WindowFrame(this) { Workspace = workspace };
+        frame.ApplyMetrics(14);
+        frame.ApplyLanguage("zh-TW");
+        Content = frame;
+        var label = ViewTheme.Text("新名稱（包含副檔名）");
+        label.SetResourceReference(Controls.TextBlock.ForegroundProperty, "TextBrush");
+        panel.Children.Add(label);
         _name = new Controls.TextBox { Text = item.Name, Margin = new Thickness(0, 10, 0, 8) };
         panel.Children.Add(_name);
-        _error = ViewTheme.Text("", 12, ViewTheme.Brush("#B42318"));
+        _error = ViewTheme.Text("", 12, ViewTheme.Brush(theme == "InkDark" ? "#F19A97" : "#B42318"));
         _error.Visibility = Visibility.Collapsed;
         panel.Children.Add(_error);
         var buttons = new Controls.StackPanel
@@ -52,7 +72,7 @@ internal sealed class RenameItemDialog : Window
 
     internal static void Show(FrameworkElement anchor, DesktopItem item)
     {
-        var dialog = new RenameItemDialog(item);
+        var dialog = new RenameItemDialog(item, anchor.TryFindResource("DesktopTheme") as string ?? "Light");
         if (PresentationSource.FromVisual(anchor) is HwndSource source)
             new WindowInteropHelper(dialog).Owner = source.Handle;
         dialog.ShowDialog();

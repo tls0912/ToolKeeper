@@ -4,7 +4,6 @@ using System.Windows.Controls;
 using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
-using System.Windows.Shell;
 using MarkPad.Services;
 using ToolKeeper.UI;
 
@@ -13,7 +12,7 @@ namespace MarkPad;
 public partial class MainWindow
 {
     private double UiSize(double size) => size * Settings.UiFontSize / 13;
-    private double UiTitleHeight => Math.Max(40, UiSize(40));
+    private double UiTitleHeight => _frame.CaptionHeight;
     private string UiFontName => UiTypography.ResolveInterfaceFont(Settings.UiFontFamily, UiLanguage, IsInkTheme);
     private string PreviewFontName => UiTypography.ResolveReadingFont(Settings.PreviewFontFamily, UiLanguage, IsInkTheme);
     private string EditorFontName => Settings.EditorFontFamily == InkTypography.FontChoice
@@ -25,12 +24,9 @@ public partial class MainWindow
     {
         FontFamily = new FontFamily(UiFontName);
         FontSize = Settings.UiFontSize;
-        UiTypography.ApplyResources(Resources, FontFamily, FontSize);
+        _frame.ApplyMetrics(Settings.UiFontSize);
         RailToggleButton.Height = Math.Max(32, UiSize(32));
-        StatusToast.Margin = new Thickness(20, UiTitleHeight + 24, 20, 0);
-        TitleRow.Height = new GridLength(_fullScreen ? 0 : UiTitleHeight);
-        TitleBar.Height = _fullScreen ? UiTitleHeight : double.NaN;
-        if (WindowChrome.GetWindowChrome(this) is { } chrome) chrome.CaptionHeight = _fullScreen ? 0 : UiTitleHeight;
+        StatusToast.Margin = new Thickness(20, _fullScreen ? UiTitleHeight + 24 : 24, 20, 0);
     }
 
     private async void OnContentMouseWheel(object sender, MouseWheelEventArgs e)
@@ -154,8 +150,51 @@ public partial class MainWindow
             size.KeyDown += (_, e) => { if (e.Key == Key.Enter) { Commit(); e.Handled = true; } };
             row.Children.Add(minus); row.Children.Add(size); row.Children.Add(plus); body.Children.Add(row);
         }
-        AddFontRow(T("User interface", "UI 介面", "UI インターフェース"), () => Settings.UiFontFamily, v => Settings.UiFontFamily = v, () => UiFontName,
+        AddFontRow(T("Interface text", "UI 文字", "UI の文字"), () => Settings.UiFontFamily, v => Settings.UiFontFamily = v, () => UiFontName,
             () => Settings.UiFontSize, v => Settings.UiFontSize = v, 10, 20);
+        void ApplyAndSaveTextShadow()
+        {
+            try
+            {
+                foreach (var window in Application.Current.Windows.OfType<MainWindow>()) window.ApplyInterfaceTextShadow();
+                App.Preferences.Save();
+            }
+            catch (Exception ex) { Report(ex); }
+        }
+        var textShadow = new CheckBox
+        {
+            Content = T("Text shadow", "文字陰影", "文字の影"), IsChecked = Settings.InterfaceTextShadowEnabled,
+            VerticalContentAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 0, 0, 6)
+        };
+        textShadow.SetResourceReference(Control.ForegroundProperty, "TextBrush");
+        textShadow.SetResourceReference(Control.FontFamilyProperty, "UiFontFamily");
+        textShadow.SetResourceReference(Control.FontSizeProperty, "UiFontSize");
+        textShadow.Click += (_, _) =>
+        {
+            Settings.InterfaceTextShadowEnabled = textShadow.IsChecked == true;
+            ApplyAndSaveTextShadow();
+        };
+        body.Children.Add(textShadow);
+        var shadowRow = new Grid { Margin = new Thickness(0, 0, 0, 10) };
+        shadowRow.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+        shadowRow.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+        var shadowLabel = T("Shadow thickness", "陰影粗細", "影の太さ");
+        shadowRow.Children.Add(new TextBlock { Text = shadowLabel, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 0, 12, 0) });
+        var shadowThickness = new ComboBox
+        {
+            ItemsSource = Enumerable.Range(1, 4).ToArray(), SelectedItem = Settings.InterfaceTextShadowThickness,
+            IsEditable = false, MinHeight = 30, MinWidth = 64,
+            ToolTip = T("Higher values make the shadow thicker.", "數值越大，陰影越粗。", "値が大きいほど影が太くなります。")
+        };
+        shadowThickness.SetResourceReference(StyleProperty, "FontPickerComboBoxStyle");
+        System.Windows.Automation.AutomationProperties.SetName(shadowThickness, shadowLabel);
+        shadowThickness.SelectionChanged += (_, _) =>
+        {
+            if (shadowThickness.SelectedItem is not int thickness || thickness == Settings.InterfaceTextShadowThickness) return;
+            Settings.InterfaceTextShadowThickness = thickness;
+            ApplyAndSaveTextShadow();
+        };
+        Grid.SetColumn(shadowThickness, 1); shadowRow.Children.Add(shadowThickness); body.Children.Add(shadowRow);
         AddFontRow(T("Document preview", "內文預覽", "本文プレビュー"), () => Settings.PreviewFontFamily, v => Settings.PreviewFontFamily = v, () => PreviewFontName,
             () => Settings.PreviewFontSize, v => Settings.PreviewFontSize = v, 8, 72);
         AddFontRow(T("Document editor", "內文編輯器", "本文エディター"), () => Settings.EditorFontFamily, v => Settings.EditorFontFamily = v, () => EditorFontName,

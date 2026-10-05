@@ -1,18 +1,20 @@
 using System.Windows;
 using System.Windows.Media;
 
-namespace MarkPad.Theming;
+namespace ToolKeeper.UI;
 
-/// <summary>Local bamboo finishes for Hanqing's ink-theme window chrome.</summary>
-internal static class BambooChrome
+/// <summary>Hanqing's bamboo finishes, shared by every product's ink-theme window chrome.</summary>
+public static class BambooChrome
 {
     private static readonly Lazy<DrawingBrush> Peeled = new(() => DrawBamboo(false, false));
     private static readonly Lazy<DrawingBrush> PeeledHorizontal = new(() => DrawBamboo(false, true));
     private static readonly Lazy<DrawingBrush> Rind = new(() => DrawBamboo(true, false));
     private static readonly Lazy<DrawingBrush> RindHorizontal = new(() => DrawBamboo(true, true));
 
+    /// <summary>Apply after UiTheme.ApplyResources, in the same window or content resource scope.</summary>
     public static void ApplyResources(ResourceDictionary resources, bool ink, bool dark)
     {
+        ArgumentNullException.ThrowIfNull(resources);
         if (ink)
         {
             resources["WindowBackground"] = Solid(dark ? 0x293723 : 0xDCCBA4);
